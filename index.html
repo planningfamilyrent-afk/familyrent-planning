@@ -527,14 +527,14 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
       </div>
     </div>
     <div class="fsec">
-      <div class="fsec-title"><i class="ti ti-truck-delivery" aria-hidden="true"></i> Levering</div>
+      <div class="fsec-title"><i class="ti ti-truck-delivery" aria-hidden="true"></i> <span id="form-lev-title">Levering</span></div>
       <div class="frow">
         <div class="fg"><label class="fl">Datum <span class="req">*</span></label><input class="fi" type="date" id="f-levdatum"></div>
         <div class="fg"><label class="fl">Tijdstip</label><input class="fi" type="time" id="f-levuur" value="09:00"></div>
       </div>
     </div>
     <div class="fsec">
-      <div class="fsec-title"><i class="ti ti-arrow-back-up" aria-hidden="true"></i> Ophaling</div>
+      <div class="fsec-title"><i class="ti ti-arrow-back-up" aria-hidden="true"></i> <span id="form-oph-title">Ophaling</span></div>
       <div class="frow">
         <div class="fg"><label class="fl">Datum <span class="req">*</span></label><input class="fi" type="date" id="f-ophdatum"></div>
         <div class="fg"><label class="fl">Tijdstip</label><input class="fi" type="time" id="f-ophuur" value="10:00"></div>
@@ -581,7 +581,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
     <div class="fsec">
       <div class="fsec-title"><i class="ti ti-hard-hat" aria-hidden="true"></i> Belevingsbouwers</div>
       <div style="margin-bottom:8px">
-        <div class="fl" style="margin-bottom:5px"><i class="ti ti-truck-delivery" style="font-size:12px;color:var(--sky)"></i> Levering</div>
+        <div class="fl" style="margin-bottom:5px" id="form-bb-lev-title"><i class="ti ti-truck-delivery" style="font-size:12px;color:var(--sky)"></i> Levering</div>
         <div class="tg-grp" id="op-grid-lev">
           <button class="tg" onclick="togOpLev(this)">Bo</button>
           <button class="tg" onclick="togOpLev(this)">Marc</button>
@@ -596,7 +596,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
         <div class="af" id="af-lev"><input class="fi" id="f-and-lev" placeholder="Naam invullen..." style="margin-top:5px;max-width:200px"></div>
       </div>
       <div style="margin-bottom:8px">
-        <div class="fl" style="margin-bottom:5px"><i class="ti ti-arrow-back-up" style="font-size:12px;color:#3B6D11"></i> Ophaling</div>
+        <div class="fl" style="margin-bottom:5px" id="form-bb-oph-title"><i class="ti ti-arrow-back-up" style="font-size:12px;color:#3B6D11"></i> Ophaling</div>
         <div class="tg-grp" id="op-grid-oph">
           <button class="tg" onclick="togOpOph(this)">Bo</button>
           <button class="tg" onclick="togOpOph(this)">Marc</button>
@@ -839,6 +839,8 @@ function normB(b){
   b.email = b.email||'';
   b.opmerking = b.opmerking!==undefined&&b.opmerking!==null ? String(b.opmerking) : '';
   b.vertrek = b.vertrek||'Kallo';
+  b.levType = b.levType||'levering';
+  b.afhaalpunt = b.afhaalpunt||'';
   b.matStatus = b.matStatus||'';
   b.levuur = b.levuur||'09:00';
   b.ophuur = b.ophuur||'10:00';
@@ -952,6 +954,42 @@ function showTab(tab){
   if(tab==='nieuw'){setTimeout(function(){ppInit();},10);}
 }
 function setFil(f,btn){activeFilter=f;document.querySelectorAll('.fb').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderPlanning();}
+
+function setLevType(type,btn){
+  fs.levType=type;
+  document.querySelectorAll('#ltype-grp .tg').forEach(function(b){b.classList.remove('sel','sel-gr','sel-or');});
+  btn.classList.add('sel');
+  var levOpties=document.getElementById('lev-opties');
+  var afhInfo=document.getElementById('afhaling-info');
+  var afhAdres=document.getElementById('afhaling-adres-tekst');
+  var isAfhaling=type!=='levering';
+  if(!isAfhaling){
+    if(levOpties)levOpties.style.display='block';
+    if(afhInfo)afhInfo.style.display='none';
+    fs.vertrek=null;fs.matStatus=null;
+    document.querySelectorAll('#vt-grp .tg,#ms-grp .tg').forEach(function(b){b.classList.remove('sel','sel-gr','sel-or');});
+  } else {
+    if(levOpties)levOpties.style.display='none';
+    if(afhInfo)afhInfo.style.display='block';
+    if(type==='afhaling-kallo'){
+      if(afhAdres)afhAdres.textContent='Callamerenstraat 24, 9120 Kallo';
+      fs.vertrek='Kallo';fs.matStatus='Nog te laden';
+    } else {
+      if(afhAdres)afhAdres.textContent='Sint-Jozefslaan 1b, 9190 Stekene';
+      fs.vertrek='Stekene';fs.matStatus='Nog te laden';
+    }
+  }
+  // Pas labels aan in formulier
+  var levTitle=document.getElementById('form-lev-title');
+  var ophTitle=document.getElementById('form-oph-title');
+  var levBBTitle=document.getElementById('form-bb-lev-title');
+  var ophBBTitle=document.getElementById('form-bb-oph-title');
+  if(levTitle) levTitle.textContent=isAfhaling?'Afhalen door klant':'Levering';
+  if(ophTitle) ophTitle.textContent=isAfhaling?'Terugbrengen door klant':'Ophaling';
+  if(levBBTitle) levBBTitle.innerHTML='<i class="ti ti-person" style="font-size:12px;color:var(--sky)"></i> '+(isAfhaling?'Aanwezig bij afhaling':'Levering');
+  if(ophBBTitle) ophBBTitle.innerHTML='<i class="ti ti-person" style="font-size:12px;color:#3B6D11"></i> '+(isAfhaling?'Aanwezig bij terugbreng':'Ophaling');
+}
+
 function setTog(field,val,btn){
   fs[field]=val;
   const g=document.getElementById(field==='vertrek'?'vt-grp':'ms-grp');
@@ -1160,7 +1198,10 @@ function clearForm(){
   const fAndLev=document.getElementById('f-and-lev');if(fAndLev)fAndLev.value='';
   document.querySelectorAll('#vt-grp .tg,#ms-grp .tg').forEach(b=>b.classList.remove('sel','sel-gr','sel-or'));
   document.querySelectorAll('#status-sel .status-opt').forEach((b,i)=>b.className='status-opt'+(i===1?' active-s1':''));
-  fs={vertrek:null,matStatus:null,status:1};
+  fs={vertrek:null,matStatus:null,status:1,levType:null};
+  document.querySelectorAll('#ltype-grp .tg').forEach(b=>b.classList.remove('sel','sel-gr','sel-or'));
+  const levOp=document.getElementById('lev-opties');if(levOp)levOp.style.display='none';
+  const afhI=document.getElementById('afhaling-info');if(afhI)afhI.style.display='none';
   ppQty={};
   const w=document.getElementById('taken-wrap');
   Array.from(w.querySelectorAll('.taak-input-row')).forEach(r=>r.remove());
@@ -1179,7 +1220,8 @@ async function saveBoeking(){
   const mat=document.getElementById('f-mat').value.trim();
   const errEl=document.getElementById('ferr');
   if(!naam||!adres||!levdatum||!ophdatum||!mat){errEl.textContent='Vul alle verplichte velden in.';errEl.style.display='block';return;}
-  if(!fs.vertrek||!fs.matStatus){errEl.textContent='Selecteer vertrekpunt en materiaalstatus.';errEl.style.display='block';return;}
+  if(!fs.levType){errEl.textContent='Selecteer het type levering (wij leveren of zelf afhalen).';errEl.style.display='block';return;}
+  if(fs.levType==='levering'&&(!fs.vertrek||!fs.matStatus)){errEl.textContent='Selecteer vertrekpunt en materiaalstatus.';errEl.style.display='block';return;}
   errEl.style.display='none';
   const b={
     id:editId||Date.now(),naam,adres,
@@ -1195,6 +1237,9 @@ async function saveBoeking(){
     opstellers_lev:getOps().lev,
     opstellers_oph:getOps().oph,
     vertrek:fs.vertrek,matStatus:fs.matStatus,
+    levType:fs.levType||'levering',
+    afhaalpunt:fs.levType==='afhaling-kallo'?'Callamerenstraat 24, 9120 Kallo':
+               fs.levType==='afhaling-stekene'?'Sint-Jozefslaan 1b, 9190 Stekene':'',
     status:fs.status!==null?fs.status:1,
     taken:getTaken()
   };
@@ -1291,8 +1336,7 @@ function renderPlanning(){
             <div class="bmeta"><i class="ti ti-map-pin" style="font-size:12px" aria-hidden="true"></i> ${esc(b.adres||'')}</div>
             ${b.tel?`<div class="bmeta"><i class="ti ti-phone" style="font-size:12px" aria-hidden="true"></i> <a href="tel:${esc(String(b.tel).replace(/\s/g,''))}" style="color:var(--sky);text-decoration:none">${esc(b.tel)}</a></div>`:''}
             <div class="bcard-meta2">
-              <span><i class="ti ti-truck-delivery" style="font-size:11px;color:var(--sky)" aria-hidden="true"></i> ${opstLev}</span>
-              <span><i class="ti ti-arrow-back-up" style="font-size:11px;color:#3B6D11" aria-hidden="true"></i> ${opstOph}</span>
+              ${b.levType&&b.levType!=='levering'?`<span><i class="ti ti-home" style="font-size:11px;color:var(--sky)" aria-hidden="true"></i> Zelf afhalen — ${esc(b.afhaalpunt||b.vertrek||'')}</span>`:`<span><i class="ti ti-truck-delivery" style="font-size:11px;color:var(--sky)" aria-hidden="true"></i> ${opstLev}</span><span><i class="ti ti-arrow-back-up" style="font-size:11px;color:#3B6D11" aria-hidden="true"></i> ${opstOph}</span>`}
               ${b.prijs?`<span><i class="ti ti-currency-euro" style="font-size:11px" aria-hidden="true"></i> ${esc(b.prijs)}</span>`:''}
             </div>
             <div class="mtags">${mth}</div>
@@ -1300,7 +1344,7 @@ function renderPlanning(){
             ${hasTaken?`<div class="taken-list">${b.taken.slice(0,3).map(tk=>`<div class="taak${tk.gedaan?' done':''}"><span style="width:12px;height:12px;border-radius:3px;border:.5px solid var(--bm);background:${tk.gedaan?'var(--navy)':'transparent'};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">${tk.gedaan?'<span style="color:#fff;font-size:9px">✓</span>':''}</span> ${esc(tk.tekst)}</div>`).join('')}${b.taken.length>3?`<div style="font-size:11px;color:var(--tx3);margin-top:3px">+${b.taken.length-3} meer taken</div>`:''}</div>`:''}
           </div>
           <div class="bcard-badges">
-            <span class="badge ${isLev?'blev':'boph'}">${isLev?'Levering '+b.levuur:'Ophaling '+b.ophuur}</span>
+            <span class="badge ${isLev?'blev':'boph'}">${isLev?(b.levType&&b.levType!=='levering'?'Afhaling klant '+b.levuur:'Levering '+b.levuur):(b.levType&&b.levType!=='levering'?'Terugbreng klant '+b.ophuur:'Ophaling '+b.ophuur)}</span>
             ${b.hasOph?`<span class="badge boph">Ophaling ${b.ophuur}</span>`:''}
             <span class="status-badge ${stCls}">${stLbl}</span>
             ${openTaken>0?`<span class="status-badge" style="background:#FCEBEB;color:#791F1F">${openTaken} taak${openTaken>1?'en':''}</span>`:''}
@@ -1431,6 +1475,8 @@ function renderRit(){
   ds.innerHTML='<span style="font-size:12px;color:var(--tx2);margin-right:4px">Datum:</span>'+sorted.map(d=>`<button class="rit-db${d===selDate?' active':''}" style="${d<t?'opacity:.55':''}" onclick="ritSelDate('${d}')">${fmtShort(d)}</button>`).join('');
   const dayStops=[];
   boekingen.filter(b=>!(b.voltooid===true||b.voltooid==='true')).forEach(b=>{
+    // Zelf-afhaal boekingen hebben geen ritplanning nodig
+    if(b.levType&&b.levType!=='levering') return;
     if(b.levdatum===selDate)dayStops.push({type:'lev',boeking:b,adres:b.adres,coord:gCoord(b.adres)});
     if(b.ophdatum===selDate&&b.ophdatum!==b.levdatum)dayStops.push({type:'oph',boeking:b,adres:b.adres,coord:gCoord(b.adres)});
   });
@@ -1736,10 +1782,12 @@ function openDetail(id){
     <div class="dr"><span class="dl"><i class="ti ti-map-pin" aria-hidden="true"></i> Adres</span><span class="dv"><a href="${mUrl}" style="color:var(--sky)">${esc(b.adres)} <i class="ti ti-external-link" style="font-size:11px"></i></a></span></div>
     ${b.tel?`<div class="dr"><span class="dl"><i class="ti ti-phone" aria-hidden="true"></i> Tel</span><span class="dv"><a href="tel:${esc(b.tel)}" style="color:var(--sky)">${esc(b.tel)}</a></span></div>`:''}
     <div class="dd"></div>
-    <div class="dr"><span class="dl"><i class="ti ti-truck-delivery" aria-hidden="true"></i> Levering</span><span class="dv">${fmtDate(b.levdatum)} om ${b.levuur}</span></div>
-    <div class="dr"><span class="dl"><i class="ti ti-arrow-back-up" aria-hidden="true"></i> Ophaling</span><span class="dv">${fmtDate(b.ophdatum)} om ${b.ophuur}</span></div>
+    <div class="dr"><span class="dl"><i class="ti ti-truck-delivery" aria-hidden="true"></i> ${b.levType&&b.levType!=='levering'?'Afhalen door klant':'Levering'}</span><span class="dv">${fmtDate(b.levdatum)} om ${b.levuur}</span></div>
+    <div class="dr"><span class="dl"><i class="ti ti-arrow-back-up" aria-hidden="true"></i> ${b.levType&&b.levType!=='levering'?'Terugbrengen door klant':'Ophaling'}</span><span class="dv">${fmtDate(b.ophdatum)} om ${b.ophuur}</span></div>
     <div class="dd"></div>
-    <div class="dr"><span class="dl"><i class="ti ti-building-warehouse" aria-hidden="true"></i> Vertrek</span><span class="dv">${esc(b.vertrek||'—')}</span></div>
+    ${b.levType&&b.levType!=='levering'?
+      `<div class="dr"><span class="dl"><i class="ti ti-home" aria-hidden="true"></i> Zelf afhalen</span><span class="dv" style="color:var(--sky)">${esc(b.afhaalpunt||b.vertrek||'—')}</span></div>`
+      :`<div class="dr"><span class="dl"><i class="ti ti-building-warehouse" aria-hidden="true"></i> Vertrek</span><span class="dv">${esc(b.vertrek||'—')}</span></div>`}
     <div class="dr"><span class="dl"><i class="ti ti-flag" aria-hidden="true"></i> Status</span><span class="dv"><span class="status-badge ${STAT_CLS[stIdx]}">${STATUSSEN[stIdx]}</span></span></div>
     ${stIdx<5?`<div class="snel-status">
       ${stIdx<3?`<button class="snel-btn s-lev" onclick="snelStatus(${id},3);closeMo()"><i class="ti ti-truck-delivery" style="font-size:12px"></i> Geleverd</button>`:''}
@@ -1748,8 +1796,8 @@ function openDetail(id){
     </div>`:''}
     <div class="dr" style="flex-direction:column;gap:4px"><span class="dl"><i class="ti ti-package" aria-hidden="true"></i> Materiaal</span><div style="width:100%;margin-top:4px">${mth||'<span style=\"color:var(--tx3)\">Geen materiaal</span>'}</div></div>
     ${b.prijs?`<div class="dr"><span class="dl"><i class="ti ti-currency-euro" aria-hidden="true"></i> Prijs</span><span class="dv">€ ${esc(b.prijs)}${b.betaling?' — '+esc(b.betaling):''}</span></div>`:''}
-    <div class="dr"><span class="dl"><i class="ti ti-truck-delivery" style="color:var(--sky)" aria-hidden="true"></i> Levering</span><span class="dv">${(b.opstellers_lev&&b.opstellers_lev.length?b.opstellers_lev:(b.opstellers||[])).map(esc).join(' + ')||'<span style="color:var(--tx3)">—</span>'}</span></div>
-    <div class="dr"><span class="dl"><i class="ti ti-arrow-back-up" style="color:#3B6D11" aria-hidden="true"></i> Ophaling</span><span class="dv">${(b.opstellers_oph&&b.opstellers_oph.length?b.opstellers_oph:(b.opstellers||[])).map(esc).join(' + ')||'<span style="color:var(--tx3)">—</span>'}</span></div>
+    <div class="dr"><span class="dl"><i class="ti ti-truck-delivery" style="color:var(--sky)" aria-hidden="true"></i> ${b.levType&&b.levType!=='levering'?'Aanwezig bij afhaling':'Levering'}</span><span class="dv">${(b.opstellers_lev&&b.opstellers_lev.length?b.opstellers_lev:(b.opstellers||[])).map(esc).join(' + ')||'<span style="color:var(--tx3)">—</span>'}</span></div>
+    <div class="dr"><span class="dl"><i class="ti ti-arrow-back-up" style="color:#3B6D11" aria-hidden="true"></i> ${b.levType&&b.levType!=='levering'?'Aanwezig bij terugbreng':'Ophaling'}</span><span class="dv">${(b.opstellers_oph&&b.opstellers_oph.length?b.opstellers_oph:(b.opstellers||[])).map(esc).join(' + ')||'<span style="color:var(--tx3)">—</span>'}</span></div>
     ${b.opmerking?`<div class="opmerking-block" style="margin:8px 0"><i class="ti ti-alert-circle" style="font-size:14px;flex-shrink:0" aria-hidden="true"></i><span>${esc(b.opmerking)}</span></div>`:''}
     ${takenHtml}
     <div class="ik-wrap">
@@ -1889,6 +1937,26 @@ function editBoeking(id){
   document.getElementById('f-opm').value=b.opmerking||'';
   const fEmail=document.getElementById('f-email');if(fEmail)fEmail.value=b.email||'';
   fs.vertrek=b.vertrek||null;fs.matStatus=b.matStatus||null;fs.status=b.status!==undefined?Number(b.status):1;
+  fs.levType=b.levType||'levering';
+  // Herstel levType knoppen
+  document.querySelectorAll('#ltype-grp .tg').forEach(btn=>{
+    btn.classList.remove('sel','sel-gr','sel-or');
+    const isMatch=(fs.levType==='levering'&&btn.textContent.includes('leveren'))||
+                  (fs.levType==='afhaling-kallo'&&btn.textContent.includes('Kallo'))||
+                  (fs.levType==='afhaling-stekene'&&btn.textContent.includes('Stekene'));
+    if(isMatch)btn.classList.add('sel');
+  });
+  const levOpEdit=document.getElementById('lev-opties');
+  const afhInfoEdit=document.getElementById('afhaling-info');
+  const afhAdresEdit=document.getElementById('afhaling-adres-tekst');
+  if(fs.levType==='levering'){
+    if(levOpEdit)levOpEdit.style.display='block';
+    if(afhInfoEdit)afhInfoEdit.style.display='none';
+  } else {
+    if(levOpEdit)levOpEdit.style.display='none';
+    if(afhInfoEdit)afhInfoEdit.style.display='block';
+    if(afhAdresEdit)afhAdresEdit.textContent=b.afhaalpunt||'';
+  }
   document.querySelectorAll('#vt-grp .tg').forEach(btn=>{btn.classList.remove('sel');if(b.vertrek&&btn.textContent.trim()===b.vertrek)btn.classList.add('sel');});
   document.querySelectorAll('#ms-grp .tg').forEach(btn=>{btn.classList.remove('sel','sel-gr','sel-or');if(b.matStatus&&btn.textContent.trim()===b.matStatus)btn.classList.add(b.matStatus==='Reeds geladen'?'sel-gr':'sel-or');});
   document.querySelectorAll('#status-sel .status-opt').forEach((btn,i)=>btn.className='status-opt'+(i===fs.status?' active-s'+i:''));
