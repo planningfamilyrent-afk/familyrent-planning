@@ -2,8 +2,8 @@
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:;">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Familyrent Planning</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -924,7 +924,7 @@ function ppInit(){
   var catsEl=document.getElementById('pp-cats');
   if(!catsEl)return;
   catsEl.innerHTML=cats.map(function(c){
-    return '<button class="pp-cat'+(c==='Alle'?' active':'') +'" onclick="ppSetCat(''+c+'')" >'+esc(c)+'</button>';
+    return '<button class="pp-cat'+(c==='Alle'?' active':'')+'" data-cat="'+c.replace(/"/g,'&quot;')+'" onclick="ppSetCat(this.dataset.cat)">'+esc(c)+'</button>';
   }).join('');
   ppRender();
 }
@@ -966,9 +966,9 @@ function ppRender(){
       '</div>'+
       '<div class="pp-item-prijs">€'+p.incl.toLocaleString('nl-BE',{minimumFractionDigits:2})+'</div>'+
       '<div class="pp-qty">'+
-        '<button class="pp-qty-btn" onclick="ppChange(''+p.id+'',-1)">−</button>'+
+        '<button class="pp-qty-btn" onclick="ppChange(this.closest('.pp-item').id.replace('ppi-',''),-1)">−</button>'+
         '<input class="pp-qty-inp" type="number" min="0" value="'+qty+'" id="ppq-'+p.id+'" oninput="ppSet(''+p.id+'',this.value)">'+
-        '<button class="pp-qty-btn" onclick="ppChange(''+p.id+'',1)">+</button>'+
+        '<button class="pp-qty-btn" onclick="ppChange(this.closest('.pp-item').id.replace('ppi-',''),1)">+</button>'+
       '</div>'+
     '</div>';
   }).join('');
@@ -1004,7 +1004,7 @@ function ppUpdateSelected(){
     var p=CATALOGUS.find(function(x){return x.id===id;});
     if(!p)return '';
     return '<span class="pp-tag">'+esc(p.naam)+' ×'+ppQty[id]+
-      ' <span class="pp-tag-del" onclick="ppChange(''+id+'',-'+ppQty[id]+')">✕</span></span>';
+      ' <span class="pp-tag-del" data-pid="'+id+'" onclick="ppChange(this.dataset.pid,-'+ppQty[id]+')">✕</span></span>';
   }).join('');
 }
 
