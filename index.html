@@ -5,6 +5,8 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:;">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Familyrent Planning</title>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>(function(){emailjs.init({publicKey:"tSEO9Yx-6g3asaLE-"});})();</script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <style>
@@ -235,6 +237,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 .ics-btn{font-size:12px;padding:7px 13px;border-radius:var(--rm);border:1px solid #3B6D11;background:#fff;color:#3B6D11;cursor:pointer;font-family:'Poppins',sans-serif;font-weight:500;display:flex;align-items:center;gap:4px}
 .ics-btn:hover{background:#EAF3DE}
 .ferr{color:#791F1F;font-size:13px;margin-bottom:9px;display:none;padding:7px 11px;background:#FCEBEB;border-radius:var(--rm)}
+
 
 /* TAKEN IN FORMULIER */
 .taken-input-wrap{border:.5px solid var(--bm);border-radius:var(--rm);overflow:hidden}
@@ -489,6 +492,10 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
         <div class="fg"><label class="fl">Naam klant / bedrijf <span class="req">*</span></label><input class="fi" id="f-naam" placeholder="bv. Familie Janssen"></div>
         <div class="fg"><label class="fl">Telefoonnummer</label><input class="fi" id="f-tel" placeholder="bv. 0478 12 34 56"></div>
       </div>
+      <div class="frow">
+        <div class="fg"><label class="fl">E-mailadres klant <span style="font-weight:400;color:var(--tx3);font-size:11px">(voor bevestigingsmail)</span></label><input class="fi" type="email" id="f-email" placeholder="bv. jan@voorbeeld.be"></div>
+        <div class="fg"></div>
+      </div>
       <div class="frow s1"><div class="fg"><label class="fl">Leveringsadres <span class="req">*</span></label><input class="fi" id="f-adres" placeholder="bv. Dorpstraat 12, Temse"></div></div>
     </div>
     <div class="fsec">
@@ -622,6 +629,30 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 </div>
 
 </div><!-- /wrap -->
+
+<!-- LAADBRIEFJE MODAL -->
+<div class="mo" id="laad-mo">
+  <div class="modal laad-modal">
+    <div class="laad-hdr">
+      <div>
+        <div class="laad-title"><i class="ti ti-clipboard-list"></i> Laadbriefje</div>
+        <div class="laad-sub" id="laad-sub">—</div>
+      </div>
+      <button class="bcl" onclick="document.getElementById('laad-mo').classList.remove('open')" style="color:#fff"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="laad-body">
+      <div class="laad-info" id="laad-info"></div>
+      <div id="laad-items"></div>
+      <div class="laad-progress" id="laad-prog">
+        <div style="flex:1">
+          <div class="laad-prog-lbl">Voortgang laden</div>
+          <div class="laad-prog-bar"><div class="laad-prog-fill" id="laad-fill" style="width:0%"></div></div>
+        </div>
+        <div class="laad-prog-val" id="laad-prog-val">0 / 0</div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- DETAIL MODAL -->
 <div class="mo" id="mo">
@@ -805,6 +836,7 @@ function normB(b){
   b.materiaal = b.materiaal!==undefined&&b.materiaal!==null ? String(b.materiaal) : '';
   b.prijs = b.prijs!==undefined&&b.prijs!==null ? String(b.prijs) : '';
   b.betaling = b.betaling||'';
+  b.email = b.email||'';
   b.opmerking = b.opmerking!==undefined&&b.opmerking!==null ? String(b.opmerking) : '';
   b.vertrek = b.vertrek||'Kallo';
   b.matStatus = b.matStatus||'';
@@ -933,7 +965,7 @@ function setStatus(idx,btn){
   });
 }
 function togOp(btn){if(btn.classList.contains('and-tog'))return;btn.classList.toggle('sel');}
-function togOpLev(btn){btn.classList.toggle('sel');}
+function togOpLev(btn){if(btn.classList.contains('and-tog-lev'))return;btn.classList.toggle('sel');}
 function togOpOph(btn){if(btn.classList.contains('and-tog-oph'))return;btn.classList.toggle('sel');}
 function togAndere(btn){const f=document.getElementById('af'),show=f.style.display==='block';f.style.display=show?'none':'block';btn.classList.toggle('sel',!show);if(!show)document.getElementById('f-and').focus();}
 function togAndereLev(btn){const f=document.getElementById('af-lev'),show=f.style.display==='block';f.style.display=show?'none':'block';btn.classList.toggle('sel',!show);if(!show)document.getElementById('f-and-lev').focus();}
@@ -1117,7 +1149,7 @@ function ppLoadFromField(tekst){
 }
 
 function clearForm(){
-  ['f-naam','f-tel','f-adres','f-mat','f-prijs','f-opm','f-and'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['f-naam','f-tel','f-email','f-adres','f-mat','f-prijs','f-opm','f-and'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('f-levdatum').value=today();
   document.getElementById('f-ophdatum').value=today();
   document.getElementById('f-levuur').value='09:00';
@@ -1132,10 +1164,12 @@ function clearForm(){
   ppQty={};
   const w=document.getElementById('taken-wrap');
   Array.from(w.querySelectorAll('.taak-input-row')).forEach(r=>r.remove());
-  document.getElementById('af').style.display='none';
+  const afEl=document.getElementById('af');if(afEl)afEl.style.display='none';
   document.getElementById('ferr').style.display='none';
   editId=null;
 }
+
+
 
 async function saveBoeking(){
   const naam=document.getElementById('f-naam').value.trim();
@@ -1150,6 +1184,7 @@ async function saveBoeking(){
   const b={
     id:editId||Date.now(),naam,adres,
     tel:document.getElementById('f-tel').value.trim(),
+    email:document.getElementById('f-email')?document.getElementById('f-email').value.trim():'',
     levdatum,levuur:document.getElementById('f-levuur').value,
     ophdatum,ophuur:document.getElementById('f-ophuur').value,
     materiaal:mat,
@@ -1168,8 +1203,29 @@ async function saveBoeking(){
   btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Boeking opslaan';
   if(result&&result.success){
     if(editId){const i=boekingen.findIndex(x=>x.id===editId);if(i>=0)boekingen[i]=b;}else boekingen.push(b);
-    saveC(boekingen);lastSavedId=b.id;editId=null;
-    banner('ok','Boeking opgeslagen');document.getElementById('ics-panel').style.display='block';updateStats();
+    saveC(boekingen);lastSavedId=b.id;
+    const wasEdit=!!editId;
+    editId=null;
+    updateStats();renderPlanning();
+    if(wasEdit){
+      // Bewerking: toon ICS panel even, dan terug naar planning
+      document.getElementById('ics-panel').style.display='block';
+      banner('ok','Boeking bijgewerkt — '+b.naam);
+    } else {
+      // Nieuwe boeking: toon succes banner, reset formulier, ga naar planning
+      banner('ok','Boeking opgeslagen — '+b.naam);
+      // Stuur bevestigingsmail naar klant
+      if(b.email){
+        stuurBevestigingsmail(b).then(function(ok){
+          if(ok) banner('ok','Bevestigingsmail verstuurd naar '+b.email);
+        });
+      }
+      setTimeout(function(){
+        showTab('planning');
+        clearForm();
+        document.getElementById('ics-panel').style.display='none';
+      }, 800);
+    }
   } else if(!result){
     banner('er','Opslaan mislukt — controleer je verbinding en probeer opnieuw.');
     document.getElementById('ferr').textContent='Verbindingsfout. Probeer opnieuw.';
@@ -1380,7 +1436,17 @@ function renderRit(){
   });
   if(dayStops.length===0){content.innerHTML='<div class="empty"><i class="ti ti-calendar-off"></i>Geen events op deze datum.</div>';return;}
   const perBB={};
-  dayStops.forEach(s=>{const bbs=s.boeking.opstellers&&s.boeking.opstellers.length>0?s.boeking.opstellers:['Niet toegewezen'];bbs.forEach(bb=>{if(!perBB[bb])perBB[bb]=[];if(!perBB[bb].find(x=>x.boeking.id===s.boeking.id&&x.type===s.type))perBB[bb].push(s);});});
+  dayStops.forEach(s=>{
+    var bbs;
+    if(s.type==='lev'){
+      bbs=(s.boeking.opstellers_lev&&s.boeking.opstellers_lev.length)?s.boeking.opstellers_lev:
+          (s.boeking.opstellers&&s.boeking.opstellers.length?s.boeking.opstellers:['Niet toegewezen']);
+    } else {
+      bbs=(s.boeking.opstellers_oph&&s.boeking.opstellers_oph.length)?s.boeking.opstellers_oph:
+          (s.boeking.opstellers&&s.boeking.opstellers.length?s.boeking.opstellers:['Niet toegewezen']);
+    }
+    bbs.forEach(bb=>{if(!perBB[bb])perBB[bb]=[];if(!perBB[bb].find(x=>x.boeking.id===s.boeking.id&&x.type===s.type))perBB[bb].push(s);});
+  });
   let html='';
   Object.entries(perBB).forEach(([bbNm,stops])=>{
     const es=stops[0];
@@ -1437,7 +1503,13 @@ function renderBBGrid(){
 function showBBDetail(name){
   document.getElementById('bb-sel').style.display='none';document.getElementById('bb-det').classList.add('active');
   const t=today(),mon=getMon(t);const sunDt=new Date(mon+'T00:00:00');sunDt.setDate(sunDt.getDate()+6);const sun=sunDt.toISOString().split('T')[0];
-  const my=boekingen.filter(b=>b.opstellers&&b.opstellers.includes(name)&&!(b.voltooid===true||b.voltooid==='true'));
+  const my=boekingen.filter(b=>{
+    if(b.voltooid===true||b.voltooid==='true') return false;
+    const inLev=(b.opstellers_lev&&b.opstellers_lev.includes(name));
+    const inOph=(b.opstellers_oph&&b.opstellers_oph.includes(name));
+    const inOld=(b.opstellers&&b.opstellers.includes(name));
+    return inLev||inOph||inOld;
+  });
   const up=my.filter(b=>b.levdatum>=t||b.ophdatum>=t),past=my.filter(b=>b.levdatum<t&&b.ophdatum<t),wk=my.filter(b=>(b.levdatum>=mon&&b.levdatum<=sun)||(b.ophdatum>=mon&&b.ophdatum<=sun));
   document.getElementById('bb-nm').textContent=name;
   document.getElementById('bb-sub').textContent=my.length+' boeking'+(my.length!==1?'en':'')+' totaal';
@@ -1815,12 +1887,17 @@ function editBoeking(id){
   document.getElementById('f-prijs').value=b.prijs||'';
   document.getElementById('f-bet').value=b.betaling||'';
   document.getElementById('f-opm').value=b.opmerking||'';
+  const fEmail=document.getElementById('f-email');if(fEmail)fEmail.value=b.email||'';
   fs.vertrek=b.vertrek||null;fs.matStatus=b.matStatus||null;fs.status=b.status!==undefined?Number(b.status):1;
   document.querySelectorAll('#vt-grp .tg').forEach(btn=>{btn.classList.remove('sel');if(b.vertrek&&btn.textContent.trim()===b.vertrek)btn.classList.add('sel');});
   document.querySelectorAll('#ms-grp .tg').forEach(btn=>{btn.classList.remove('sel','sel-gr','sel-or');if(b.matStatus&&btn.textContent.trim()===b.matStatus)btn.classList.add(b.matStatus==='Reeds geladen'?'sel-gr':'sel-or');});
   document.querySelectorAll('#status-sel .status-opt').forEach((btn,i)=>btn.className='status-opt'+(i===fs.status?' active-s'+i:''));
   document.querySelectorAll('#op-grid-lev .tg').forEach(btn=>btn.classList.toggle('sel',b.opstellers_lev&&b.opstellers_lev.includes(btn.textContent.trim())));
   document.querySelectorAll('#op-grid-oph .tg:not(.and-tog-oph)').forEach(btn=>btn.classList.toggle('sel',b.opstellers_oph&&b.opstellers_oph.includes(btn.textContent.trim())));
+  const afLevEl=document.getElementById('af-lev');if(afLevEl)afLevEl.style.display='none';
+  const afOphEl=document.getElementById('af-oph');if(afOphEl)afOphEl.style.display='none';
+  const fAndLevEl=document.getElementById('f-and-lev');if(fAndLevEl)fAndLevEl.value='';
+  const fAndOphEl=document.getElementById('f-and-oph');if(fAndOphEl)fAndOphEl.value='';
   ppQty={};ppInit();ppLoadFromField(b.materiaal||'');
   const w=document.getElementById('taken-wrap');
   Array.from(w.querySelectorAll('.taak-input-row')).forEach(r=>r.remove());
