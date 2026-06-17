@@ -559,18 +559,35 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
     </div>
     <div class="fsec">
       <div class="fsec-title"><i class="ti ti-hard-hat" aria-hidden="true"></i> Belevingsbouwers</div>
-      <div class="tg-grp" id="op-grid">
-        <button class="tg" onclick="togOp(this)">Bo</button>
-        <button class="tg" onclick="togOp(this)">Marc</button>
-        <button class="tg" onclick="togOp(this)">Jony</button>
-        <button class="tg" onclick="togOp(this)">Yentl</button>
-        <button class="tg" onclick="togOp(this)">Stany</button>
-        <button class="tg" onclick="togOp(this)">Siebe</button>
-        <button class="tg" onclick="togOp(this)">Kylian</button>
-        <button class="tg" onclick="togOp(this)">Jelle</button>
-        <button class="tg and-tog" onclick="togAndere(this)">Andere...</button>
+      <div style="margin-bottom:8px">
+        <div class="fl" style="margin-bottom:5px"><i class="ti ti-truck-delivery" style="font-size:12px;color:var(--sky)"></i> Levering</div>
+        <div class="tg-grp" id="op-grid-lev">
+          <button class="tg" onclick="togOpLev(this)">Bo</button>
+          <button class="tg" onclick="togOpLev(this)">Marc</button>
+          <button class="tg" onclick="togOpLev(this)">Jony</button>
+          <button class="tg" onclick="togOpLev(this)">Yentl</button>
+          <button class="tg" onclick="togOpLev(this)">Stany</button>
+          <button class="tg" onclick="togOpLev(this)">Siebe</button>
+          <button class="tg" onclick="togOpLev(this)">Kylian</button>
+          <button class="tg" onclick="togOpLev(this)">Jelle</button>
+        </div>
       </div>
-      <div class="af" id="af"><input class="fi" id="f-and" placeholder="Naam invullen..." style="margin-top:5px;max-width:200px"></div>
+      <div style="margin-bottom:8px">
+        <div class="fl" style="margin-bottom:5px"><i class="ti ti-arrow-back-up" style="font-size:12px;color:#3B6D11"></i> Ophaling</div>
+        <div class="tg-grp" id="op-grid-oph">
+          <button class="tg" onclick="togOpOph(this)">Bo</button>
+          <button class="tg" onclick="togOpOph(this)">Marc</button>
+          <button class="tg" onclick="togOpOph(this)">Jony</button>
+          <button class="tg" onclick="togOpOph(this)">Yentl</button>
+          <button class="tg" onclick="togOpOph(this)">Stany</button>
+          <button class="tg" onclick="togOpOph(this)">Siebe</button>
+          <button class="tg" onclick="togOpOph(this)">Kylian</button>
+          <button class="tg" onclick="togOpOph(this)">Jelle</button>
+          <button class="tg and-tog-oph" onclick="togAndereOph(this)">Andere...</button>
+        </div>
+        <div class="af" id="af-oph"><input class="fi" id="f-and-oph" placeholder="Naam invullen..." style="margin-top:5px;max-width:200px"></div>
+      </div>
+      <div class="af" id="af"><input class="fi" id="f-and" placeholder="Naam invullen..." style="margin-top:5px;max-width:200px;display:none"></div>
     </div>
     <div class="ferr" id="ferr"></div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -787,6 +804,16 @@ function normB(b){
   if(typeof b.opstellers==='string'){
     b.opstellers=b.opstellers?b.opstellers.split(',').map(s=>s.trim()).filter(s=>s):[];
   } else if(!Array.isArray(b.opstellers)){b.opstellers=[];}
+  if(typeof b.opstellers_lev==='string'){
+    b.opstellers_lev=b.opstellers_lev?b.opstellers_lev.split(',').map(s=>s.trim()).filter(s=>s):[];
+  } else if(!Array.isArray(b.opstellers_lev)){
+    b.opstellers_lev=b.opstellers||[];
+  }
+  if(typeof b.opstellers_oph==='string'){
+    b.opstellers_oph=b.opstellers_oph?b.opstellers_oph.split(',').map(s=>s.trim()).filter(s=>s):[];
+  } else if(!Array.isArray(b.opstellers_oph)){
+    b.opstellers_oph=b.opstellers||[];
+  }
   b.id=Number(b.id);
   return b;
 }
@@ -890,8 +917,21 @@ function setStatus(idx,btn){
   });
 }
 function togOp(btn){if(btn.classList.contains('and-tog'))return;btn.classList.toggle('sel');}
+function togOpLev(btn){btn.classList.toggle('sel');}
+function togOpOph(btn){if(btn.classList.contains('and-tog-oph'))return;btn.classList.toggle('sel');}
 function togAndere(btn){const f=document.getElementById('af'),show=f.style.display==='block';f.style.display=show?'none':'block';btn.classList.toggle('sel',!show);if(!show)document.getElementById('f-and').focus();}
-function getOps(){const n=Array.from(document.querySelectorAll('#op-grid .tg.sel:not(.and-tog)')).map(b=>b.textContent);const a=document.getElementById('f-and').value.trim();if(a)n.push(a);return n;}
+function togAndereOph(btn){const f=document.getElementById('af-oph'),show=f.style.display==='block';f.style.display=show?'none':'block';btn.classList.toggle('sel',!show);if(!show)document.getElementById('f-and-oph').focus();}
+function getOps(){
+  const lev=Array.from(document.querySelectorAll('#op-grid-lev .tg.sel')).map(b=>b.textContent.trim());
+  const oph=Array.from(document.querySelectorAll('#op-grid-oph .tg.sel:not(.and-tog-oph)')).map(b=>b.textContent.trim());
+  const andOph=document.getElementById('f-and-oph').value.trim();
+  if(andOph)oph.push(andOph);
+  return {lev,oph};
+}
+function getOpsFlat(){
+  const o=getOps();
+  return [...new Set([...o.lev,...o.oph])];
+}
 
 function addTaakInput(tekst='',gedaan=false){
   const w=document.getElementById('taken-wrap');
@@ -1064,7 +1104,7 @@ function clearForm(){
   document.getElementById('f-levuur').value='09:00';
   document.getElementById('f-ophuur').value='10:00';
   document.getElementById('f-bet').value='';
-  document.querySelectorAll('#op-grid .tg').forEach(b=>b.classList.remove('sel','sel-gr','sel-or'));
+  document.querySelectorAll('#op-grid-lev .tg,#op-grid-oph .tg').forEach(b=>b.classList.remove('sel','sel-gr','sel-or'));
   document.querySelectorAll('#vt-grp .tg,#ms-grp .tg').forEach(b=>b.classList.remove('sel','sel-gr','sel-or'));
   document.querySelectorAll('#status-sel .status-opt').forEach((b,i)=>b.className='status-opt'+(i===1?' active-s1':''));
   fs={vertrek:null,matStatus:null,status:1};
@@ -1095,7 +1135,9 @@ async function saveBoeking(){
     prijs:document.getElementById('f-prijs').value.trim(),
     betaling:document.getElementById('f-bet').value,
     opmerking:document.getElementById('f-opm').value.trim(),
-    opstellers:getOps(),
+    opstellers:getOpsFlat(),
+    opstellers_lev:getOps().lev,
+    opstellers_oph:getOps().oph,
     vertrek:fs.vertrek,matStatus:fs.matStatus,
     status:fs.status!==null?fs.status:1,
     taken:getTaken()
@@ -1156,7 +1198,9 @@ function renderPlanning(){
     items.forEach(b=>{
       const isLev=b.eventType==='lev';
       const mth=(b.materiaal||'').split('\n').filter(x=>x&&x.trim()).map(m=>`<span class="mtag">${esc(m.trim())}</span>`).join('');
-      const opst=b.opstellers&&b.opstellers.length>0?b.opstellers.map(esc).join(' + '):'<span style="color:#E24B4A;font-weight:500">⚠ Niemand toegewezen</span>';
+      const opstLev=b.opstellers_lev&&b.opstellers_lev.length>0?b.opstellers_lev.map(esc).join(' + '):(b.opstellers&&b.opstellers.length>0?b.opstellers.map(esc).join(' + '):'<span style="color:#E24B4A;font-weight:500">⚠ Niemand</span>');
+      const opstOph=b.opstellers_oph&&b.opstellers_oph.length>0?b.opstellers_oph.map(esc).join(' + '):(b.opstellers&&b.opstellers.length>0?b.opstellers.map(esc).join(' + '):'<span style="color:#E24B4A;font-weight:500">⚠ Niemand</span>');
+      const opst=opstLev;
       const stIdx=b.status!==undefined&&b.status!==null?Number(b.status):1;
       const stLbl=STATUSSEN[stIdx]||'Bevestigd';
       const stCls=STAT_CLS[stIdx]||'s-bevestigd';
@@ -1170,7 +1214,8 @@ function renderPlanning(){
             <div class="bmeta"><i class="ti ti-map-pin" style="font-size:12px" aria-hidden="true"></i> ${esc(b.adres||'')}</div>
             ${b.tel?`<div class="bmeta"><i class="ti ti-phone" style="font-size:12px" aria-hidden="true"></i> <a href="tel:${esc(String(b.tel).replace(/\s/g,''))}" style="color:var(--sky);text-decoration:none">${esc(b.tel)}</a></div>`:''}
             <div class="bcard-meta2">
-              <span><i class="ti ti-hard-hat" style="font-size:11px" aria-hidden="true"></i> ${opst}</span>
+              <span><i class="ti ti-truck-delivery" style="font-size:11px;color:var(--sky)" aria-hidden="true"></i> ${opstLev}</span>
+              <span><i class="ti ti-arrow-back-up" style="font-size:11px;color:#3B6D11" aria-hidden="true"></i> ${opstOph}</span>
               ${b.prijs?`<span><i class="ti ti-currency-euro" style="font-size:11px" aria-hidden="true"></i> ${esc(b.prijs)}</span>`:''}
             </div>
             <div class="mtags">${mth}</div>
@@ -1574,17 +1619,24 @@ function openDetail(id){
     </div>`:''}
     <div class="dr" style="flex-direction:column;gap:4px"><span class="dl"><i class="ti ti-package" aria-hidden="true"></i> Materiaal</span><div style="width:100%;margin-top:4px">${mth||'<span style=\"color:var(--tx3)\">Geen materiaal</span>'}</div></div>
     ${b.prijs?`<div class="dr"><span class="dl"><i class="ti ti-currency-euro" aria-hidden="true"></i> Prijs</span><span class="dv">€ ${esc(b.prijs)}${b.betaling?' — '+esc(b.betaling):''}</span></div>`:''}
-    ${b.opstellers&&b.opstellers.length?`<div class="dr"><span class="dl"><i class="ti ti-hard-hat" aria-hidden="true"></i> Bouwers</span><span class="dv">${b.opstellers.map(esc).join(' + ')}</span></div>`:''}
+    <div class="dr"><span class="dl"><i class="ti ti-truck-delivery" style="color:var(--sky)" aria-hidden="true"></i> Levering</span><span class="dv">${(b.opstellers_lev&&b.opstellers_lev.length?b.opstellers_lev:(b.opstellers||[])).map(esc).join(' + ')||'<span style="color:var(--tx3)">—</span>'}</span></div>
+    <div class="dr"><span class="dl"><i class="ti ti-arrow-back-up" style="color:#3B6D11" aria-hidden="true"></i> Ophaling</span><span class="dv">${(b.opstellers_oph&&b.opstellers_oph.length?b.opstellers_oph:(b.opstellers||[])).map(esc).join(' + ')||'<span style="color:var(--tx3)">—</span>'}</span></div>
     ${b.opmerking?`<div class="opmerking-block" style="margin:8px 0"><i class="ti ti-alert-circle" style="font-size:14px;flex-shrink:0" aria-hidden="true"></i><span>${esc(b.opmerking)}</span></div>`:''}
     ${takenHtml}
     <div class="ik-wrap">
-      <div class="ik-title"><i class="ti ti-hand-stop" style="font-size:13px"></i> Wie gaat mee? Klik op je naam om je aan te melden.</div>
-      <div class="ik-grid" id="ik-grid-${id}">
-        ${BB.concat(b.opstellers&&b.opstellers.length?b.opstellers.filter(n=>!BB.includes(n)):[]).map(naam=>{
-          const isAan=b.opstellers&&b.opstellers.includes(naam);
-          return`<button class="ik-btn${isAan?' aangemeld':''}" onclick="ikDitToggle(${id},'${naam}')" title="${isAan?naam+' afmelden':naam+' aanmelden'}">
-            <span>${ini(naam)}</span> ${esc(naam)}${isAan?' ✓':''}
-          </button>`;
+      <div class="ik-title"><i class="ti ti-hand-stop" style="font-size:13px"></i> Klik op je naam om je aan te melden.</div>
+      <div style="display:flex;gap:4px;align-items:center;margin-bottom:6px;font-size:11px;font-weight:600;color:var(--sky)"><i class="ti ti-truck-delivery" style="font-size:12px"></i> Levering</div>
+      <div class="ik-grid" id="ik-grid-lev-${id}" style="margin-bottom:10px">
+        ${BB.concat((b.opstellers_lev||[]).filter(n=>!BB.includes(n))).map(naam=>{
+          const isAan=(b.opstellers_lev||b.opstellers||[]).includes(naam);
+          return`<button class="ik-btn${isAan?' aangemeld':''}" onclick="ikDitToggle(${id},'lev','${esc(naam)}')">${ini(naam)} ${esc(naam)}${isAan?' ✓':''}</button>`;
+        }).join('')}
+      </div>
+      <div style="display:flex;gap:4px;align-items:center;margin-bottom:6px;font-size:11px;font-weight:600;color:#3B6D11"><i class="ti ti-arrow-back-up" style="font-size:12px"></i> Ophaling</div>
+      <div class="ik-grid" id="ik-grid-oph-${id}">
+        ${BB.concat((b.opstellers_oph||[]).filter(n=>!BB.includes(n))).map(naam=>{
+          const isAan=(b.opstellers_oph||b.opstellers||[]).includes(naam);
+          return`<button class="ik-btn${isAan?' aangemeld':''}" onclick="ikDitToggle(${id},'oph','${esc(naam)}')">${ini(naam)} ${esc(naam)}${isAan?' ✓':''}</button>`;
         }).join('')}
       </div>
     </div>`;
@@ -1650,29 +1702,27 @@ function toggleLaadItem(idx){
   window._renderLaad();
 }
 
-async function ikDitToggle(id,naam){
+async function ikDitToggle(id,type,naam){
   const b=boekingen.find(x=>x.id===id);if(!b)return;
-  if(!b.opstellers)b.opstellers=[];
-  const wasAan=b.opstellers.includes(naam);
-  if(wasAan){
-    b.opstellers=b.opstellers.filter(n=>n!==naam);
-  } else {
-    b.opstellers.push(naam);
-  }
+  const field=type==='lev'?'opstellers_lev':'opstellers_oph';
+  if(!b[field])b[field]=(b.opstellers||[]).slice();
+  const wasAan=b[field].includes(naam);
+  if(wasAan){b[field]=b[field].filter(n=>n!==naam);}
+  else{b[field].push(naam);}
+  // Update gecombineerde opstellers
+  b.opstellers=[...new Set([...( b.opstellers_lev||[]),...(b.opstellers_oph||[])])];
   saveC(boekingen);
-  // Herrender de grid meteen
-  const grid=document.getElementById('ik-grid-'+id);
+  // Herrender de juiste grid
+  const grid=document.getElementById('ik-grid-'+type+'-'+id);
   if(grid){
-    const alleNamen=[...new Set([...BB,...b.opstellers])];
+    const alleNamen=[...new Set([...BB,...b[field]])];
     grid.innerHTML=alleNamen.map(nm=>{
-      const isAan=b.opstellers.includes(nm);
-      return`<button class="ik-btn${isAan?' aangemeld':''}" onclick="ikDitToggle(${id},'${esc(nm)}')" title="${isAan?esc(nm)+' afmelden':esc(nm)+' aanmelden'}">
-        <span style="background:var(--sky);color:#fff;width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0">${ini(nm)}</span> ${esc(nm)}${isAan?' ✓':''}
-      </button>`;
+      const isAan=b[field].includes(nm);
+      return`<button class="ik-btn${isAan?' aangemeld':''}" onclick="ikDitToggle(${id},'${type}','${esc(nm)}')">${ini(nm)} ${esc(nm)}${isAan?' ✓':''}</button>`;
     }).join('');
   }
-  // Sla op in achtergrond
-  const statusMsg=wasAan?naam+' afgemeld van '+b.naam:naam+' aangemeld voor '+b.naam;
+  const typeLabel=type==='lev'?'levering':'ophaling';
+  const statusMsg=wasAan?naam+' afgemeld van '+typeLabel:naam+' aangemeld voor '+typeLabel;
   const r=await api({action:'save',body:{action:'save',boeking:b}});
   if(r&&r.success){renderPlanning();banner('ok',statusMsg);}
 }
@@ -1712,7 +1762,8 @@ function editBoeking(id){
   document.querySelectorAll('#vt-grp .tg').forEach(btn=>{btn.classList.remove('sel');if(b.vertrek&&btn.textContent.trim()===b.vertrek)btn.classList.add('sel');});
   document.querySelectorAll('#ms-grp .tg').forEach(btn=>{btn.classList.remove('sel','sel-gr','sel-or');if(b.matStatus&&btn.textContent.trim()===b.matStatus)btn.classList.add(b.matStatus==='Reeds geladen'?'sel-gr':'sel-or');});
   document.querySelectorAll('#status-sel .status-opt').forEach((btn,i)=>btn.className='status-opt'+(i===fs.status?' active-s'+i:''));
-  document.querySelectorAll('#op-grid .tg:not(.and-tog)').forEach(btn=>btn.classList.toggle('sel',b.opstellers&&b.opstellers.includes(btn.textContent)));
+  document.querySelectorAll('#op-grid-lev .tg').forEach(btn=>btn.classList.toggle('sel',b.opstellers_lev&&b.opstellers_lev.includes(btn.textContent.trim())));
+  document.querySelectorAll('#op-grid-oph .tg:not(.and-tog-oph)').forEach(btn=>btn.classList.toggle('sel',b.opstellers_oph&&b.opstellers_oph.includes(btn.textContent.trim())));
   ppQty={};ppInit();ppLoadFromField(b.materiaal||'');
   const w=document.getElementById('taken-wrap');
   Array.from(w.querySelectorAll('.taak-input-row')).forEach(r=>r.remove());
