@@ -107,17 +107,31 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 .opmerking-block{background:#FAEEDA;border-left:3px solid #EF9F27;border-radius:0 var(--rm) var(--rm) 0;padding:7px 10px;margin-top:7px;font-size:12px;color:#633806;display:flex;gap:6px;align-items:flex-start}
 
 /* TIJDLIJN */
-.tl-wrap{overflow-x:auto;padding-bottom:8px}
-.tl-grid{min-width:600px;position:relative;padding:0 0 8px 60px}
-.tl-axis{display:flex;border-bottom:.5px solid var(--bl);margin-bottom:4px}
-.tl-hour{flex:1;font-size:10px;color:var(--tx3);text-align:left;padding-left:3px;border-left:.5px solid var(--bl)}
-.tl-lanes{position:relative}
-.tl-lane{display:flex;align-items:center;min-height:38px;margin-bottom:4px;position:relative}
-.tl-lane-label{position:absolute;left:-58px;font-size:11px;color:var(--tx2);font-weight:500;width:54px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tl-bar{position:absolute;height:28px;border-radius:var(--rm);display:flex;align-items:center;padding:0 8px;font-size:11px;font-weight:500;color:#fff;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:40px;transition:opacity .15s}
-.tl-bar:hover{opacity:.85}
-.tl-bar-lev{background:var(--sky)}
-.tl-bar-oph{background:#3B6D11}
+.tl-dag{margin-bottom:20px}
+.tl-dag-hdr{background:var(--navy);color:#fff;padding:7px 13px;border-radius:var(--rm);font-size:13px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:7px}
+.tl-bb-block{background:var(--bg1);border:.5px solid var(--bl);border-radius:var(--rl);margin-bottom:10px;overflow:hidden}
+.tl-bb-hdr{background:var(--bg2);padding:8px 14px;display:flex;align-items:center;gap:8px;border-bottom:.5px solid var(--bl)}
+.tl-bb-av{width:28px;height:28px;border-radius:50%;background:#E6F1FB;color:#0C447C;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.tl-bb-nm{font-size:13px;font-weight:600;color:var(--tx1)}
+.tl-bb-ct{font-size:11px;color:var(--tx2);margin-left:auto}
+.tl-events{padding:8px 14px;display:flex;flex-direction:column;gap:7px}
+.tl-event{display:flex;align-items:stretch;gap:10px;padding:9px 12px;border-radius:var(--rm);cursor:pointer;transition:opacity .15s;border:.5px solid transparent}
+.tl-event:hover{opacity:.85}
+.tl-event-lev{background:#E6F1FB;border-color:#B5D4F4}
+.tl-event-oph{background:#EAF3DE;border-color:#97C459}
+.tl-event-time{font-size:15px;font-weight:700;min-width:42px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:0}
+.tl-event-time-val{line-height:1}
+.tl-event-lev .tl-event-time{color:#0C447C}
+.tl-event-oph .tl-event-time{color:#27500A}
+.tl-event-sep{width:1px;background:var(--bl);flex-shrink:0}
+.tl-event-info{flex:1;min-width:0}
+.tl-event-type{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
+.tl-event-lev .tl-event-type{color:#185FA5}
+.tl-event-oph .tl-event-type{color:#3B6D11}
+.tl-event-naam{font-size:13px;font-weight:600;color:var(--tx1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-event-adres{font-size:11px;color:var(--tx2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-event-mat{font-size:11px;color:var(--tx2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tl-event-opm{font-size:11px;color:#854F0B;margin-top:3px;display:flex;align-items:center;gap:3px}
 
 /* BUTTONS */
 .bsm{font-size:11px;padding:4px 10px;border-radius:var(--rm);border:.5px solid var(--bm);background:transparent;cursor:pointer;font-family:'Poppins',sans-serif;color:var(--tx2)}
@@ -570,7 +584,9 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
           <button class="tg" onclick="togOpLev(this)">Siebe</button>
           <button class="tg" onclick="togOpLev(this)">Kylian</button>
           <button class="tg" onclick="togOpLev(this)">Jelle</button>
+          <button class="tg and-tog-lev" onclick="togAndereLev(this)">Andere...</button>
         </div>
+        <div class="af" id="af-lev"><input class="fi" id="f-and-lev" placeholder="Naam invullen..." style="margin-top:5px;max-width:200px"></div>
       </div>
       <div style="margin-bottom:8px">
         <div class="fl" style="margin-bottom:5px"><i class="ti ti-arrow-back-up" style="font-size:12px;color:#3B6D11"></i> Ophaling</div>
@@ -920,11 +936,14 @@ function togOp(btn){if(btn.classList.contains('and-tog'))return;btn.classList.to
 function togOpLev(btn){btn.classList.toggle('sel');}
 function togOpOph(btn){if(btn.classList.contains('and-tog-oph'))return;btn.classList.toggle('sel');}
 function togAndere(btn){const f=document.getElementById('af'),show=f.style.display==='block';f.style.display=show?'none':'block';btn.classList.toggle('sel',!show);if(!show)document.getElementById('f-and').focus();}
+function togAndereLev(btn){const f=document.getElementById('af-lev'),show=f.style.display==='block';f.style.display=show?'none':'block';btn.classList.toggle('sel',!show);if(!show)document.getElementById('f-and-lev').focus();}
 function togAndereOph(btn){const f=document.getElementById('af-oph'),show=f.style.display==='block';f.style.display=show?'none':'block';btn.classList.toggle('sel',!show);if(!show)document.getElementById('f-and-oph').focus();}
 function getOps(){
-  const lev=Array.from(document.querySelectorAll('#op-grid-lev .tg.sel')).map(b=>b.textContent.trim());
+  const lev=Array.from(document.querySelectorAll('#op-grid-lev .tg.sel:not(.and-tog-lev)')).map(b=>b.textContent.trim());
+  const andLev=document.getElementById('f-and-lev')?document.getElementById('f-and-lev').value.trim():'';
+  if(andLev)lev.push(andLev);
   const oph=Array.from(document.querySelectorAll('#op-grid-oph .tg.sel:not(.and-tog-oph)')).map(b=>b.textContent.trim());
-  const andOph=document.getElementById('f-and-oph').value.trim();
+  const andOph=document.getElementById('f-and-oph')?document.getElementById('f-and-oph').value.trim():'';
   if(andOph)oph.push(andOph);
   return {lev,oph};
 }
@@ -1105,6 +1124,8 @@ function clearForm(){
   document.getElementById('f-ophuur').value='10:00';
   document.getElementById('f-bet').value='';
   document.querySelectorAll('#op-grid-lev .tg,#op-grid-oph .tg').forEach(b=>b.classList.remove('sel','sel-gr','sel-or'));
+  const afLev=document.getElementById('af-lev');if(afLev)afLev.style.display='none';
+  const fAndLev=document.getElementById('f-and-lev');if(fAndLev)fAndLev.value='';
   document.querySelectorAll('#vt-grp .tg,#ms-grp .tg').forEach(b=>b.classList.remove('sel','sel-gr','sel-or'));
   document.querySelectorAll('#status-sel .status-opt').forEach((b,i)=>b.className='status-opt'+(i===1?' active-s1':''));
   fs={vertrek:null,matStatus:null,status:1};
@@ -1264,39 +1285,75 @@ function updateStats(){
 /* TIJDLIJN */
 function renderTijdlijn(){
   const sel=document.getElementById('tl-date-sel'),content=document.getElementById('tl-content');
-  const dates=new Set();boekingen.forEach(b=>{dates.add(b.levdatum);dates.add(b.ophdatum);});
-  const sorted=[...dates].sort();
+  const dates=new Set();
+  boekingen.filter(b=>!(b.voltooid===true||b.voltooid==='true')).forEach(b=>{
+    if(b.levdatum)dates.add(b.levdatum);
+    if(b.ophdatum)dates.add(b.ophdatum);
+  });
+  const sorted=[...dates].filter(d=>d).sort();
   if(sorted.length===0){sel.innerHTML='';content.innerHTML='<div class="empty"><i class="ti ti-timeline"></i>Voeg boekingen toe om de tijdlijn te zien.</div>';return;}
-  const t=today();let selDate=sel.dataset.sel||sorted.find(d=>d>=t)||sorted[0];
-  if(!sorted.includes(selDate))selDate=sorted[0];sel.dataset.sel=selDate;
+  const t=today();
+  let selDate=sel.dataset.sel||sorted.find(d=>d>=t)||sorted[0];
+  if(!sorted.includes(selDate))selDate=sorted[0];
+  sel.dataset.sel=selDate;
   sel.innerHTML=sorted.map(d=>`<button class="rit-db${d===selDate?' active':''}" style="${d<t?'opacity:.55':''}" onclick="tlSelDate('${d}')">${fmtShort(d)}</button>`).join('');
   const dayB=boekingen.filter(b=>(b.levdatum===selDate||b.ophdatum===selDate)&&!(b.voltooid===true||b.voltooid==='true'));
   if(dayB.length===0){content.innerHTML='<div class="empty"><i class="ti ti-calendar-off"></i>Geen events op deze datum.</div>';return;}
-  const START_H=7,END_H=20,TOTAL=END_H-START_H;
-  const timeToPos=t=>{const[h,m]=t.split(':').map(Number);return Math.max(0,Math.min(100,(h+m/60-START_H)/TOTAL*100));};
-  const allBBs=new Set();
-  dayB.forEach(b=>{if(b.opstellers&&b.opstellers.length>0)b.opstellers.forEach(n=>allBBs.add(n));else allBBs.add('Niet toegewezen');});
-  const hours=[];for(let h=START_H;h<=END_H;h++)hours.push(h);
-  let html=`<div class="tl-wrap"><div class="tl-grid">
-    <div class="tl-axis">${hours.map(h=>`<div class="tl-hour">${h}:00</div>`).join('')}</div>
-    <div class="tl-lanes">`;
-  allBBs.forEach(bb=>{
-    html+=`<div class="tl-lane"><div class="tl-lane-label">${esc(bb)}</div>`;
-    dayB.forEach(b=>{
-      const isBB=b.opstellers&&b.opstellers.includes(bb)||(!b.opstellers||b.opstellers.length===0)&&bb==='Niet toegewezen';
-      if(!isBB)return;
-      if(b.levdatum===selDate){
-        const pos=timeToPos(b.levuur||'09:00');
-        html+=`<div class="tl-bar tl-bar-lev" style="left:${pos}%;width:max(40px,8%)" onclick="openDetail(${b.id})" title="Levering ${b.naam} om ${b.levuur}"><i class="ti ti-truck-delivery" style="font-size:11px;flex-shrink:0"></i> ${esc(b.naam)}</div>`;
-      }
-      if(b.ophdatum===selDate&&b.ophdatum!==b.levdatum){
-        const pos=timeToPos(b.ophuur||'10:00');
-        html+=`<div class="tl-bar tl-bar-oph" style="left:${pos}%;width:max(40px,8%)" onclick="openDetail(${b.id})" title="Ophaling ${b.naam} om ${b.ophuur}"><i class="ti ti-arrow-back-up" style="font-size:11px;flex-shrink:0"></i> ${esc(b.naam)}</div>`;
-      }
-    });
-    html+='</div>';
+
+  // Bouw per belevingsbouwer een overzicht
+  const perBB={};
+  dayB.forEach(b=>{
+    const levBBs=(b.opstellers_lev&&b.opstellers_lev.length)?b.opstellers_lev:(b.opstellers&&b.opstellers.length?b.opstellers:['Niet toegewezen']);
+    const ophBBs=(b.opstellers_oph&&b.opstellers_oph.length)?b.opstellers_oph:(b.opstellers&&b.opstellers.length?b.opstellers:['Niet toegewezen']);
+    if(b.levdatum===selDate){
+      levBBs.forEach(nm=>{
+        if(!perBB[nm])perBB[nm]=[];
+        if(!perBB[nm].find(e=>e.id===b.id&&e.type==='lev'))
+          perBB[nm].push({type:'lev',id:b.id,naam:b.naam,adres:b.adres,uur:b.levuur||'09:00',materiaal:b.materiaal,opmerking:b.opmerking});
+      });
+    }
+    if(b.ophdatum===selDate){
+      ophBBs.forEach(nm=>{
+        if(!perBB[nm])perBB[nm]=[];
+        if(!perBB[nm].find(e=>e.id===b.id&&e.type==='oph'))
+          perBB[nm].push({type:'oph',id:b.id,naam:b.naam,adres:b.adres,uur:b.ophuur||'10:00',materiaal:b.materiaal,opmerking:b.opmerking});
+      });
+    }
   });
-  html+='</div></div></div>';
+
+  // Sorteer events per BB op tijdstip
+  Object.values(perBB).forEach(events=>events.sort((a,b)=>timeToMin(a.uur)-timeToMin(b.uur)));
+
+  let html=`<div class="tl-dag"><div class="tl-dag-hdr"><i class="ti ti-calendar"></i> ${fmtDate(selDate)} <span class="dc">${dayB.length} boeking${dayB.length!==1?'en':''}</span></div>`;
+
+  Object.entries(perBB).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([bb,events])=>{
+    html+=`<div class="tl-bb-block">
+      <div class="tl-bb-hdr">
+        <div class="tl-bb-av">${ini(bb)}</div>
+        <div class="tl-bb-nm">${esc(bb)}</div>
+        <div class="tl-bb-ct">${events.length} event${events.length!==1?'s':''}</div>
+      </div>
+      <div class="tl-events">`;
+    events.forEach(ev=>{
+      const isLev=ev.type==='lev';
+      const matPreview=(ev.materiaal||'').split('\n').filter(x=>x.trim()).slice(0,3).join(' · ');
+      html+=`<div class="tl-event ${isLev?'tl-event-lev':'tl-event-oph'}" onclick="openDetail(${ev.id})">
+        <div class="tl-event-time">
+          <div class="tl-event-time-val">${ev.uur}</div>
+        </div>
+        <div class="tl-event-sep"></div>
+        <div class="tl-event-info">
+          <div class="tl-event-type"><i class="ti ${isLev?'ti-truck-delivery':'ti-arrow-back-up'}" style="font-size:10px"></i> ${isLev?'Levering':'Ophaling'}</div>
+          <div class="tl-event-naam">${esc(ev.naam)}</div>
+          <div class="tl-event-adres"><i class="ti ti-map-pin" style="font-size:10px"></i> ${esc(ev.adres)}</div>
+          ${matPreview?`<div class="tl-event-mat"><i class="ti ti-package" style="font-size:10px"></i> ${esc(matPreview)}</div>`:''}
+          ${ev.opmerking?`<div class="tl-event-opm"><i class="ti ti-alert-circle" style="font-size:10px"></i> ${esc(ev.opmerking)}</div>`:''}
+        </div>
+      </div>`;
+    });
+    html+='</div></div>';
+  });
+  html+='</div>';
   content.innerHTML=html;
 }
 function tlSelDate(d){document.getElementById('tl-date-sel').dataset.sel=d;renderTijdlijn();}
