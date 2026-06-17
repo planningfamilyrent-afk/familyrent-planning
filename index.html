@@ -499,18 +499,43 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
       <div class="frow s1"><div class="fg"><label class="fl">Leveringsadres <span class="req">*</span></label><input class="fi" id="f-adres" placeholder="bv. Dorpstraat 12, Temse"></div></div>
     </div>
     <div class="fsec">
-      <div class="fsec-title"><i class="ti ti-building-warehouse" aria-hidden="true"></i> Vertrekpunt & materiaalstatus</div>
-      <div class="frow">
-        <div class="fg"><label class="fl">Vertrek vanuit <span class="req">*</span></label>
-          <div class="tg-grp" id="vt-grp">
-            <button class="tg" onclick="setTog('vertrek','Kallo',this)">Kallo</button>
-            <button class="tg" onclick="setTog('vertrek','Stekene',this)">Stekene</button>
+      <div class="fsec-title"><i class="ti ti-building-warehouse" aria-hidden="true"></i> Levering & afhaling <span class="req">*</span></div>
+      <!-- Type selector — altijd zichtbaar -->
+      <div class="tg-grp" id="ltype-grp" style="flex-wrap:wrap;gap:7px;margin-bottom:10px">
+        <button class="tg" style="flex:1;min-width:140px;justify-content:center;padding:9px 12px" onclick="setLevType('levering',this)">
+          <i class="ti ti-truck-delivery" style="font-size:13px"></i> Wij leveren
+        </button>
+        <button class="tg" style="flex:1;min-width:140px;justify-content:center;padding:9px 12px" onclick="setLevType('afhaling-kallo',this)">
+          <i class="ti ti-home" style="font-size:13px"></i> Zelf afhalen — Kallo
+        </button>
+        <button class="tg" style="flex:1;min-width:140px;justify-content:center;padding:9px 12px" onclick="setLevType('afhaling-stekene',this)">
+          <i class="ti ti-home" style="font-size:13px"></i> Zelf afhalen — Stekene
+        </button>
+      </div>
+      <!-- Extra opties bij "Wij leveren" -->
+      <div id="lev-opties" style="display:none">
+        <div class="frow">
+          <div class="fg"><label class="fl">Vertrek vanuit <span class="req">*</span></label>
+            <div class="tg-grp" id="vt-grp">
+              <button class="tg" onclick="setTog('vertrek','Kallo',this)">Kallo</button>
+              <button class="tg" onclick="setTog('vertrek','Stekene',this)">Stekene</button>
+            </div>
+          </div>
+          <div class="fg"><label class="fl">Materiaal <span class="req">*</span></label>
+            <div class="tg-grp" id="ms-grp">
+              <button class="tg" onclick="setTog('matStatus','Reeds geladen',this)"><i class="ti ti-check" style="font-size:11px"></i> Reeds geladen</button>
+              <button class="tg" onclick="setTog('matStatus','Nog te laden',this)"><i class="ti ti-clock" style="font-size:11px"></i> Nog te laden</button>
+            </div>
           </div>
         </div>
-        <div class="fg"><label class="fl">Materiaal <span class="req">*</span></label>
-          <div class="tg-grp" id="ms-grp">
-            <button class="tg" onclick="setTog('matStatus','Reeds geladen',this)"><i class="ti ti-check" style="font-size:11px"></i> Reeds geladen</button>
-            <button class="tg" onclick="setTog('matStatus','Nog te laden',this)"><i class="ti ti-clock" style="font-size:11px"></i> Nog te laden</button>
+      </div>
+      <!-- Info bij zelf afhalen -->
+      <div id="afhaling-info" style="display:none">
+        <div style="background:#E6F1FB;border:.5px solid #B5D4F4;border-radius:var(--rm);padding:10px 14px;display:flex;align-items:center;gap:8px">
+          <i class="ti ti-map-pin" style="font-size:16px;color:#0C447C;flex-shrink:0"></i>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:#0C447C" id="afhaling-adres-tekst">—</div>
+            <div style="font-size:11px;color:#185FA5;margin-top:2px">Duid aan wie aanwezig zal zijn om het materiaal te overhandigen.</div>
           </div>
         </div>
       </div>
