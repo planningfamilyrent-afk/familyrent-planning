@@ -653,7 +653,7 @@ const CATALOGUS = [
   {id:'audiotel',cat:'Entertainment',naam:'Audio gastenboek + Telefooncel',excl:206.61,incl:250},
   {id:'audiogast',cat:'Entertainment',naam:'Audio gastenboek (zonder cel)',excl:82.64,incl:100},
   {id:'houten',cat:'Photobooth',naam:'Houten Photobooth',excl:412.40,incl:499},
-  {id:'spiegel',cat:'Photobooth',naam:'Spiegelbooth 43" touchscreen',excl:495.04,incl:599},
+  {id:'spiegel',cat:'Photobooth',naam:'Spiegelbooth 43 inch touchscreen',excl:495.04,incl:599},
   {id:'achtergrond',cat:'Photobooth',naam:'Achtergrond / backdrop',excl:41.32,incl:50},
   {id:'partybar',cat:'Horeca & catering',naam:'Partybar',excl:41.32,incl:50},
   {id:'perculator',cat:'Horeca & catering',naam:'Perculator koffie 15L',excl:20.66,incl:25},
@@ -724,6 +724,8 @@ let boekingen=[],editId=null,activeFilter='vandaag',lastSavedId=null,pinUnlocked
 let fs={vertrek:null,matStatus:null,status:null};
 let takens=[];
 
+function fmtNr(n){return n.toLocaleString('nl-BE',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fmtRound(n){return fmtRound(n) ;}
 const fmtDate=d=>{const dt=new Date(d+'T00:00:00');return NLD[dt.getDay()]+' '+dt.getDate()+' '+NLM[dt.getMonth()]};
 const fmtShort=d=>{const dt=new Date(d+'T00:00:00');return dt.getDate()+' '+NLM[dt.getMonth()].slice(0,3)};
 const pad=n=>String(n).padStart(2,'0');
@@ -964,15 +966,31 @@ function ppRender(){
         '<div class="pp-item-naam">'+esc(p.naam)+'</div>'+
         '<div class="pp-item-cat">'+esc(p.cat)+'</div>'+
       '</div>'+
-      '<div class="pp-item-prijs">€'+p.incl.toLocaleString('nl-BE',{minimumFractionDigits:2})+'</div>'+
-      '<div class="pp-qty">'+
-        '<button class="pp-qty-btn" onclick="ppChange(this.closest('.pp-item').id.replace('ppi-',''),-1)">−</button>'+
-        '<input class="pp-qty-inp" type="number" min="0" value="'+qty+'" id="ppq-'+p.id+'" oninput="ppSet(''+p.id+'',this.value)">'+
-        '<button class="pp-qty-btn" onclick="ppChange(this.closest('.pp-item').id.replace('ppi-',''),1)">+</button>'+
+      '<div class="pp-item-prijs">€'+p.incl+'</div>'+
+      '<div class="pp-qty" data-pid="'+p.id+'">'+
+        '<button class="pp-qty-btn pp-min">−</button>'+
+        '<input class="pp-qty-inp" type="number" min="0" value="'+qty+'" id="ppq-'+p.id+'">'+
+        '<button class="pp-qty-btn pp-plus">+</button>'+
       '</div>'+
     '</div>';
   }).join('');
   ppUpdateSelected();
+  // Event delegation voor +/- knoppen
+  list.onclick=function(e){
+    var btn=e.target.closest('.pp-qty-btn');
+    if(!btn)return;
+    var wrap=btn.closest('[data-pid]');
+    if(!wrap)return;
+    var id=wrap.dataset.pid;
+    if(btn.classList.contains('pp-min'))ppChange(id,-1);
+    else if(btn.classList.contains('pp-plus'))ppChange(id,1);
+  };
+  list.oninput=function(e){
+    if(!e.target.classList.contains('pp-qty-inp'))return;
+    var wrap=e.target.closest('[data-pid]');
+    if(!wrap)return;
+    ppSet(wrap.dataset.pid,e.target.value);
+  };
 }
 
 function ppChange(id,delta){
@@ -1116,7 +1134,7 @@ function renderPlanning(){
     if(boekingen.filter(b=>!(b.voltooid===true||b.voltooid==='true')).length===0){
       emptyMsg='Nog geen boekingen. Klik op "Nieuwe boeking" om te starten.';
     } else if(activeFilter==='vandaag'){
-      emptyMsg='Geen boekingen voor vandaag. <button class="fb" style="margin-left:6px" onclick="setFil('alle',this)">Bekijk alle boekingen</button>';
+      emptyMsg='Geen boekingen voor vandaag. <button class="fb" style="margin-left:6px" onclick="setFil(&quot;alle&quot;,this)">Bekijk alle boekingen</button>';
     } else if(activeFilter==='archief'){
       emptyMsg='Geen voltooide boekingen in het archief.';
     } else {
@@ -1462,7 +1480,7 @@ function buildReport(){
 
       <!-- KERNCIJFERS -->
       <div class="rpt-stats" style="grid-template-columns:repeat(5,1fr)">
-        <div class="rpt-stat"><div class="rpt-lbl">Totale omzet</div><div class="rpt-val">€ ${Math.round(totalOmzet).toLocaleString('nl-BE')}</div></div>
+        <div class="rpt-stat"><div class="rpt-lbl">Totale omzet</div><div class="rpt-val">€ ${fmtRound(totalOmzet) }</div></div>
         <div class="rpt-stat"><div class="rpt-lbl">Totaal boekingen</div><div class="rpt-val">${total}</div></div>
         <div class="rpt-stat"><div class="rpt-lbl">Gem. per boeking</div><div class="rpt-val">€ ${total>0?Math.round(totalOmzet/total):0}</div></div>
         <div class="rpt-stat"><div class="rpt-lbl">Openstaand</div><div class="rpt-val" style="color:#A32D2D">${openBet}</div><div class="rpt-sub">zonder betaalwijze</div></div>
@@ -1472,7 +1490,7 @@ function buildReport(){
       <!-- OMZET PER MAAND -->
       <div class="rpt-section">
         <div class="rpt-title">Omzet per maand (laatste 12 maanden)</div>
-        ${maanden.map(m=>{const mo=maandOmzet[m];const pct=Math.round(mo.omzet/maxMO*100);const[y,mn]=m.split('-');const lbl=NLM[parseInt(mn)-1]+' '+y;return`<div class="rpt-bar-wrap"><div class="rpt-bar-lbl"><span>${lbl}</span><span>€ ${Math.round(mo.omzet).toLocaleString('nl-BE')} (${mo.count} boeking${mo.count!==1?'en':''})</span></div><div class="rpt-bar-bg"><div class="rpt-bar-fill" style="width:${pct}%"></div></div></div>`;}).join('')}
+        ${maanden.map(m=>{const mo=maandOmzet[m];const pct=Math.round(mo.omzet/maxMO*100);const[y,mn]=m.split('-');const lbl=NLM[parseInt(mn)-1]+' '+y;return`<div class="rpt-bar-wrap"><div class="rpt-bar-lbl"><span>${lbl}</span><span>€ ${fmtRound(mo.omzet) } (${mo.count} boeking${mo.count!==1?'en':''})</span></div><div class="rpt-bar-bg"><div class="rpt-bar-fill" style="width:${pct}%"></div></div></div>`;}).join('')}
       </div>
 
       <!-- MEEST VERHUURDE PRODUCTEN -->
@@ -1491,7 +1509,7 @@ function buildReport(){
         ${catSort.length===0?`<div style="font-size:13px;color:var(--tx2);padding:8px 0">Nog geen data beschikbaar.</div>`:
         catSort.map(([cat,omz])=>{
           const pct=Math.round(omz/maxCat*100);
-          return`<div class="rpt-bar-wrap"><div class="rpt-bar-lbl"><span>${esc(cat)}</span><span>€ ${Math.round(omz).toLocaleString('nl-BE')}</span></div><div class="rpt-bar-bg"><div class="rpt-bar-fill" style="width:${pct}%;background:#61ABED"></div></div></div>`;
+          return`<div class="rpt-bar-wrap"><div class="rpt-bar-lbl"><span>${esc(cat)}</span><span>€ ${fmtRound(omz) }</span></div><div class="rpt-bar-bg"><div class="rpt-bar-fill" style="width:${pct}%;background:#61ABED"></div></div></div>`;
         }).join('')}
         <p style="font-size:11px;color:var(--tx3);margin-top:6px">* Indicatieve waarden op basis van catalogusprijzen — niet de werkelijk gefactureerde bedragen</p>
       </div>
