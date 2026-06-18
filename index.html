@@ -814,6 +814,11 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 
 
 <script>
+window.addEventListener('error', function(e){
+  console.error('JS Error:', e.message, 'in', e.filename, 'line', e.lineno);
+  // Toon banner als er een kritieke fout is
+  try{banner('er','Fout: '+e.message);}catch(x){}
+});
 
 const CATALOGUS = [
   {id:'tent3x3',cat:'Partytenten',naam:'Partytent 3×3 m',excl:78.51,incl:95},
@@ -1512,18 +1517,32 @@ function renderPlanning(){
             ${openTaken>0?`<span class="status-badge" style="background:#FCEBEB;color:#791F1F">${openTaken} taak${openTaken>1?'en':''}</span>`:''}
           </div>
         </div>
-        <div class="bcard-actions">
-          <button class="bsm-bl" onclick="event.stopPropagation();dlICS(${b.id},'lev')"><i class="ti ti-calendar-plus" style="font-size:11px"></i> .ics lev</button>
-          <button class="bsm-bl" onclick="event.stopPropagation();dlICS(${b.id},'oph')"><i class="ti ti-calendar-plus" style="font-size:11px"></i> .ics oph</button>
-          ${b.tel?`<a class="wa-btn" href="${waLink(b.tel,b.naam,b.levuur,b.adres)||'#'}" target="_blank" rel="noopener" onclick="event.stopPropagation()" ${!b.tel?'style="display:none"':''}><i class="ti ti-brand-whatsapp"></i> WhatsApp</a>`:''}
-          <button class="bsm" onclick="editBoeking(${b.id});event.stopPropagation()"><i class="ti ti-edit" style="font-size:11px"></i> Bewerken</button>
-          <button class="bsm" style="background:#EAF3DE;color:#27500A;border-color:#97C459;font-weight:500" onclick="voltooiBoeking(${b.id});event.stopPropagation()"><i class="ti ti-circle-check" style="font-size:11px"></i> Voltooien</button>
+        <div class="bcard-actions" data-id="${b.id}">
+          <button class="bsm-bl bca-ics-lev"><i class="ti ti-calendar-plus" style="font-size:11px"></i> .ics lev</button>
+          <button class="bsm-bl bca-ics-oph"><i class="ti ti-calendar-plus" style="font-size:11px"></i> .ics oph</button>
+          ${b.tel?`<a class="wa-btn" href="${waLink(b.tel,b.naam,b.levuur,b.adres)||'#'}" target="_blank" rel="noopener" onclick="event.stopPropagation()"><i class="ti ti-brand-whatsapp"></i> WhatsApp</a>`:''}
+          <button class="bsm bca-edit"><i class="ti ti-edit" style="font-size:11px"></i> Bewerken</button>
+          <button class="bsm bca-volt" style="background:#EAF3DE;color:#27500A;border-color:#97C459;font-weight:500"><i class="ti ti-circle-check" style="font-size:11px"></i> Voltooien</button>
         </div>
       </div>`;
     });
     html+='</div>';
   });
   container.innerHTML=html;
+
+  // Event delegation voor bcard-actions knoppen
+  container.addEventListener('click', function(e){
+    var btn=e.target.closest('button,a');
+    if(!btn) return;
+    var actions=btn.closest('.bcard-actions');
+    if(!actions) return;
+    e.stopPropagation();
+    var id=Number(actions.dataset.id);
+    if(btn.classList.contains('bca-ics-lev')){dlICS(id,'lev');}
+    else if(btn.classList.contains('bca-ics-oph')){dlICS(id,'oph');}
+    else if(btn.classList.contains('bca-edit')){editBoeking(id);}
+    else if(btn.classList.contains('bca-volt')){voltooiBoeking(id);}
+  },{once:false});
   }catch(err){console.error(err);document.getElementById('plan-list').innerHTML='<div class="empty"><i class="ti ti-alert-circle"></i>Fout bij laden. Herlaad de pagina.</div>';}
 }
 
@@ -2255,6 +2274,7 @@ function buildReport(){
   });
   rptHtml+='</div></div></div>';
   content.innerHTML=rptHtml;
+}
 
 /* DETAIL MODAL */
 function openDetail(id){
@@ -2500,7 +2520,6 @@ function dlICS(id,type){
 }
 function dlLastICS(type){if(lastSavedId)dlICS(lastSavedId,type);}
 
-}
 document.getElementById('f-levdatum').value=today();
 document.getElementById('f-ophdatum').value=today();
 fs.status=1;
