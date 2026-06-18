@@ -478,6 +478,17 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 .db-bb-chip-cnt{font-size:10px;color:var(--tx2)}
 .db-bb-chip.heeft-jobs{border-color:var(--sky);background:#E6F1FB}
 
+/* BETALEN VIEW */
+.bet-item{background:var(--bg1);border:.5px solid var(--bl);border-radius:var(--rm);padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:border-color .15s;display:flex;align-items:center;gap:12px}
+.bet-item:hover{border-color:var(--sky)}
+.bet-info{flex:1;min-width:0}
+.bet-naam{font-size:14px;font-weight:600;color:var(--tx1)}
+.bet-meta{font-size:12px;color:var(--tx2);margin-top:2px;display:flex;flex-wrap:wrap;gap:8px}
+.bet-prijs{font-size:18px;font-weight:700;color:#A32D2D;flex-shrink:0}
+.bet-totaal{background:var(--navy);color:#fff;border-radius:var(--rm);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.bet-totaal-lbl{font-size:13px;color:rgba(255,255,255,.7)}
+.bet-totaal-val{font-size:22px;font-weight:700;color:#fff}
+
 /* MOBILE */
 @media(max-width:480px){
   body{padding:8px}
@@ -517,6 +528,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
   <button class="tab" onclick="showTab('mijn')" id="tab-mijn"><i class="ti ti-user" aria-hidden="true"></i> Mijn planning</button>
   <button class="tab" onclick="showTab('rapport')" id="tab-rapport"><i class="ti ti-chart-bar" aria-hidden="true"></i> Rapport</button>
   <button class="tab" onclick="showTab('nieuw')" id="tab-nieuw"><i class="ti ti-plus" aria-hidden="true"></i> Nieuw</button>
+  <button class="tab" onclick="showTab('betalen')" id="tab-betalen" style="display:none"><i class="ti ti-currency-euro" aria-hidden="true"></i> Te betalen</button>
 </div>
 
 <!-- DASHBOARD -->
@@ -553,6 +565,11 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
     <div id="tl-date-sel" style="display:flex;gap:6px;flex-wrap:wrap"></div>
   </div>
   <div id="tl-content"><div class="empty"><i class="ti ti-timeline"></i>Voeg boekingen toe om de tijdlijn te zien.</div></div>
+</div>
+
+<!-- TE BETALEN -->
+<div class="view" id="view-betalen">
+  <div id="bet-content"><div class="loading"><i class="ti ti-loader"></i>Laden...</div></div>
 </div>
 
 <!-- RITPLANNING -->
@@ -1080,6 +1097,7 @@ function showTab(tab){
   document.getElementById('view-'+tab).classList.add('active');
   if(tab==='dashboard')renderDashboard();
   if(tab==='planning')renderPlanning();
+  if(tab==='betalen')renderBetalen();
   if(tab==='tijdlijn')renderTijdlijn();
   if(tab==='rit')renderRit();
   if(tab==='mijn')renderBBGrid();
@@ -1613,10 +1631,10 @@ function _buildDashboard(){
 
   // Stat blokken
   html+='<div class="db-grid">';
-  html+='<div class="db-stat db-lev" data-goto="planning"><div class="db-stat-icon"><i class="ti ti-truck-delivery"></i></div><div class="db-stat-val">'+vandaagLev.length+'</div><div class="db-stat-lbl">Leveringen vandaag</div><div class="db-stat-sub">'+morgenLev.length+' morgen</div></div>';
-  html+='<div class="db-stat db-oph" data-goto="planning"><div class="db-stat-icon"><i class="ti ti-arrow-back-up"></i></div><div class="db-stat-val">'+vandaagOph.length+'</div><div class="db-stat-lbl">Ophalingen vandaag</div><div class="db-stat-sub">'+morgenOph.length+' morgen</div></div>';
-  html+='<div class="db-stat db-tak" data-goto="planning"><div class="db-stat-icon"><i class="ti ti-checklist"></i></div><div class="db-stat-val">'+openTaken.length+'</div><div class="db-stat-lbl">Open taken</div><div class="db-stat-sub">over alle boekingen</div></div>';
-  html+='<div class="db-stat db-bet" data-goto="planning"><div class="db-stat-icon"><i class="ti ti-currency-euro"></i></div><div class="db-stat-val">'+nietBetaald.length+'</div><div class="db-stat-lbl">Nog te betalen</div><div class="db-stat-sub">actieve boekingen</div></div>';
+  html+='<div class="db-stat db-lev" data-goto="planning" data-filter="vandaag"><div class="db-stat-icon"><i class="ti ti-truck-delivery"></i></div><div class="db-stat-val">'+vandaagLev.length+'</div><div class="db-stat-lbl">Leveringen vandaag</div><div class="db-stat-sub">'+morgenLev.length+' morgen</div></div>';
+  html+='<div class="db-stat db-oph" data-goto="planning" data-filter="vandaag"><div class="db-stat-icon"><i class="ti ti-arrow-back-up"></i></div><div class="db-stat-val">'+vandaagOph.length+'</div><div class="db-stat-lbl">Ophalingen vandaag</div><div class="db-stat-sub">'+morgenOph.length+' morgen</div></div>';
+  html+='<div class="db-stat db-tak" data-goto="planning" data-filter="alle"><div class="db-stat-icon"><i class="ti ti-checklist"></i></div><div class="db-stat-val">'+openTaken.length+'</div><div class="db-stat-lbl">Open taken</div><div class="db-stat-sub">over alle boekingen</div></div>';
+  html+='<div class="db-stat db-bet" data-goto="betalen"><div class="db-stat-icon"><i class="ti ti-currency-euro"></i></div><div class="db-stat-val">'+nietBetaald.length+'</div><div class="db-stat-lbl">Nog te betalen</div><div class="db-stat-sub">actieve boekingen</div></div>';
   html+='</div>';
 
   // Belevingsbouwers vandaag
@@ -1677,7 +1695,27 @@ function _buildDashboard(){
   // Click handlers via event delegation
   wrap.addEventListener('click', function(e){
     var goto=e.target.closest('[data-goto]');
-    if(goto) showTab(goto.dataset.goto);
+    if(goto){
+      var tab=goto.dataset.goto;
+      var filter=goto.dataset.filter;
+      // Toon verborgen tabs indien nodig
+      var tabEl=document.getElementById('tab-'+tab);
+      if(tabEl) tabEl.style.display='';
+      showTab(tab);
+      if(filter&&tab==='planning'){
+        setTimeout(function(){
+          var btn=document.querySelector('.fb[data-filter="'+filter+'"]');
+          if(!btn){
+            // Zoek op tekst
+            document.querySelectorAll('.fb').forEach(function(b){
+              if(b.textContent.trim().toLowerCase()===filter.toLowerCase()) btn=b;
+            });
+          }
+          if(btn) setFil(filter,btn);
+          else{activeFilter=filter;renderPlanning();}
+        },50);
+      }
+    }
     var bbchip=e.target.closest('[data-bbname]');
     if(bbchip){showTab('mijn');setTimeout(function(){showBBDetail(bbchip.dataset.bbname);},50);}
   });
@@ -1899,6 +1937,35 @@ function showBBDetail(name){
   });
   document.getElementById('bb-list').innerHTML=html;
 }
+
+function renderBetalen(){
+  var el=document.getElementById('bet-content');
+  if(!el) return;
+  var open=boekingen.filter(function(b){
+    return !(b.voltooid===true||b.voltooid==='true')&&(!b.betaling||b.betaling==='');
+  });
+  var totaal=open.reduce(function(s,b){return s+(parseFloat(b.prijs)||0);},0);
+  if(open.length===0){
+    el.innerHTML='<div class="empty"><i class="ti ti-check" style="color:#3B6D11"></i>Alle boekingen zijn betaald!</div>';
+    return;
+  }
+  var html='<div class="bet-totaal"><div class="bet-totaal-lbl">Totaal openstaand</div><div class="bet-totaal-val">€ '+fmtRound(totaal)+'</div></div>';
+  open.sort(function(a,b2){return (a.levdatum||'').localeCompare(b2.levdatum||'');}).forEach(function(b){
+    html+='<div class="bet-item" onclick="openDetail('+b.id+')">'+
+      '<div class="bet-info">'+
+        '<div class="bet-naam">'+esc(b.naam)+'</div>'+
+        '<div class="bet-meta">'+
+          '<span><i class="ti ti-calendar" style="font-size:11px"></i> '+fmtShort(b.levdatum)+'</span>'+
+          '<span><i class="ti ti-map-pin" style="font-size:11px"></i> '+esc(b.adres)+'</span>'+
+          (b.tel?'<span><a href="tel:'+esc(b.tel)+'" style="color:var(--sky)">'+esc(b.tel)+'</a></span>':'')+
+        '</div>'+
+      '</div>'+
+      '<div class="bet-prijs">'+(b.prijs?'€ '+esc(b.prijs):'—')+'</div>'+
+    '</div>';
+  });
+  el.innerHTML=html;
+}
+
 function backBB(){document.getElementById('bb-det').classList.remove('active');document.getElementById('bb-sel').style.display='block';}
 
 function printPlanning(){
