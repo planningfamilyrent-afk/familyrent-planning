@@ -1407,11 +1407,15 @@ async function saveBoeking(){
     editId=null;
     updateStats();renderPlanning();
     if(wasEdit){
-      // Bewerking: toon ICS panel even, dan terug naar planning
-      document.getElementById('ics-panel').style.display='block';
       banner('ok','Boeking bijgewerkt — '+b.naam);
       var nieuwTab=document.getElementById('tab-nieuw');
       if(nieuwTab) nieuwTab.innerHTML='<i class="ti ti-plus"></i> Nieuw';
+      // Na bewerken: ga terug naar planning
+      setTimeout(function(){
+        showTab('planning');
+        clearForm();
+        document.getElementById('ics-panel').style.display='none';
+      }, 600);
     } else {
       // Nieuwe boeking: toon succes banner, reset formulier, ga naar planning
       banner('ok','Boeking opgeslagen — '+b.naam);
@@ -2251,7 +2255,6 @@ function buildReport(){
   });
   rptHtml+='</div></div></div>';
   content.innerHTML=rptHtml;
-  fixes.append("FIX 3: buildReport herschreven zonder template literals")
 
 /* DETAIL MODAL */
 function openDetail(id){
@@ -2455,7 +2458,12 @@ function editBoeking(id){
   const afOphEl=document.getElementById('af-oph');if(afOphEl)afOphEl.style.display='none';
   const fAndLevEl=document.getElementById('f-and-lev');if(fAndLevEl)fAndLevEl.value='';
   const fAndOphEl=document.getElementById('f-and-oph');if(fAndOphEl)fAndOphEl.value='';
-  ppQty={};ppInit();ppLoadFromField(b.materiaal||'');
+  ppQty={};
+  // ppInit na showTab zodat DOM elementen zichtbaar zijn
+  setTimeout(function(){
+    ppInit();
+    ppLoadFromField(b.materiaal||'');
+  },50);
   const w=document.getElementById('taken-wrap');
   Array.from(w.querySelectorAll('.taak-input-row')).forEach(r=>r.remove());
   if(b.taken&&b.taken.length>0)b.taken.forEach(tk=>addTaakInput(tk.tekst,tk.gedaan));
