@@ -114,6 +114,20 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 .s-geleverd{background:#EAF3DE;color:#27500A}
 .s-opgehaald{background:#F1EFE8;color:#5F5E5A}
 .s-betaald{background:#EAF3DE;color:#173404}
+[data-theme="dark"] .s-offerte{background:#0C447C;color:#B5D4F4}
+[data-theme="dark"] .s-bevestigd{background:#633806;color:#FAC775}
+[data-theme="dark"] .s-klaar{background:#27500A;color:#C0DD97}
+[data-theme="dark"] .s-geleverd{background:#27500A;color:#C0DD97}
+[data-theme="dark"] .s-opgehaald{background:#3d3d3a;color:#9ba3b8}
+[data-theme="dark"] .s-betaald{background:#173404;color:#97C459}
+@media(prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) .s-offerte{background:#0C447C;color:#B5D4F4}
+  :root:not([data-theme="light"]) .s-bevestigd{background:#633806;color:#FAC775}
+  :root:not([data-theme="light"]) .s-klaar{background:#27500A;color:#C0DD97}
+  :root:not([data-theme="light"]) .s-geleverd{background:#27500A;color:#C0DD97}
+  :root:not([data-theme="light"]) .s-opgehaald{background:#3d3d3a;color:#9ba3b8}
+  :root:not([data-theme="light"]) .s-betaald{background:#173404;color:#97C459}
+}
 .badge{font-size:11px;padding:3px 8px;border-radius:20px;font-weight:500;white-space:nowrap}
 .blev{background:#E6F1FB;color:#0C447C}
 .boph{background:#EAF3DE;color:#27500A}
@@ -138,8 +152,15 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 .tl-events{padding:8px 14px;display:flex;flex-direction:column;gap:7px}
 .tl-event{display:flex;align-items:stretch;gap:10px;padding:9px 12px;border-radius:var(--rm);cursor:pointer;transition:opacity .15s;border:.5px solid transparent}
 .tl-event:hover{opacity:.85}
+
 .tl-event-lev{background:#E6F1FB;border-color:#B5D4F4}
 .tl-event-oph{background:#EAF3DE;border-color:#97C459}
+[data-theme="dark"] .tl-event-lev{background:#0C447C;border-color:#185FA5}
+[data-theme="dark"] .tl-event-oph{background:#173404;border-color:#3B6D11}
+@media(prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) .tl-event-lev{background:#0C447C;border-color:#185FA5}
+  :root:not([data-theme="light"]) .tl-event-oph{background:#173404;border-color:#3B6D11}
+}
 .tl-event-time{font-size:15px;font-weight:700;min-width:42px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:0}
 .tl-event-time-val{line-height:1}
 .tl-event-lev .tl-event-time{color:#0C447C}
@@ -248,6 +269,12 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 .tg.sel{background:var(--navy);color:#fff;border-color:var(--navy)}
 .tg.sel-gr{background:#3B6D11;color:#fff;border-color:#3B6D11}
 .tg.sel-or{background:#854F0B;color:#fff;border-color:#854F0B}
+[data-theme="dark"] .tg.sel-gr{background:#639922;color:#fff;border-color:#639922}
+[data-theme="dark"] .tg.sel-or{background:#EF9F27;color:#1a1205;border-color:#EF9F27}
+@media(prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) .tg.sel-gr{background:#639922;color:#fff;border-color:#639922}
+  :root:not([data-theme="light"]) .tg.sel-or{background:#EF9F27;color:#1a1205;border-color:#EF9F27}
+}
 .tg-grp{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
 .af{display:none;margin-top:7px}
 .ics-panel{background:#EAF3DE;border:1px solid #97C459;border-radius:var(--rm);padding:11px 14px;margin-top:14px;display:none}
@@ -400,12 +427,15 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 .ik-grid{display:flex;flex-wrap:wrap;gap:6px}
 .ik-btn{font-size:12px;padding:5px 13px;border-radius:20px;border:.5px solid var(--bm);background:var(--bg1);cursor:pointer;font-family:'Poppins',sans-serif;color:var(--tx2);font-weight:500;display:flex;align-items:center;gap:5px;transition:all .15s}
 .ik-btn:hover{border-color:var(--sky);color:var(--sky)}
-.ik-btn.aangemeld{background:var(--navy);color:#fff;border-color:var(--navy)}
+.ik-btn.aangemeld{background:var(--navy);color:#fff;border-color:var(--sky)}
+[data-theme="dark"] .ik-btn.aangemeld{background:var(--sky);color:#0C1135;border-color:var(--sky)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .ik-btn.aangemeld{background:var(--sky);color:#0C1135;border-color:var(--sky)}}
 .ik-btn.aangemeld:hover{background:#E24B4A;border-color:#E24B4A}
 .ik-btn.aangemeld:hover::after{content:' ✕';font-size:11px}
 
 /* AFDRUKKEN */
 @media print{
+  :root{--bg:#fff;--bg1:#fff;--bg2:#f5f7fc;--tx1:#0C1135;--tx2:#6b7280;--bl:rgba(12,17,53,.12)}
   body{background:#fff;padding:0;font-family:'Poppins',sans-serif}
   .print-page{display:block!important}
   .no-print,.hdr,.tabs,.view,.wrap{display:none!important}
@@ -492,10 +522,14 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 .db-bb-chip{background:var(--bg1);border:.5px solid var(--bl);border-radius:var(--rm);padding:8px 12px;display:flex;align-items:center;gap:8px;cursor:pointer;transition:border-color .15s}
 .db-bb-chip:hover{border-color:var(--sky)}
 .db-bb-chip-av{width:28px;height:28px;border-radius:50%;background:#E6F1FB;color:#0C447C;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+[data-theme="dark"] .db-bb-chip-av{background:#0C447C;color:#B5D4F4}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .db-bb-chip-av{background:#0C447C;color:#B5D4F4}}
 .db-bb-chip-info{display:flex;flex-direction:column}
 .db-bb-chip-naam{font-size:12px;font-weight:600;color:var(--tx1)}
 .db-bb-chip-cnt{font-size:10px;color:var(--tx2)}
 .db-bb-chip.heeft-jobs{border-color:var(--sky);background:#E6F1FB}
+[data-theme="dark"] .db-bb-chip.heeft-jobs{background:#0C447C;border-color:var(--sky)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .db-bb-chip.heeft-jobs{background:#0C447C;border-color:var(--sky)}}
 
 /* KLANTENDATABASE AUTOCOMPLETE */
 .ac-wrap{position:relative}
@@ -524,6 +558,14 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 .weer-ok{background:#EAF3DE;border:.5px solid #97C459;color:#27500A}
 .weer-warn{background:#FAEEDA;border:.5px solid #EF9F27;color:#854F0B}
 .weer-danger{background:#FCEBEB;border:.5px solid #F09595;color:#A32D2D}
+[data-theme="dark"] .weer-ok{background:#173404;border-color:#3B6D11;color:#C0DD97}
+[data-theme="dark"] .weer-warn{background:#412402;border-color:#EF9F27;color:#FAC775}
+[data-theme="dark"] .weer-danger{background:#501313;border-color:#E24B4A;color:#F7C1C1}
+@media(prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) .weer-ok{background:#173404;border-color:#3B6D11;color:#C0DD97}
+  :root:not([data-theme="light"]) .weer-warn{background:#412402;border-color:#EF9F27;color:#FAC775}
+  :root:not([data-theme="light"]) .weer-danger{background:#501313;border-color:#E24B4A;color:#F7C1C1}
+}
 .weer-icon{font-size:18px;flex-shrink:0;margin-top:1px}
 .weer-info{flex:1}
 .weer-title{font-weight:600;margin-bottom:2px}
@@ -1492,6 +1534,7 @@ async function saveBoeking(){
   if(!fs.levType){errEl.textContent='Selecteer het type levering (wij leveren of zelf afhalen).';errEl.style.display='block';return;}
   if(fs.levType==='levering'&&(!fs.vertrek||!fs.matStatus)){errEl.textContent='Selecteer vertrekpunt en materiaalstatus.';errEl.style.display='block';return;}
   errEl.style.display='none';
+  const _ops=getOps();
   const b={
     id:editId||Date.now(),naam,adres,
     tel:document.getElementById('f-tel').value.trim(),
@@ -1502,9 +1545,9 @@ async function saveBoeking(){
     prijs:document.getElementById('f-prijs').value.trim(),
     betaling:document.getElementById('f-bet').value,
     opmerking:document.getElementById('f-opm').value.trim(),
-    opstellers:getOpsFlat(),
-    opstellers_lev:getOps().lev,
-    opstellers_oph:getOps().oph,
+    opstellers:[...new Set([..._ops.lev,..._ops.oph])],
+    opstellers_lev:_ops.lev,
+    opstellers_oph:_ops.oph,
     vertrek:fs.vertrek,matStatus:fs.matStatus,
     levType:fs.levType||'levering',
     afhaalpunt:fs.levType==='afhaling-kallo'?'Callamerenstraat 24, 9120 Kallo':
@@ -2757,14 +2800,14 @@ function openDetail(id){
       <div class="ik-grid" id="ik-grid-lev-${id}" style="margin-bottom:10px">
         ${BB.concat((b.opstellers_lev||[]).filter(n=>!BB.includes(n))).map(naam=>{
           const isAan=(b.opstellers_lev||b.opstellers||[]).includes(naam);
-          return`<button class="ik-btn${isAan?' aangemeld':''}" onclick="ikDitToggle(${id},'lev','${esc(naam)}')">${ini(naam)} ${esc(naam)}${isAan?' ✓':''}</button>`;
+          return`<button class="ik-btn${isAan?' aangemeld':''}" data-boeking="${id}" data-type="lev" data-naam="${esc(naam)}">${ini(naam)} ${esc(naam)}${isAan?' ✓':''}</button>`;
         }).join('')}
       </div>
       <div style="display:flex;gap:4px;align-items:center;margin-bottom:6px;font-size:11px;font-weight:600;color:#3B6D11"><i class="ti ti-arrow-back-up" style="font-size:12px"></i> Ophaling</div>
       <div class="ik-grid" id="ik-grid-oph-${id}">
         ${BB.concat((b.opstellers_oph||[]).filter(n=>!BB.includes(n))).map(naam=>{
           const isAan=(b.opstellers_oph||b.opstellers||[]).includes(naam);
-          return`<button class="ik-btn${isAan?' aangemeld':''}" onclick="ikDitToggle(${id},'oph','${esc(naam)}')">${ini(naam)} ${esc(naam)}${isAan?' ✓':''}</button>`;
+          return`<button class="ik-btn${isAan?' aangemeld':''}" data-boeking="${id}" data-type="oph" data-naam="${esc(naam)}">${ini(naam)} ${esc(naam)}${isAan?' ✓':''}</button>`;
         }).join('')}
       </div>
     </div>`;
@@ -2781,6 +2824,19 @@ function openDetail(id){
     <button class="bsm" style="background:#EAF3DE;color:#27500A;border-color:#97C459;font-weight:500" onclick="voltooiBoeking(${id});closeMo()"><i class="ti ti-circle-check"></i> Voltooien</button>
     <button class="bsm" style="color:#791F1F;border-color:#F09595" onclick="delBoeking(${id})"><i class="ti ti-trash"></i> Verwijderen</button>`;
   document.getElementById('mo').classList.add('open');
+  // Event delegation voor ik-btn knoppen
+  var moBody=document.getElementById('mo-body');
+  if(moBody&&!moBody._ikListener){
+    moBody._ikListener=true;
+    moBody.addEventListener('click',function(e){
+      var btn=e.target.closest('.ik-btn');
+      if(!btn) return;
+      var bid=Number(btn.dataset.boeking);
+      var type=btn.dataset.type;
+      var naam=btn.dataset.naam;
+      if(bid&&type&&naam) ikDitToggle(bid,type,naam);
+    });
+  }
   // Laad weersdata als er buitenproducten zijn
   if(heeftBuitenProduct(b.materiaal)){
     laadWeer(b.levdatum,b.adres,'weer-detail-'+id);
@@ -3091,7 +3147,7 @@ async function ikDitToggle(id,type,naam){
     const alleNamen=[...new Set([...BB,...b[field]])];
     grid.innerHTML=alleNamen.map(nm=>{
       const isAan=b[field].includes(nm);
-      return`<button class="ik-btn${isAan?' aangemeld':''}" onclick="ikDitToggle(${id},'${type}','${esc(nm)}')">${ini(nm)} ${esc(nm)}${isAan?' ✓':''}</button>`;
+      return`<button class="ik-btn${isAan?' aangemeld':''}" data-boeking="${id}" data-type="${type}" data-naam="${esc(nm)}">${ini(nm)} ${esc(nm)}${isAan?' ✓':''}</button>`;
     }).join('');
   }
   const typeLabel=type==='lev'?'levering':'ophaling';
