@@ -2342,14 +2342,114 @@ function openDetail(id){
 }
 function closeMo(){document.getElementById('mo').classList.remove('open');}
 
+// Extra materiaal regels per producttype
+var EXTRA_MATERIAAL={
+  // TENTEN
+  'tent4x4':[
+    {aantal:4,naam:'Betonnen blok'},
+    {aantal:4,naam:'Spanriem'}
+  ],
+  'tent4x8':[
+    {aantal:1,naam:'Gootstuk'},
+    {aantal:2,naam:'Verbindingsstuk tent'},
+    {aantal:2,naam:'Tussenstuk zijwanden'},
+    {aantal:6,naam:'Betonnen blok'},
+    {aantal:6,naam:'Spanriem'}
+  ],
+  'tent4x12':[
+    {aantal:2,naam:'Gootstuk'},
+    {aantal:4,naam:'Verbindingsstuk tent'},
+    {aantal:4,naam:'Tussenstuk zijwanden'},
+    {aantal:8,naam:'Betonnen blok'},
+    {aantal:8,naam:'Spanriem'}
+  ],
+  // PHOTOBOOTHS
+  'spiegel':[
+    {aantal:1,naam:'Kleine kist (Spiegelbooth)'},
+    {aantal:1,naam:'Flitser'},
+    {aantal:1,naam:'Printer'},
+    {aantal:1,naam:'Case printer'},
+    {aantal:1,naam:'Papier voor printer'},
+    {aantal:1,naam:'Paraplu voor flitser'},
+    {aantal:1,naam:'Verlengkabel'},
+    {aantal:1,naam:'Props (eventueel)'}
+  ],
+  'spiegel_zwart':[
+    {aantal:1,naam:'Grote kist (Spiegelbooth zwart)'},
+    {aantal:1,naam:'Flitser'},
+    {aantal:1,naam:'Printer'},
+    {aantal:1,naam:'Case printer'},
+    {aantal:1,naam:'Papier voor printer'},
+    {aantal:1,naam:'Paraplu voor flitser'},
+    {aantal:1,naam:'Verlengkabel'},
+    {aantal:1,naam:'Props (eventueel)'}
+  ],
+  'houten':[
+    {aantal:1,naam:'Flitser'},
+    {aantal:1,naam:'Papier voor printer'},
+    {aantal:1,naam:'Paraplu voor flitser'},
+    {aantal:1,naam:'Verlengkabel'},
+    {aantal:1,naam:'Props (eventueel)'}
+  ]
+};
+
+// Detecteer welk extra materiaal nodig is op basis van productnaam
+function detecteerExtraMateriaal(productnaam){
+  var n=productnaam.toLowerCase();
+  // Tenten
+  if(n.includes('4x12')||n.includes('4×12')||n.includes('4 x 12'))return 'tent4x12';
+  if(n.includes('4x8')||n.includes('4×8')||n.includes('4 x 8'))return 'tent4x8';
+  if(n.includes('4x4')||n.includes('4×4')||n.includes('4 x 4'))return 'tent4x4';
+  // Photobooths
+  if(n.includes('spiegelbooth')||n.includes('spiegel booth')||n.includes('43 inch')||n.includes('touchscreen')){
+    if(n.includes('zwart')||n.includes('black'))return 'spiegel_zwart';
+    return 'spiegel';
+  }
+  if(n.includes('houten photobooth')||n.includes('houten booth'))return 'houten';
+  return null;
+}
+
 function openLaadbriefje(id){
   const b=boekingen.find(x=>x.id===id);if(!b)return;
   // Verwerk materiaallijst
   const regels=(b.materiaal||'').split('\n').filter(x=>x&&x.trim());
-  const items=regels.map((r,i)=>{
+  var basisItems=regels.map((r,i)=>{
     const m=r.trim().match(/^(\d+)[x×]?\s+(.+)$/i);
-    return{idx:i,aantal:m?parseInt(m[1]):1,naam:m?m[2].trim():r.trim(),geladen:false};
+    return{aantal:m?parseInt(m[1]):1,naam:m?m[2].trim():r.trim(),geladen:false,isExtra:false};
   });
+  // Voeg automatisch extra materiaal toe
+  var extraItems=[];
+  var toegevoegdeExtra={};
+  basisItems.forEach(function(item){
+    var key=detecteerExtraMateriaal(item.naam);
+    if(key&&EXTRA_MATERIAAL[key]){
+      var veelvoud=item.aantal;
+      // tent4x4 per stuk, tent4x8/4x12 eenmalig (zijn al gecombineerd)
+      var isMulti=(key==='tent4x8'||key==='tent4x12');
+      var extraKey=key+(isMulti?'':'-'+item.naam);
+      if(!toegevoegdeExtra[extraKey]){
+        toegevoegdeExtra[extraKey]=true;
+        EXTRA_MATERIAAL[key].forEach(function(e){
+          var bestaand=extraItems.find(function(x){return x.naam===e.naam;});
+          if(bestaand){
+            bestaand.aantal+=(isMulti?e.aantal:e.aantal*veelvoud);
+          } else {
+            extraItems.push({
+              aantal:(isMulti?e.aantal:e.aantal*veelvoud),
+              naam:e.naam,
+              geladen:false,
+              isExtra:true
+            });
+          }
+        });
+      }
+    }
+  });
+  // Combineer basis + extra, geef elk een index
+  var allItems=basisItems.concat(extraItems).map(function(item,i){
+    item.idx=i; return item;
+  });
+  const items=allItems;
   // Header info
   document.getElementById('laad-sub').textContent=b.naam+' — '+fmtDate(b.levdatum)+' om '+b.levuur;
   document.getElementById('laad-info').innerHTML=`
@@ -2372,12 +2472,31 @@ function openLaadbriefje(id){
     document.getElementById('laad-fill').style.width=pct+'%';
     document.getElementById('laad-fill').className='laad-prog-fill'+(pct===100?' done':'');
     document.getElementById('laad-prog-val').textContent=done+' / '+items.length;
-    document.getElementById('laad-items').innerHTML=items.map(item=>`
-      <div class="laad-item${item.geladen?' done':''}" onclick="toggleLaadItem(${item.idx})">
-        <div class="laad-cb${item.geladen?' checked':''}"></div>
-        <div class="laad-naam">${esc(item.naam)}</div>
-        <div class="laad-aantal">${item.aantal}×</div>
-      </div>`).join('');
+    // Groepeer basis en extra items
+    var basisList=items.filter(function(x){return !x.isExtra;});
+    var extraList=items.filter(function(x){return x.isExtra;});
+    var html='';
+    if(basisList.length>0){
+      html+=basisList.map(function(item){
+        return '<div class="laad-item'+(item.geladen?' done':'')+'" onclick="toggleLaadItem('+item.idx+')">'+
+          '<div class="laad-cb'+(item.geladen?' checked':'')+'"></div>'+
+          '<div class="laad-naam">'+esc(item.naam)+'</div>'+
+          '<div class="laad-aantal">'+item.aantal+'×</div>'+
+        '</div>';
+      }).join('');
+    }
+    if(extraList.length>0){
+      html+='<div style="margin:10px 0 6px;font-size:11px;font-weight:600;color:var(--sky);text-transform:uppercase;letter-spacing:.5px;padding:6px 0;border-top:1px solid var(--bl)">'+
+        '<i class="ti ti-tool" style="font-size:11px"></i> Extra benodigdheden</div>';
+      html+=extraList.map(function(item){
+        return '<div class="laad-item'+(item.geladen?' done':'')+'" onclick="toggleLaadItem('+item.idx+')" style="background:rgba(97,171,237,.05)">'+
+          '<div class="laad-cb'+(item.geladen?' checked':'')+'"></div>'+
+          '<div class="laad-naam" style="color:var(--tx2)">'+esc(item.naam)+'</div>'+
+          '<div class="laad-aantal">'+item.aantal+'×</div>'+
+        '</div>';
+      }).join('');
+    }
+    document.getElementById('laad-items').innerHTML=html;
   }
   window._laadItems=items;
   window._renderLaad=renderLaadItems;
