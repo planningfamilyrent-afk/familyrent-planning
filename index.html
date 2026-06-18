@@ -385,6 +385,99 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 .ik-btn.aangemeld:hover{background:#E24B4A;border-color:#E24B4A}
 .ik-btn.aangemeld:hover::after{content:' ✕';font-size:11px}
 
+/* AFDRUKKEN */
+@media print{
+  body{background:#fff;padding:0;font-family:'Poppins',sans-serif}
+  .print-page{display:block!important}
+  .no-print,.hdr,.tabs,.view,.wrap{display:none!important}
+  .print-page{padding:20mm;max-width:100%;width:100%}
+  .print-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:6mm;padding-bottom:4mm;border-bottom:2px solid #0C1135}
+  .print-logo{font-size:18pt;font-weight:700;color:#0C1135}
+  .print-logo span{color:#61ABED}
+  .print-meta{font-size:9pt;color:#6b7280;text-align:right;line-height:1.6}
+  .print-bb-title{font-size:16pt;font-weight:700;color:#0C1135;margin-bottom:2mm}
+  .print-datum{font-size:11pt;color:#61ABED;font-weight:600;margin-bottom:6mm}
+  .print-stop{border:1px solid #dde3f5;border-radius:3mm;padding:4mm 5mm;margin-bottom:4mm;page-break-inside:avoid}
+  .print-stop-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:2mm}
+  .print-type-lev{background:#E6F1FB;color:#0C447C;font-size:8pt;font-weight:700;padding:1mm 3mm;border-radius:2mm;text-transform:uppercase;letter-spacing:.5px}
+  .print-type-oph{background:#EAF3DE;color:#27500A;font-size:8pt;font-weight:700;padding:1mm 3mm;border-radius:2mm;text-transform:uppercase;letter-spacing:.5px}
+  .print-time{font-size:16pt;font-weight:700;color:#0C1135}
+  .print-naam{font-size:13pt;font-weight:600;color:#0C1135;margin-bottom:1mm}
+  .print-adres{font-size:10pt;color:#6b7280;margin-bottom:1mm}
+  .print-tel{font-size:10pt;color:#0C1135;font-weight:500}
+  .print-mat{font-size:9pt;color:#444;margin-top:2mm;padding-top:2mm;border-top:1px solid #eee}
+  .print-mat-title{font-weight:600;margin-bottom:1mm;font-size:9pt;color:#0C1135}
+  .print-mat-item{padding:0.5mm 0;display:flex;align-items:baseline;gap:2mm}
+  .print-mat-qty{font-weight:700;color:#61ABED;min-width:8mm}
+  .print-opm{background:#FFF3CD;border-left:3px solid #EF9F27;padding:2mm 3mm;margin-top:2mm;font-size:9pt;color:#633806}
+  .print-samen{font-size:9pt;color:#6b7280;margin-top:1mm}
+  .print-footer{margin-top:8mm;padding-top:3mm;border-top:1px solid #dde3f5;font-size:8pt;color:#9ca3af;display:flex;justify-content:space-between}
+  .print-sign{margin-top:6mm;border-top:1px solid #0C1135;width:60mm;padding-top:1mm;font-size:8pt;color:#6b7280}
+  .print-totaal{background:#0C1135;color:#fff;padding:3mm 5mm;border-radius:2mm;margin-bottom:5mm;font-size:10pt;display:flex;gap:8mm}
+  .print-totaal span{font-weight:700;color:#61ABED}
+}
+.print-page{display:none}
+
+/* DASHBOARD */
+.db-wrap{display:flex;flex-direction:column;gap:14px}
+.db-datum{font-size:13px;color:var(--tx2);margin-bottom:2px;display:flex;align-items:center;gap:6px}
+.db-datum strong{color:var(--tx1);font-size:15px}
+.db-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:620px){.db-grid{grid-template-columns:repeat(2,1fr)}}
+.db-stat{background:var(--bg1);border:.5px solid var(--bl);border-radius:var(--rl);padding:14px;cursor:pointer;transition:border-color .15s}
+.db-stat:hover{border-color:var(--sky)}
+.db-stat-icon{width:36px;height:36px;border-radius:var(--rm);display:flex;align-items:center;justify-content:center;font-size:16px;margin-bottom:10px}
+.db-stat-val{font-size:28px;font-weight:700;color:var(--tx1);line-height:1}
+.db-stat-lbl{font-size:12px;color:var(--tx2);margin-top:4px}
+.db-stat-sub{font-size:11px;color:var(--tx3);margin-top:2px}
+.db-lev .db-stat-icon{background:#E6F1FB;color:#0C447C}
+.db-oph .db-stat-icon{background:#EAF3DE;color:#27500A}
+.db-tak .db-stat-icon{background:#FAEEDA;color:#854F0B}
+.db-bet .db-stat-icon{background:#FCEBEB;color:#A32D2D}
+.db-section{background:var(--bg1);border:.5px solid var(--bl);border-radius:var(--rl);overflow:hidden}
+.db-sec-hdr{background:var(--navy);color:#fff;padding:10px 16px;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.db-sec-hdr-left{display:flex;align-items:center;gap:7px}
+.db-sec-cnt{font-size:11px;background:var(--sky);color:#fff;padding:2px 8px;border-radius:20px}
+.db-empty{padding:20px;text-align:center;font-size:13px;color:var(--tx3)}
+.db-item{display:flex;align-items:stretch;gap:0;border-bottom:.5px solid var(--bl);cursor:pointer;transition:background .1s}
+.db-item:last-child{border-bottom:none}
+.db-item:hover{background:var(--bg2)}
+.db-item-time{min-width:58px;padding:12px 10px;display:flex;align-items:center;justify-content:center;flex-direction:column;background:var(--bg2);border-right:.5px solid var(--bl);flex-shrink:0}
+.db-item-time-val{font-size:15px;font-weight:700;color:var(--tx1);line-height:1}
+.db-item-time-lbl{font-size:9px;color:var(--tx3);text-transform:uppercase;margin-top:2px}
+.db-item-body{flex:1;padding:10px 14px;min-width:0}
+.db-item-naam{font-size:13px;font-weight:600;color:var(--tx1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.db-item-adres{font-size:11px;color:var(--tx2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.db-item-bb{font-size:11px;color:var(--tx2);margin-top:3px;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.db-item-bb-av{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#E6F1FB;color:#0C447C;font-size:9px;font-weight:700}
+.db-item-opm{font-size:11px;color:#854F0B;margin-top:3px;display:flex;align-items:center;gap:3px}
+.db-item-right{padding:10px 12px;display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.db-tag-lev{font-size:10px;background:#E6F1FB;color:#0C447C;padding:2px 7px;border-radius:20px;font-weight:500;white-space:nowrap}
+.db-tag-oph{font-size:10px;background:#EAF3DE;color:#27500A;padding:2px 7px;border-radius:20px;font-weight:500;white-space:nowrap}
+.db-tag-afh{font-size:10px;background:#F3E8FF;color:#7C3AED;padding:2px 7px;border-radius:20px;font-weight:500;white-space:nowrap}
+.db-wa{display:inline-flex;align-items:center;gap:3px;font-size:10px;background:#25D366;color:#fff;padding:3px 8px;border-radius:20px;text-decoration:none;font-weight:500}
+.db-morgen{background:var(--bg2);border-top:2px solid var(--bl)}
+.db-morgen-hdr{padding:8px 14px;font-size:11px;font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:5px}
+.db-taak-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:.5px solid var(--bl);cursor:pointer}
+.db-taak-item:last-child{border-bottom:none}
+.db-taak-item:hover{background:var(--bg2)}
+.db-taak-cb{width:18px;height:18px;border-radius:4px;border:1.5px solid var(--bm);background:var(--bg1);flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.db-taak-tekst{font-size:12px;color:var(--tx1);flex:1}
+.db-taak-klant{font-size:11px;color:var(--tx2)}
+.db-weer{background:var(--bg1);border:.5px solid var(--bl);border-radius:var(--rl);padding:12px 16px;display:flex;align-items:center;gap:12px}
+.db-weer-icon{font-size:28px}
+.db-weer-info{flex:1}
+.db-weer-temp{font-size:18px;font-weight:700;color:var(--tx1)}
+.db-weer-desc{font-size:12px;color:var(--tx2)}
+.db-bb-overzicht{display:flex;flex-wrap:wrap;gap:8px}
+.db-bb-chip{background:var(--bg1);border:.5px solid var(--bl);border-radius:var(--rm);padding:8px 12px;display:flex;align-items:center;gap:8px;cursor:pointer;transition:border-color .15s}
+.db-bb-chip:hover{border-color:var(--sky)}
+.db-bb-chip-av{width:28px;height:28px;border-radius:50%;background:#E6F1FB;color:#0C447C;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.db-bb-chip-info{display:flex;flex-direction:column}
+.db-bb-chip-naam{font-size:12px;font-weight:600;color:var(--tx1)}
+.db-bb-chip-cnt{font-size:10px;color:var(--tx2)}
+.db-bb-chip.heeft-jobs{border-color:var(--sky);background:#E6F1FB}
+
 /* MOBILE */
 @media(max-width:480px){
   body{padding:8px}
@@ -417,7 +510,8 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 <div class="banner banner-er" id="bn-er"><i class="ti ti-alert-circle" aria-hidden="true"></i><span id="bn-er-msg"></span></div>
 
 <div class="tabs" id="tabs">
-  <button class="tab active" onclick="showTab('planning')" id="tab-planning"><i class="ti ti-layout-list" aria-hidden="true"></i> Planning</button>
+  <button class="tab active" onclick="showTab('dashboard')" id="tab-dashboard"><i class="ti ti-layout-dashboard" aria-hidden="true"></i> Dashboard</button>
+  <button class="tab" onclick="showTab('planning')" id="tab-planning"><i class="ti ti-layout-list" aria-hidden="true"></i> Planning</button>
   <button class="tab" onclick="showTab('tijdlijn')" id="tab-tijdlijn"><i class="ti ti-timeline" aria-hidden="true"></i> Tijdlijn</button>
   <button class="tab" onclick="showTab('rit')" id="tab-rit"><i class="ti ti-route" aria-hidden="true"></i> Ritplanning</button>
   <button class="tab" onclick="showTab('mijn')" id="tab-mijn"><i class="ti ti-user" aria-hidden="true"></i> Mijn planning</button>
@@ -425,8 +519,15 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
   <button class="tab" onclick="showTab('nieuw')" id="tab-nieuw"><i class="ti ti-plus" aria-hidden="true"></i> Nieuw</button>
 </div>
 
+<!-- DASHBOARD -->
+<div class="view active" id="view-dashboard">
+  <div class="db-wrap" id="db-wrap">
+    <div class="loading"><i class="ti ti-loader"></i>Dashboard laden...</div>
+  </div>
+</div>
+
 <!-- PLANNING -->
-<div class="view active" id="view-planning">
+<div class="view" id="view-planning">
   <div class="stats" id="stats-wrap">
     <div class="stat"><div class="stat-lbl">Totaal</div><div class="stat-val" id="st0">—</div></div>
     <div class="stat"><div class="stat-lbl">Leveringen</div><div class="stat-val" id="st1">—</div><div class="stat-sub" id="st1s"></div></div>
@@ -470,7 +571,10 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
   <div class="bb-det" id="bb-det">
     <div class="bb-hdr">
       <button class="bb-bck" onclick="backBB()"><i class="ti ti-arrow-left"></i> Terug</button>
-      <div><div class="bb-title" id="bb-nm">—</div><div class="bb-sub" id="bb-sub">—</div></div>
+      <div style="flex:1"><div class="bb-title" id="bb-nm">—</div><div class="bb-sub" id="bb-sub">—</div></div>
+      <button class="bsm-bl no-print" onclick="printPlanning()" style="display:flex;align-items:center;gap:5px;padding:6px 14px">
+        <i class="ti ti-printer" style="font-size:13px"></i> Afdrukken
+      </button>
     </div>
     <div class="bb-stats" id="bb-stats"></div>
     <div id="bb-list"></div>
@@ -654,6 +758,9 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 </div>
 
 </div><!-- /wrap -->
+
+<!-- PRINT PAGINA — enkel zichtbaar bij afdrukken -->
+<div class="print-page" id="print-page"></div>
 
 <!-- LAADBRIEFJE MODAL -->
 <div class="mo" id="laad-mo">
@@ -919,6 +1026,7 @@ async function loadData(){
     return;
   }
   renderPlanning();updateStats();
+  if(document.getElementById('view-dashboard').classList.contains('active')) renderDashboard();
   if(document.getElementById('view-tijdlijn').classList.contains('active')) renderTijdlijn();
   if(document.getElementById('view-rit').classList.contains('active')) renderRit();
   if(document.getElementById('view-mijn').classList.contains('active')) renderBBGrid();
@@ -970,6 +1078,7 @@ function showTab(tab){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
   document.getElementById('view-'+tab).classList.add('active');
+  if(tab==='dashboard')renderDashboard();
   if(tab==='planning')renderPlanning();
   if(tab==='tijdlijn')renderTijdlijn();
   if(tab==='rit')renderRit();
@@ -1408,6 +1517,182 @@ function updateStats(){
 }
 
 /* TIJDLIJN */
+function _buildDashboard(){
+  var wrap=document.getElementById('db-wrap');
+  if(!wrap) return;
+  var t=today();
+  var morgenDt=new Date(t+'T00:00:00'); morgenDt.setDate(morgenDt.getDate()+1);
+  var morgen=morgenDt.toISOString().split('T')[0];
+  var actief=boekingen.filter(function(b){return !(b.voltooid===true||b.voltooid==='true');});
+
+  // Vandaag stats
+  var vandaagLev=actief.filter(function(b){return b.levdatum===t&&(b.levType==='levering'||!b.levType||b.levType==='');});
+  var vandaagOph=actief.filter(function(b){return b.ophdatum===t&&b.ophdatum!==b.levdatum&&(b.levType==='levering'||!b.levType||b.levType==='');});
+  var vandaagAfh=actief.filter(function(b){return b.levdatum===t&&b.levType&&b.levType!=='levering';});
+  var vandaagAll=[].concat(
+    vandaagLev.map(function(b){return {b:b,type:'lev',uur:b.levuur||'09:00'};}),
+    vandaagOph.map(function(b){return {b:b,type:'oph',uur:b.ophuur||'10:00'};}),
+    vandaagAfh.map(function(b){return {b:b,type:'afh',uur:b.levuur||'09:00'};})
+  ).sort(function(a,b2){return timeToMin(a.uur)-timeToMin(b2.uur);});
+
+  // Morgen
+  var morgenLev=actief.filter(function(b){return b.levdatum===morgen&&(b.levType==='levering'||!b.levType||b.levType==='');});
+  var morgenOph=actief.filter(function(b){return b.ophdatum===morgen&&b.ophdatum!==b.levdatum&&(b.levType==='levering'||!b.levType||b.levType==='');});
+  var morgenAfh=actief.filter(function(b){return b.levdatum===morgen&&b.levType&&b.levType!=='levering';});
+  var morgenAll=[].concat(
+    morgenLev.map(function(b){return {b:b,type:'lev',uur:b.levuur||'09:00'};}),
+    morgenOph.map(function(b){return {b:b,type:'oph',uur:b.ophuur||'10:00'};}),
+    morgenAfh.map(function(b){return {b:b,type:'afh',uur:b.levuur||'09:00'};})
+  ).sort(function(a,b2){return timeToMin(a.uur)-timeToMin(b2.uur);});
+
+  // Open taken
+  var openTaken=[];
+  actief.forEach(function(b){
+    if(!b.taken) return;
+    b.taken.forEach(function(tk){
+      if(!tk.gedaan) openTaken.push({taak:tk,boeking:b});
+    });
+  });
+
+  // Niet betaald
+  var nietBetaald=actief.filter(function(b){return !b.betaling||b.betaling==='';});
+
+  // Belevingsbouwers vandaag
+  var bbVandaag={};
+  vandaagAll.forEach(function(stop){
+    var lijst=stop.type==='oph'?(stop.b.opstellers_oph||stop.b.opstellers||[]):(stop.b.opstellers_lev||stop.b.opstellers||[]);
+    lijst.forEach(function(nm){
+      if(!bbVandaag[nm]) bbVandaag[nm]=[];
+      bbVandaag[nm].push(stop);
+    });
+    if(lijst.length===0){
+      if(!bbVandaag['Niet toegewezen']) bbVandaag['Niet toegewezen']=[];
+      bbVandaag['Niet toegewezen'].push(stop);
+    }
+  });
+
+  // Datumformattering
+  var now=new Date();
+  var NLD2=['Zondag','Maandag','Dinsdag','Woensdag','Donderdag','Vrijdag','Zaterdag'];
+  var dagNaam=NLD2[now.getDay()];
+  var datumStr=dagNaam+' '+now.getDate()+' '+NLM[now.getMonth()]+' '+now.getFullYear();
+
+  function stopHtml(stop){
+    var b=stop.b, isLev=stop.type==='lev', isAfh=stop.type==='afh';
+    var bbs=isLev||isAfh?(b.opstellers_lev||b.opstellers||[]):(b.opstellers_oph||b.opstellers||[]);
+    var bbHtml=bbs.length?bbs.map(function(nm){
+      return '<span class="db-item-bb-av" title="'+esc(nm)+'">'+ini(nm)+'</span> <span>'+esc(nm)+'</span>';
+    }).join(' '):'<span style="color:#E24B4A">⚠ Niemand toegewezen</span>';
+    var tagClass=isAfh?'db-tag-afh':isLev?'db-tag-lev':'db-tag-oph';
+    var tagLabel=isAfh?'Afhaling klant':isLev?'Levering':'Ophaling';
+    var waUrl=b.tel&&isLev?waLink(b.tel,b.naam,stop.uur,b.adres):null;
+    return '<div class="db-item" onclick="openDetail('+b.id+')">'+
+      '<div class="db-item-time"><div class="db-item-time-val">'+stop.uur+'</div><div class="db-item-time-lbl">uur</div></div>'+
+      '<div class="db-item-body">'+
+        '<div class="db-item-naam">'+esc(b.naam)+'</div>'+
+        '<div class="db-item-adres"><i class="ti ti-map-pin" style="font-size:10px"></i> '+esc(b.adres)+'</div>'+
+        '<div class="db-item-bb"><i class="ti ti-hard-hat" style="font-size:10px"></i> '+bbHtml+'</div>'+
+        (b.opmerking?'<div class="db-item-opm"><i class="ti ti-alert-circle" style="font-size:10px"></i> '+esc(b.opmerking)+'</div>':'')+
+      '</div>'+
+      '<div class="db-item-right">'+
+        '<span class="'+tagClass+'">'+tagLabel+'</span>'+
+        (waUrl?'<a class="db-wa" href="'+waUrl+'" target="_blank" rel="noopener" onclick="event.stopPropagation()"><i class="ti ti-brand-whatsapp" style="font-size:11px"></i> WhatsApp</a>':'')+
+      '</div>'+
+    '</div>';
+  }
+
+  var html='';
+
+  // Datum + greeting
+  var uur=now.getHours();
+  var greeting='Goedemorgen';
+  if(uur>=12&&uur<17) greeting='Goedemiddag';
+  else if(uur>=17) greeting='Goedenavond';
+
+  html+='<div class="db-datum"><i class="ti ti-calendar" style="color:var(--sky)"></i> <strong>'+greeting+'</strong> — '+datumStr+'</div>';
+
+  // Stat blokken
+  html+='<div class="db-grid">';
+  html+='<div class="db-stat db-lev" data-goto="planning"><div class="db-stat-icon"><i class="ti ti-truck-delivery"></i></div><div class="db-stat-val">'+vandaagLev.length+'</div><div class="db-stat-lbl">Leveringen vandaag</div><div class="db-stat-sub">'+morgenLev.length+' morgen</div></div>';
+  html+='<div class="db-stat db-oph" data-goto="planning"><div class="db-stat-icon"><i class="ti ti-arrow-back-up"></i></div><div class="db-stat-val">'+vandaagOph.length+'</div><div class="db-stat-lbl">Ophalingen vandaag</div><div class="db-stat-sub">'+morgenOph.length+' morgen</div></div>';
+  html+='<div class="db-stat db-tak" data-goto="planning"><div class="db-stat-icon"><i class="ti ti-checklist"></i></div><div class="db-stat-val">'+openTaken.length+'</div><div class="db-stat-lbl">Open taken</div><div class="db-stat-sub">over alle boekingen</div></div>';
+  html+='<div class="db-stat db-bet" data-goto="planning"><div class="db-stat-icon"><i class="ti ti-currency-euro"></i></div><div class="db-stat-val">'+nietBetaald.length+'</div><div class="db-stat-lbl">Nog te betalen</div><div class="db-stat-sub">actieve boekingen</div></div>';
+  html+='</div>';
+
+  // Belevingsbouwers vandaag
+  if(vandaagAll.length>0){
+    html+='<div class="db-section">';
+    html+='<div class="db-sec-hdr"><div class="db-sec-hdr-left"><i class="ti ti-hard-hat"></i> Wie werkt er vandaag?</div></div>';
+    html+='<div style="padding:12px 14px"><div class="db-bb-overzicht">';
+    BB.forEach(function(nm){
+      var jobs=bbVandaag[nm]||[];
+      html+='<div class="db-bb-chip'+(jobs.length?' heeft-jobs':'')+'" data-bbname="'+esc(nm)+'">';
+      html+='<div class="db-bb-chip-av">'+ini(nm)+'</div>';
+      html+='<div class="db-bb-chip-info"><div class="db-bb-chip-naam">'+esc(nm)+'</div><div class="db-bb-chip-cnt">'+(jobs.length?jobs.length+' job'+(jobs.length!==1?'s':''):'vrij')+'</div></div>';
+      html+='</div>';
+    });
+    if(bbVandaag['Niet toegewezen']){
+      html+='<div class="db-bb-chip heeft-jobs" style="border-color:#E24B4A;background:#FCEBEB" data-bbname="Niet toegewezen">';
+      html+='<div class="db-bb-chip-av" style="background:#FCEBEB;color:#A32D2D">⚠</div>';
+      html+='<div class="db-bb-chip-info"><div class="db-bb-chip-naam" style="color:#A32D2D">Niet toegewezen</div><div class="db-bb-chip-cnt">'+bbVandaag['Niet toegewezen'].length+' job'+(bbVandaag['Niet toegewezen'].length!==1?'s':'')+'</div></div>';
+      html+='</div>';
+    }
+    html+='</div></div></div>';
+  }
+
+  // Vandaag stops
+  html+='<div class="db-section">';
+  html+='<div class="db-sec-hdr"><div class="db-sec-hdr-left"><i class="ti ti-calendar-event"></i> Vandaag</div><span class="db-sec-cnt">'+vandaagAll.length+' event'+(vandaagAll.length!==1?'s':'')+'</span></div>';
+  if(vandaagAll.length===0){
+    html+='<div class="db-empty"><i class="ti ti-coffee" style="font-size:24px;display:block;margin-bottom:6px;color:var(--tx3)"></i>Geen leveringen of ophalingen vandaag</div>';
+  } else {
+    vandaagAll.forEach(function(stop){ html+=stopHtml(stop); });
+  }
+  // Morgen preview
+  if(morgenAll.length>0){
+    html+='<div class="db-morgen"><div class="db-morgen-hdr"><i class="ti ti-calendar" style="font-size:11px"></i> Morgen — '+morgenAll.length+' event'+(morgenAll.length!==1?'s':'')+'</div>';
+    morgenAll.forEach(function(stop){ html+=stopHtml(stop); });
+    html+='</div>';
+  }
+  html+='</div>';
+
+  // Open taken sectie
+  if(openTaken.length>0){
+    html+='<div class="db-section">';
+    html+='<div class="db-sec-hdr"><div class="db-sec-hdr-left"><i class="ti ti-checklist"></i> Open taken</div><span class="db-sec-cnt">'+openTaken.length+'</span></div>';
+    openTaken.slice(0,5).forEach(function(item){
+      html+='<div class="db-taak-item" onclick="openDetail('+item.boeking.id+')">';
+      html+='<div class="db-taak-cb"><i class="ti ti-circle" style="font-size:10px;color:var(--tx3)"></i></div>';
+      html+='<div class="db-taak-tekst">'+esc(item.taak.tekst)+'</div>';
+      html+='<div class="db-taak-klant">'+esc(item.boeking.naam)+' · '+fmtShort(item.boeking.levdatum)+'</div>';
+      html+='</div>';
+    });
+    if(openTaken.length>5){
+      html+='<div style="padding:8px 14px;font-size:11px;color:var(--tx3)">+'+( openTaken.length-5)+' meer taken — bekijk in Planning</div>';
+    }
+    html+='</div>';
+  }
+
+  wrap.innerHTML=html;
+  // Click handlers via event delegation
+  wrap.addEventListener('click', function(e){
+    var goto=e.target.closest('[data-goto]');
+    if(goto) showTab(goto.dataset.goto);
+    var bbchip=e.target.closest('[data-bbname]');
+    if(bbchip){showTab('mijn');setTimeout(function(){showBBDetail(bbchip.dataset.bbname);},50);}
+  });
+}
+
+function renderDashboard(){
+  var wrap=document.getElementById('db-wrap');
+  if(!wrap) return;
+  if(boekingen.length===0&&document.getElementById('plan-list')&&document.getElementById('plan-list').innerHTML.includes('laden')){
+    wrap.innerHTML='<div class="loading"><i class="ti ti-loader"></i>Dashboard laden...</div>';
+    return;
+  }
+  _buildDashboard();
+}
+
 function renderTijdlijn(){
   const sel=document.getElementById('tl-date-sel'),content=document.getElementById('tl-content');
   const dates=new Set();
@@ -1616,6 +1901,114 @@ function showBBDetail(name){
 }
 function backBB(){document.getElementById('bb-det').classList.remove('active');document.getElementById('bb-sel').style.display='block';}
 
+function printPlanning(){
+  var naam=document.getElementById('bb-nm').textContent;
+  var printEl=document.getElementById('print-page');
+  if(!printEl||!naam||naam==='—') return;
+
+  var t=today();
+  var datumSel=document.getElementById('tl-date-sel');
+  var selDate=t; // Standaard vandaag
+
+  // Haal de boekingen op voor deze belevingsbouwer
+  var my=boekingen.filter(function(b){
+    if(b.voltooid===true||b.voltooid==='true') return false;
+    var inLev=b.opstellers_lev&&b.opstellers_lev.includes(naam);
+    var inOph=b.opstellers_oph&&b.opstellers_oph.includes(naam);
+    var inOld=b.opstellers&&b.opstellers.includes(naam);
+    return inLev||inOph||inOld;
+  });
+
+  // Maak stops voor vandaag en de komende 7 dagen
+  var stopsByDate={};
+  my.forEach(function(b){
+    function addStop(date,type,uur){
+      if(!stopsByDate[date])stopsByDate[date]=[];
+      stopsByDate[date].push({b:b,type:type,uur:uur});
+    }
+    if(b.levdatum>=t){
+      var isLevBB=(b.opstellers_lev&&b.opstellers_lev.includes(naam))||(b.opstellers&&b.opstellers.includes(naam)&&(!b.opstellers_lev||!b.opstellers_lev.length));
+      if(isLevBB) addStop(b.levdatum,'lev',b.levuur||'09:00');
+    }
+    if(b.ophdatum>=t&&b.ophdatum!==b.levdatum){
+      var isOphBB=(b.opstellers_oph&&b.opstellers_oph.includes(naam))||(b.opstellers&&b.opstellers.includes(naam)&&(!b.opstellers_oph||!b.opstellers_oph.length));
+      if(isOphBB) addStop(b.ophdatum,'oph',b.ophuur||'10:00');
+    }
+  });
+
+  var datums=Object.keys(stopsByDate).sort().slice(0,7);
+  var now=new Date();
+  var printDatum=now.getDate()+' '+NLM[now.getMonth()]+' '+now.getFullYear();
+  var totaalStops=Object.values(stopsByDate).reduce(function(s,a){return s+a.length;},0);
+
+  var html=
+    '<div class="print-hdr">'+
+      '<div class="print-logo">FAMILY<span>RENT</span></div>'+
+      '<div class="print-meta">'+
+        'Planning voor: <strong>'+esc(naam)+'</strong><br>'+
+        'Afgedrukt op: '+printDatum+'<br>'+
+        'www.familyrent.be · 0497 03 52 23'+
+      '</div>'+
+    '</div>'+
+    '<div class="print-bb-title">'+esc(naam)+'</div>'+
+    '<div class="print-datum">Komende jobs — '+datums.length+' dag'+(datums.length!==1?'en':'')+' · '+totaalStops+' stop'+(totaalStops!==1?'s':'')+'</div>'+
+    '<div class="print-totaal">'+
+      '<div>Leveringen: <span>'+Object.values(stopsByDate).flat().filter(function(s){return s.type==='lev';}).length+'</span></div>'+
+      '<div>Ophalingen: <span>'+Object.values(stopsByDate).flat().filter(function(s){return s.type==='oph';}).length+'</span></div>'+
+    '</div>';
+
+  if(datums.length===0){
+    html+='<div style="text-align:center;padding:10mm;color:#6b7280;font-size:11pt">Geen aankomende jobs.</div>';
+  }
+
+  datums.forEach(function(date){
+    var stops=stopsByDate[date].sort(function(a,b){return timeToMin(a.uur)-timeToMin(b.uur);});
+    var isVandaag=date===t;
+    html+='<div style="margin-bottom:3mm;font-size:9pt;font-weight:700;color:#0C1135;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #0C1135;padding-bottom:1mm;margin-top:5mm">'+
+      fmtDate(date)+(isVandaag?' — VANDAAG':'')+
+    '</div>';
+
+    stops.forEach(function(s){
+      var b=s.b,isLev=s.type==='lev';
+      var isAfhaling=b.levType&&b.levType!=='levering';
+      var typeLabel=isAfhaling?(isLev?'Afhaling klant':'Terugbreng klant'):(isLev?'Levering':'Ophaling');
+      var mUrl='https://maps.google.com/?q='+encodeURIComponent(b.adres||'');
+      var regels=(b.materiaal||'').split('\n').filter(function(r){return r.trim();});
+      var samen=isLev?(b.opstellers_lev||b.opstellers||[]):(b.opstellers_oph||b.opstellers||[]);
+      var samenZonder=samen.filter(function(n){return n!==naam;});
+
+      html+='<div class="print-stop">'+
+        '<div class="print-stop-hdr">'+
+          '<span class="'+(isLev?'print-type-lev':'print-type-oph')+'">'+typeLabel+'</span>'+
+          '<span class="print-time">'+s.uur+'</span>'+
+        '</div>'+
+        '<div class="print-naam">'+esc(b.naam)+'</div>'+
+        '<div class="print-adres">'+esc(b.adres||'')+'</div>'+
+        (b.tel?'<div class="print-tel">📞 '+esc(b.tel)+'</div>':'')+
+        (samenZonder.length?'<div class="print-samen">Samen met: '+samenZonder.map(esc).join(', ')+'</div>':'')+
+        (regels.length?
+          '<div class="print-mat">'+
+            '<div class="print-mat-title">Materiaal:</div>'+
+            regels.map(function(r){
+              var m=r.trim().match(/^(\d+)[x×]?\s+(.+)$/i);
+              return'<div class="print-mat-item"><span class="print-mat-qty">'+(m?m[1]+'×':'—')+'</span><span>'+(m?esc(m[2]):esc(r.trim()))+'</span></div>';
+            }).join('')+
+          '</div>':'')+
+        (b.opmerking?'<div class="print-opm">⚠️ '+esc(b.opmerking)+'</div>':'')+
+      '</div>';
+    });
+  });
+
+  html+=
+    '<div class="print-footer">'+
+      '<span>Familyrent · info@familyrent.be · 0497 03 52 23</span>'+
+      '<span>Afgedrukt op '+printDatum+'</span>'+
+    '</div>';
+
+  printEl.innerHTML=html;
+  window.print();
+}
+
 /* OMZETRAPPORT MET PINCODE */
 function renderRapport(){
   const pinWrap=document.getElementById('rpt-pin-wrap'),content=document.getElementById('rpt-content');
@@ -1662,13 +2055,13 @@ function buildReport(){
     maandOmzet[mn].count++;
   });
   const maanden=Object.keys(maandOmzet).sort().slice(-12);
-  const maxMO=Math.max(...maanden.map(m=>maandOmzet[m].omzet),1);
+  const maxMO=maanden.length>0?Math.max(...maanden.map(m=>maandOmzet[m].omzet),1):1;
 
   // BB count
   const bbCount={};
   boekingen.forEach(b=>{if(b.opstellers)b.opstellers.forEach(nm=>{if(!bbCount[nm])bbCount[nm]=0;bbCount[nm]++;});});
   const bbSort=Object.entries(bbCount).sort((a,b)=>b[1]-a[1]);
-  const maxBB=Math.max(...bbSort.map(x=>x[1]),1);
+  const maxBB=bbSort.length>0?Math.max(...bbSort.map(x=>x[1]),1):1;
 
   // STATUS count
   const statusCount=Array(6).fill(0);
@@ -1719,75 +2112,77 @@ function buildReport(){
   const catSort=Object.entries(catOmzet).sort((a,b)=>b[1]-a[1]);
   const maxCat=catSort.length>0?catSort[0][1]:1;
 
-  content.innerHTML=`
-    <div class="rpt-wrap">
-      <div class="rpt-logout" onclick="pinUnlocked=false;renderRapport()"><i class="ti ti-lock" aria-hidden="true"></i> Rapport vergrendelen</div>
-
-      <!-- KERNCIJFERS -->
-      <div class="rpt-stats" style="grid-template-columns:repeat(5,1fr)">
-        <div class="rpt-stat"><div class="rpt-lbl">Totale omzet</div><div class="rpt-val">€ ${fmtRound(totalOmzet) }</div></div>
-        <div class="rpt-stat"><div class="rpt-lbl">Totaal boekingen</div><div class="rpt-val">${total}</div></div>
-        <div class="rpt-stat"><div class="rpt-lbl">Gem. per boeking</div><div class="rpt-val">€ ${total>0?Math.round(totalOmzet/total):0}</div></div>
-        <div class="rpt-stat"><div class="rpt-lbl">Openstaand</div><div class="rpt-val" style="color:#A32D2D">${openBet}</div><div class="rpt-sub">zonder betaalwijze</div></div>
-        <div class="rpt-stat"><div class="rpt-lbl">Voltooid</div><div class="rpt-val" style="color:#3B6D11">${voltooide}</div><div class="rpt-sub">gearchiveerd</div></div>
-      </div>
-
-      <!-- OMZET PER MAAND -->
-      <div class="rpt-section">
-        <div class="rpt-title">Omzet per maand (laatste 12 maanden)</div>
-        ${maanden.map(m=>{const mo=maandOmzet[m];const pct=Math.round(mo.omzet/maxMO*100);const[y,mn]=m.split('-');const lbl=NLM[parseInt(mn)-1]+' '+y;return`<div class="rpt-bar-wrap"><div class="rpt-bar-lbl"><span>${lbl}</span><span>€ ${fmtRound(mo.omzet) } (${mo.count} boeking${mo.count!==1?'en':''})</span></div><div class="rpt-bar-bg"><div class="rpt-bar-fill" style="width:${pct}%"></div></div></div>`;}).join('')}
-      </div>
-
-      <!-- MEEST VERHUURDE PRODUCTEN -->
-      <div class="rpt-section">
-        <div class="rpt-title">Meest verhuurde producten <span style="font-weight:400;font-size:11px;color:var(--tx3)">(herkend uit materiaallijst)</span></div>
-        ${prodSort.length===0?`<div style="font-size:13px;color:var(--tx2);padding:8px 0">Nog geen data beschikbaar. Voeg boekingen toe met materiaal uit de catalogus.</div>`:
-        prodSort.map(({product,keer,aantalTotaal,omzetIndicatief})=>{
-          const pct=Math.round(keer/maxProd*100);
-          return`<div class="rpt-bar-wrap"><div class="rpt-bar-lbl"><span><strong>${esc(product.naam)}</strong> <span style="font-size:10px;color:var(--tx3)">${esc(product.cat)}</span></span><span>${keer}× verhuurd · ${aantalTotaal} stuks · €${Math.round(omzetIndicatief)} indicatief</span></div><div class="rpt-bar-bg"><div class="rpt-bar-fill alt" style="width:${pct}%"></div></div></div>`;
-        }).join('')}
-      </div>
-
-      <!-- OMZET PER CATEGORIE (indicatief) -->
-      <div class="rpt-section">
-        <div class="rpt-title">Indicatieve omzet per productcategorie</div>
-        ${catSort.length===0?`<div style="font-size:13px;color:var(--tx2);padding:8px 0">Nog geen data beschikbaar.</div>`:
-        catSort.map(([cat,omz])=>{
-          const pct=Math.round(omz/maxCat*100);
-          return`<div class="rpt-bar-wrap"><div class="rpt-bar-lbl"><span>${esc(cat)}</span><span>€ ${fmtRound(omz) }</span></div><div class="rpt-bar-bg"><div class="rpt-bar-fill" style="width:${pct}%;background:#61ABED"></div></div></div>`;
-        }).join('')}
-        <p style="font-size:11px;color:var(--tx3);margin-top:6px">* Indicatieve waarden op basis van catalogusprijzen — niet de werkelijk gefactureerde bedragen</p>
-      </div>
-
-      <!-- POPULAIRE COMBINATIES -->
-      <div class="rpt-section">
-        <div class="rpt-title">Populaire productcombinaties <span style="font-weight:400;font-size:11px;color:var(--tx3)">(upselling kansen)</span></div>
-        ${combiSort.length===0?`<div style="font-size:13px;color:var(--tx2);padding:8px 0">Nog geen data beschikbaar.</div>`:`
-        <table class="rpt-table"><thead><tr><th>Combinatie</th><th style="text-align:right">Samen geboekt</th></tr></thead><tbody>
-        ${combiSort.map(([key,count])=>{
-          const [id1,id2]=key.split('+');
-          const p1=CATALOGUS.find(p=>p.id===id1),p2=CATALOGUS.find(p=>p.id===id2);
-          if(!p1||!p2) return '';
-          return`<tr><td>${esc(p1.naam)} + ${esc(p2.naam)}</td><td class="num">${count}×</td></tr>`;
-        }).join('')}
-        </tbody></table>`}
-      </div>
-
-      <!-- BB PER BOEKING -->
-      <div class="rpt-section">
-        <div class="rpt-title">Boekingen per belevingsbouwer</div>
-        ${bbSort.map(([nm,cnt])=>`<div class="rpt-bar-wrap"><div class="rpt-bar-lbl"><span>${esc(nm)}</span><span>${cnt} boeking${cnt!==1?'en':''}</span></div><div class="rpt-bar-bg"><div class="rpt-bar-fill alt" style="width:${Math.round(cnt/maxBB*100)}%"></div></div></div>`).join('')}
-      </div>
-
-      <!-- STATUS OVERZICHT -->
-      <div class="rpt-section">
-        <div class="rpt-title">Status overzicht</div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px">
-          ${STATUSSEN.map((s,i)=>`<div class="rpt-stat" style="min-width:120px"><div class="rpt-lbl">${s}</div><div class="rpt-val" style="font-size:18px">${statusCount[i]}</div></div>`).join('')}
-        </div>
-      </div>
-    </div>`;
-}
+  // Bouw rapport stapsgewijs op via string concatenatie ipv template literal
+  // Dit vermijdt problemen met geneste quotes en spaties in template literals
+  var rptHtml='';
+  rptHtml+='<div class="rpt-wrap">';
+  rptHtml+='<div class="rpt-logout" onclick="pinUnlocked=false;renderRapport()"><i class="ti ti-lock"></i> Rapport vergrendelen</div>';
+  rptHtml+='<div class="rpt-stats" style="grid-template-columns:repeat(5,1fr)">';
+  rptHtml+='<div class="rpt-stat"><div class="rpt-lbl">Totale omzet</div><div class="rpt-val">€ '+fmtRound(totalOmzet)+'</div></div>';
+  rptHtml+='<div class="rpt-stat"><div class="rpt-lbl">Totaal boekingen</div><div class="rpt-val">'+total+'</div></div>';
+  rptHtml+='<div class="rpt-stat"><div class="rpt-lbl">Gem. per boeking</div><div class="rpt-val">€ '+(total>0?Math.round(totalOmzet/total):0)+'</div></div>';
+  rptHtml+='<div class="rpt-stat"><div class="rpt-lbl">Openstaand</div><div class="rpt-val" style="color:#A32D2D">'+openBet+'</div><div class="rpt-sub">zonder betaalwijze</div></div>';
+  rptHtml+='<div class="rpt-stat"><div class="rpt-lbl">Voltooid</div><div class="rpt-val" style="color:#3B6D11">'+voltooide+'</div><div class="rpt-sub">gearchiveerd</div></div>';
+  rptHtml+='</div>';
+  // Maandomzet
+  rptHtml+='<div class="rpt-section"><div class="rpt-title">Omzet per maand (laatste 12 maanden)</div>';
+  if(maanden.length===0){rptHtml+='<div style="font-size:13px;color:var(--tx2);padding:8px 0">Nog geen boekingen met prijzen.</div>';}
+  maanden.forEach(function(m){
+    var mo=maandOmzet[m];
+    var pct=Math.round(mo.omzet/maxMO*100);
+    var parts=m.split('-');
+    var lbl=NLM[parseInt(parts[1])-1]+' '+parts[0];
+    rptHtml+='<div class="rpt-bar-wrap"><div class="rpt-bar-lbl"><span>'+lbl+'</span><span>€ '+fmtRound(mo.omzet)+' ('+mo.count+' boeking'+(mo.count!==1?'en':'')+')</span></div><div class="rpt-bar-bg"><div class="rpt-bar-fill" style="width:'+pct+'%"></div></div></div>';
+  });
+  rptHtml+='</div>';
+  // Meest verhuurde producten
+  rptHtml+='<div class="rpt-section"><div class="rpt-title">Meest verhuurde producten <span style="font-weight:400;font-size:11px;color:var(--tx3)">(herkend uit materiaallijst)</span></div>';
+  if(prodSort.length===0){rptHtml+='<div style="font-size:13px;color:var(--tx2);padding:8px 0">Nog geen data. Sla boekingen op met producten uit de catalogus.</div>';}
+  prodSort.forEach(function(entry){
+    var pct=Math.round(entry.keer/maxProd*100);
+    rptHtml+='<div class="rpt-bar-wrap"><div class="rpt-bar-lbl"><span><strong>'+esc(entry.product.naam)+'</strong> <span style="font-size:10px;color:var(--tx3)">'+esc(entry.product.cat)+'</span></span><span>'+entry.keer+'× verhuurd · '+entry.aantalTotaal+' stuks · €'+Math.round(entry.omzetIndicatief)+' indicatief</span></div><div class="rpt-bar-bg"><div class="rpt-bar-fill alt" style="width:'+pct+'%"></div></div></div>';
+  });
+  rptHtml+='</div>';
+  // Omzet per categorie
+  rptHtml+='<div class="rpt-section"><div class="rpt-title">Indicatieve omzet per productcategorie</div>';
+  if(catSort.length===0){rptHtml+='<div style="font-size:13px;color:var(--tx2);padding:8px 0">Nog geen data beschikbaar.</div>';}
+  catSort.forEach(function(entry){
+    var pct=Math.round(entry[1]/maxCat*100);
+    rptHtml+='<div class="rpt-bar-wrap"><div class="rpt-bar-lbl"><span>'+esc(entry[0])+'</span><span>€ '+fmtRound(entry[1])+'</span></div><div class="rpt-bar-bg"><div class="rpt-bar-fill" style="width:'+pct+'%;background:#61ABED"></div></div></div>';
+  });
+  rptHtml+='<p style="font-size:11px;color:var(--tx3);margin-top:6px">* Indicatieve waarden op basis van catalogusprijzen</p>';
+  rptHtml+='</div>';
+  // Populaire combinaties
+  rptHtml+='<div class="rpt-section"><div class="rpt-title">Populaire productcombinaties <span style="font-weight:400;font-size:11px;color:var(--tx3)">(upselling kansen)</span></div>';
+  if(combiSort.length===0){rptHtml+='<div style="font-size:13px;color:var(--tx2);padding:8px 0">Nog geen data beschikbaar.</div>';}
+  else{
+    rptHtml+='<table class="rpt-table"><thead><tr><th>Combinatie</th><th style="text-align:right">Samen geboekt</th></tr></thead><tbody>';
+    combiSort.forEach(function(entry){
+      var parts=entry[0].split('+');
+      var p1=CATALOGUS.find(function(p){return p.id===parts[0];});
+      var p2=CATALOGUS.find(function(p){return p.id===parts[1];});
+      if(!p1||!p2) return;
+      rptHtml+='<tr><td>'+esc(p1.naam)+' + '+esc(p2.naam)+'</td><td class="num">'+entry[1]+'×</td></tr>';
+    });
+    rptHtml+='</tbody></table>';
+  }
+  rptHtml+='</div>';
+  // BB per boeking
+  rptHtml+='<div class="rpt-section"><div class="rpt-title">Boekingen per belevingsbouwer</div>';
+  if(bbSort.length===0){rptHtml+='<div style="font-size:13px;color:var(--tx2);padding:8px 0">Nog geen data.</div>';}
+  bbSort.forEach(function(entry){
+    var pct=Math.round(entry[1]/maxBB*100);
+    rptHtml+='<div class="rpt-bar-wrap"><div class="rpt-bar-lbl"><span>'+esc(entry[0])+'</span><span>'+entry[1]+' boeking'+(entry[1]!==1?'en':'')+'</span></div><div class="rpt-bar-bg"><div class="rpt-bar-fill alt" style="width:'+pct+'%"></div></div></div>';
+  });
+  rptHtml+='</div>';
+  // Status overzicht
+  rptHtml+='<div class="rpt-section"><div class="rpt-title">Status overzicht</div><div style="display:flex;flex-wrap:wrap;gap:8px">';
+  STATUSSEN.forEach(function(s,i){
+    rptHtml+='<div class="rpt-stat" style="min-width:120px"><div class="rpt-lbl">'+s+'</div><div class="rpt-val" style="font-size:18px">'+statusCount[i]+'</div></div>';
+  });
+  rptHtml+='</div></div></div>';
+  content.innerHTML=rptHtml;
+  fixes.append("FIX 3: buildReport herschreven zonder template literals")
 
 /* DETAIL MODAL */
 function openDetail(id){
@@ -2026,10 +2421,13 @@ function dlICS(id,type){
 }
 function dlLastICS(type){if(lastSavedId)dlICS(lastSavedId,type);}
 
+}
 document.getElementById('f-levdatum').value=today();
 document.getElementById('f-ophdatum').value=today();
 fs.status=1;
 document.querySelectorAll('#status-sel .status-opt').forEach((b,i)=>b.className='status-opt'+(i===1?' active-s1':''));
+// Start op dashboard tab
+showTab('dashboard');
 loadData();
 setInterval(()=>{if(document.getElementById('view-planning').classList.contains('active'))loadData();},60000);
 </script>
