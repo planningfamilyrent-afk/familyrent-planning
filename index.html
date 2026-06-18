@@ -5,6 +5,11 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:;">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Familyrent Planning</title>
+<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22Familyrent+Planning%22%2C%22short_name%22%3A%22Planning%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230C1135%22%2C%22theme_color%22%3A%22%230C1135%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg+xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527+viewBox%3D%25270+0+100+100%2527%253E%253Crect+width%3D%2527100%2527+height%3D%2527100%2527+fill%3D%2527%25230C1135%2527%2F%253E%253Ctext+y%3D%252770%2527+font-size%3D%252760%2527+text-anchor%3D%2527middle%2527+x%3D%252750%2527%253E%25F0%259F%259A%259A%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22192x192%22%7D%5D%7D">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FR Planning">
+<meta name="theme-color" content="#0C1135">
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>(function(){emailjs.init({publicKey:"tSEO9Yx-6g3asaLE-"});})();</script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
@@ -17,6 +22,20 @@
   --tx1:#0C1135;--tx2:#6b7280;--tx3:#9ca3af;
   --bl:rgba(12,17,53,.12);--bm:rgba(12,17,53,.22);
   --rm:8px;--rl:12px;
+}
+[data-theme="dark"]{
+  --navy:#1a1f3e;--sky:#61ABED;--bg:#0f1117;
+  --bg1:#1a1f2e;--bg2:#242938;--bg3:#2d3347;
+  --tx1:#e8eaf0;--tx2:#9ba3b8;--tx3:#5c6478;
+  --bl:rgba(255,255,255,.08);--bm:rgba(255,255,255,.15);
+}
+@media(prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --navy:#1a1f3e;--sky:#61ABED;--bg:#0f1117;
+    --bg1:#1a1f2e;--bg2:#242938;--bg3:#2d3347;
+    --tx1:#e8eaf0;--tx2:#9ba3b8;--tx3:#5c6478;
+    --bl:rgba(255,255,255,.08);--bm:rgba(255,255,255,.15);
+  }
 }
 html{font-size:16px}
 body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padding:12px}
@@ -536,7 +555,8 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
       <div class="hdr-sub"><span class="sdot" id="sdot"></span><span id="sstat">Verbinden...</span></div>
     </div>
   </div>
-  <button class="btn-new" onclick="showTab('nieuw')"><i class="ti ti-plus" aria-hidden="true"></i> Nieuwe boeking</button>
+  <button class="btn-new no-print" onclick="toggleDark()" id="dark-toggle" title="Donkere/lichte modus" style="background:rgba(255,255,255,.15);padding:8px 10px"><i class="ti ti-moon" aria-hidden="true"></i></button>
+<button class="btn-new" onclick="showTab('nieuw')"><i class="ti ti-plus" aria-hidden="true"></i> Nieuwe boeking</button>
 </div>
 
 <div class="banner banner-ok" id="bn-ok"><i class="ti ti-check" aria-hidden="true"></i><span id="bn-ok-msg"></span></div>
@@ -639,7 +659,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
         <div class="fg"><label class="fl">E-mailadres klant <span style="font-weight:400;color:var(--tx3);font-size:11px">(voor bevestigingsmail)</span></label><input class="fi" type="email" id="f-email" placeholder="bv. jan@voorbeeld.be"></div>
         <div class="fg"></div>
       </div>
-      <div class="frow s1"><div class="fg"><label class="fl">Leveringsadres <span class="req">*</span></label><input class="fi" id="f-adres" oninput="updateWeerFormulier()" placeholder="bv. Dorpstraat 12, Temse"></div></div>
+      <div class="frow s1"><div class="fg"><label class="fl">Leveringsadres <span class="req">*</span></label><input class="fi" id="f-adres" oninput="debounceWeer()" placeholder="bv. Dorpstraat 12, Temse"></div></div>
     </div>
     <div class="fsec">
       <div class="fsec-title"><i class="ti ti-building-warehouse" aria-hidden="true"></i> Levering & afhaling <span class="req">*</span></div>
@@ -836,6 +856,56 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 
 
 <script>
+
+// Service Worker voor offline gebruik
+(function(){
+  if(!('serviceWorker' in navigator)) return;
+
+  // Inline Service Worker via blob
+  var swCode = `
+const CACHE='fr-v1';
+const URLS=[self.location.pathname];
+self.addEventListener('install',e=>{
+  e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS)));
+  self.skipWaiting();
+});
+self.addEventListener('activate',e=>{
+  e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));
+  self.clients.claim();
+});
+self.addEventListener('fetch',e=>{
+  if(e.request.method!=='GET') return;
+  // API calls: network first, geen cache
+  if(e.request.url.includes('script.google.com')||e.request.url.includes('open-meteo.com')){
+    return;
+  }
+  e.respondWith(
+    caches.match(e.request).then(cached=>{
+      var fresh=fetch(e.request).then(res=>{
+        if(res.ok){
+          var clone=res.clone();
+          caches.open(CACHE).then(c=>c.put(e.request,clone));
+        }
+        return res;
+      }).catch(()=>cached);
+      return cached||fresh;
+    })
+  );
+});
+`;
+
+  try{
+    var blob=new Blob([swCode],{type:'application/javascript'});
+    var swUrl=URL.createObjectURL(blob);
+    navigator.serviceWorker.register(swUrl,{scope:'/'}).then(function(reg){
+      console.log('SW geregistreerd');
+    }).catch(function(err){
+      // Probeer fallback zonder scope
+      navigator.serviceWorker.register(swUrl).catch(function(){});
+    });
+  }catch(e){}
+})();
+
 window.addEventListener('error', function(e){
   console.error('JS Error:', e.message, 'in', e.filename, 'line', e.lineno);
   // Toon banner als er een kritieke fout is
@@ -1360,6 +1430,8 @@ function ppSaveToField(){
     }
   });
   field.value=lines.join('\n');
+  // Update weersblok als er buitenproducten zijn
+  updateWeerFormulier();
 }
 
 function ppLoadFromField(tekst){
@@ -1401,6 +1473,9 @@ function clearForm(){
   Array.from(w.querySelectorAll('.taak-input-row')).forEach(r=>r.remove());
   const afEl=document.getElementById('af');if(afEl)afEl.style.display='none';
   document.getElementById('ferr').style.display='none';
+  var acList=document.getElementById('ac-list');
+  if(acList){acList.style.display='none';acList._matches=[];}
+  document.getElementById('f-naam').value='';
   editId=null;
 }
 
@@ -1445,7 +1520,14 @@ async function saveBoeking(){
     saveC(boekingen);lastSavedId=b.id;
     const wasEdit=!!editId;
     editId=null;
-    slaKlantOp(b);
+    // Sla klant op: bij bewerken aantalBoekingen niet verhogen
+    if(!wasEdit) slaKlantOp(b);
+    else {
+      // Update wel adres/tel/email bij bewerken
+      var klanten=laadKlanten();
+      var ki=klanten.findIndex(function(k){return k.naam.toLowerCase()===b.naam.toLowerCase();});
+      if(ki>=0){klanten[ki].adres=b.adres||klanten[ki].adres;klanten[ki].tel=b.tel||klanten[ki].tel;klanten[ki].email=b.email||klanten[ki].email;try{localStorage.setItem(KLANTEN_KEY,JSON.stringify(klanten));}catch(e){}}
+    }
     updateStats();renderPlanning();
     if(wasEdit){
       banner('ok','Boeking bijgewerkt — '+b.naam);
@@ -1566,19 +1648,22 @@ function renderPlanning(){
   });
   container.innerHTML=html;
 
-  // Event delegation voor bcard-actions knoppen
-  container.addEventListener('click', function(e){
-    var btn=e.target.closest('button,a');
-    if(!btn) return;
-    var actions=btn.closest('.bcard-actions');
-    if(!actions) return;
-    e.stopPropagation();
-    var id=Number(actions.dataset.id);
-    if(btn.classList.contains('bca-ics-lev')){dlICS(id,'lev');}
-    else if(btn.classList.contains('bca-ics-oph')){dlICS(id,'oph');}
-    else if(btn.classList.contains('bca-edit')){editBoeking(id);}
-    else if(btn.classList.contains('bca-volt')){voltooiBoeking(id);}
-  },{once:false});
+  // Event delegation voor bcard-actions knoppen (eenmalig registreren)
+  if(!container._bcaListenerAdded){
+    container._bcaListenerAdded=true;
+    container.addEventListener('click', function(e){
+      var btn=e.target.closest('button,a');
+      if(!btn) return;
+      var actions=btn.closest('.bcard-actions');
+      if(!actions) return;
+      e.stopPropagation();
+      var id=Number(actions.dataset.id);
+      if(btn.classList.contains('bca-ics-lev')){dlICS(id,'lev');}
+      else if(btn.classList.contains('bca-ics-oph')){dlICS(id,'oph');}
+      else if(btn.classList.contains('bca-edit')){editBoeking(id);}
+      else if(btn.classList.contains('bca-volt')){voltooiBoeking(id);}
+    });
+  }
   }catch(err){console.error(err);document.getElementById('plan-list').innerHTML='<div class="empty"><i class="ti ti-alert-circle"></i>Fout bij laden. Herlaad de pagina.</div>';}
 }
 
@@ -2002,29 +2087,123 @@ function showBBDetail(name){
 function renderBetalen(){
   var el=document.getElementById('bet-content');
   if(!el) return;
+
+  // Filter opties
+  var filterPeriode=el._filterPeriode||'alle';
+  var nu=new Date();
   var open=boekingen.filter(function(b){
-    return !(b.voltooid===true||b.voltooid==='true')&&(!b.betaling||b.betaling==='');
+    if(b.voltooid===true||b.voltooid==='true') return false;
+    if(b.betaling&&b.betaling!=='') return false;
+    if(filterPeriode==='maand'){
+      var d=new Date((b.levdatum||'')+'T00:00:00');
+      return d.getMonth()===nu.getMonth()&&d.getFullYear()===nu.getFullYear();
+    }
+    if(filterPeriode==='kwartaal'){
+      var d2=new Date((b.levdatum||'')+'T00:00:00');
+      return Math.floor(d2.getMonth()/3)===Math.floor(nu.getMonth()/3)&&d2.getFullYear()===nu.getFullYear();
+    }
+    return true;
   });
+
   var totaal=open.reduce(function(s,b){return s+(parseFloat(b.prijs)||0);},0);
-  if(open.length===0){
-    el.innerHTML='<div class="empty"><i class="ti ti-check" style="color:#3B6D11"></i>Alle boekingen zijn betaald!</div>';
-    return;
-  }
-  var html='<div class="bet-totaal"><div class="bet-totaal-lbl">Totaal openstaand</div><div class="bet-totaal-val">€ '+fmtRound(totaal)+'</div></div>';
-  open.sort(function(a,b2){return (a.levdatum||'').localeCompare(b2.levdatum||'');}).forEach(function(b){
-    html+='<div class="bet-item" onclick="openDetail('+b.id+')">'+
-      '<div class="bet-info">'+
-        '<div class="bet-naam">'+esc(b.naam)+'</div>'+
-        '<div class="bet-meta">'+
-          '<span><i class="ti ti-calendar" style="font-size:11px"></i> '+fmtShort(b.levdatum)+'</span>'+
-          '<span><i class="ti ti-map-pin" style="font-size:11px"></i> '+esc(b.adres)+'</span>'+
-          (b.tel?'<span><a href="tel:'+esc(b.tel)+'" style="color:var(--sky)">'+esc(b.tel)+'</a></span>':'')+
-        '</div>'+
-      '</div>'+
-      '<div class="bet-prijs">'+(b.prijs?'€ '+esc(b.prijs):'—')+'</div>'+
-    '</div>';
+  var aantalMetPrijs=open.filter(function(b){return parseFloat(b.prijs)>0;}).length;
+
+  // Header met filters + export
+  var html='<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">';
+  html+='<div style="font-size:12px;color:var(--tx2)">Filter:</div>';
+  [{v:'alle',l:'Alle'},{v:'maand',l:'Deze maand'},{v:'kwartaal',l:'Dit kwartaal'}].forEach(function(f){
+    html+='<button class="fb'+(filterPeriode===f.v?' active':'')+'" data-periode="'+f.v+'">'+f.l+'</button>';
   });
+  html+='<button class="bsm-bl" style="margin-left:auto" onclick="exportBetalen()"><i class="ti ti-download" style="font-size:11px"></i> CSV export</button>';
+  html+='</div>';
+
+  // Statistieken
+  html+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">';
+  html+='<div class="rpt-stat"><div class="rpt-lbl">Openstaand</div><div class="rpt-val" style="color:#A32D2D">'+open.length+'</div></div>';
+  html+='<div class="rpt-stat"><div class="rpt-lbl">Totaal bedrag</div><div class="rpt-val">€ '+fmtRound(totaal)+'</div></div>';
+  html+='<div class="rpt-stat"><div class="rpt-lbl">Gem. per boeking</div><div class="rpt-val">€ '+(aantalMetPrijs>0?Math.round(totaal/aantalMetPrijs):0)+'</div></div>';
+  html+='</div>';
+
+  if(open.length===0){
+    html+='<div class="empty"><i class="ti ti-check" style="font-size:32px;color:#3B6D11"></i><br>Geen openstaande betalingen'+(filterPeriode!=='alle'?' in deze periode':'')+'!</div>';
+    el.innerHTML=html;return;
+  }
+
+  // Groepeer per maand
+  var perMaand={};
+  open.forEach(function(b){
+    var m=(b.levdatum||'????').slice(0,7);
+    if(!perMaand[m])perMaand[m]=[];
+    perMaand[m].push(b);
+  });
+
+  Object.keys(perMaand).sort().forEach(function(m){
+    var groep=perMaand[m];
+    var mTotaal=groep.reduce(function(s,b){return s+(parseFloat(b.prijs)||0);},0);
+    var parts=m.split('-');
+    var mLabel=parts.length>1?NLM[parseInt(parts[1])-1]+' '+parts[0]:m;
+    html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;margin:8px 0 4px;border-bottom:1px solid var(--bl)">';
+    html+='<span style="font-size:12px;font-weight:600;color:var(--tx1)">'+mLabel+'</span>';
+    html+='<span style="font-size:12px;color:#A32D2D;font-weight:600">€ '+fmtRound(mTotaal)+' ('+groep.length+'×)</span>';
+    html+='</div>';
+    groep.sort(function(a,b2){return (a.levdatum||'').localeCompare(b2.levdatum||'');}).forEach(function(b){
+      html+='<div class="bet-item" onclick="openDetail('+b.id+')">'+
+        '<div class="bet-info">'+
+          '<div class="bet-naam">'+esc(b.naam)+'</div>'+
+          '<div class="bet-meta">'+
+            '<span><i class="ti ti-calendar" style="font-size:11px"></i> '+fmtShort(b.levdatum)+'</span>'+
+            '<span><i class="ti ti-map-pin" style="font-size:11px"></i> '+esc(b.adres)+'</span>'+
+            (b.tel?'<span><a href="tel:'+esc(b.tel)+'" onclick="event.stopPropagation()" style="color:var(--sky)">'+esc(b.tel)+'</a></span>':'')+
+          '</div>'+
+        '</div>'+
+        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">'+
+          '<div class="bet-prijs">'+(b.prijs?'€ '+esc(b.prijs):'—')+'</div>'+
+          '<button class="bsm" style="font-size:10px;padding:3px 8px;background:#EAF3DE;color:#27500A;border-color:#97C459" onclick="event.stopPropagation();snelStatusBetalen('+b.id+')"><i class="ti ti-check" style="font-size:10px"></i> Betaald</button>'+
+        '</div>'+
+      '</div>';
+    });
+  });
+
   el.innerHTML=html;
+  el._filterPeriode=filterPeriode;
+  // Event delegation voor filterknopjes
+  el.querySelectorAll('[data-periode]').forEach(function(btn){
+    btn.addEventListener('click',function(){setBetFilter(btn.dataset.periode);});
+  });
+}
+
+function setBetFilter(periode){
+  var el=document.getElementById('bet-content');
+  if(el)el._filterPeriode=periode;
+  renderBetalen();
+}
+
+async function snelStatusBetalen(id){
+  const b=boekingen.find(x=>x.id===id);if(!b)return;
+  b.status=5;b.betaling='Cash bij levering';
+  saveC(boekingen);
+  const r=await api({action:'save',body:{action:'save',boeking:b}});
+  if(r&&r.success){renderBetalen();renderPlanning();banner('ok',b.naam+' gemarkeerd als betaald');}
+}
+
+function exportBetalen(){
+  var el=document.getElementById('bet-content');
+  var filterPeriode=el?el._filterPeriode||'alle':'alle';
+  var open=boekingen.filter(function(b){
+    if(b.voltooid===true||b.voltooid==='true') return false;
+    return !b.betaling||b.betaling==='';
+  });
+  var csv='Naam;Adres;Tel;Leverdatum;Prijs;Status\n';
+  open.forEach(function(b){
+    csv+='"'+( b.naam||'')+'";"'+(b.adres||'')+'";"'+(b.tel||'')+'";'+
+      (b.levdatum||'')+';'+(b.prijs||'')+';'+
+      (STATUSSEN[b.status||1]||'')+'\n';
+  });
+  var blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;a.download='familyrent-openstaand-'+today()+'.csv';
+  a.click();URL.revokeObjectURL(url);
 }
 
 
@@ -2087,7 +2266,7 @@ function acZoek(q){
   }).slice(0,8);
   if(matches.length===0){list.style.display='none';return;}
   list.innerHTML=matches.map(function(k,i){
-    var highlight=k.naam.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<span class="ac-highlight">$1</span>');
+    var highlight=k.naam.replace(new RegExp('('+q.replace(/[.*+?^${}()|\[\]\\]/g,'\\$&')+')','gi'),'<span class="ac-highlight">$1</span>');
     return '<div class="ac-item" data-idx="'+i+'">'+
       '<div class="ac-naam">'+highlight+'</div>'+
       '<div class="ac-meta">'+
@@ -2127,6 +2306,127 @@ function acKiesObj(k){
 function acSluit(){
   var list=document.getElementById('ac-list');
   if(list) list.style.display='none';
+}
+
+
+function dupliceerBoeking(id){
+  const b=boekingen.find(x=>x.id===id);if(!b)return;
+  // Kopieer alle velden behalve id, datums, status, voltooid
+  editId=null;
+  document.getElementById('f-naam').value=b.naam||'';
+  document.getElementById('f-adres').value=b.adres||'';
+  document.getElementById('f-tel').value=b.tel||'';
+  const fEmail=document.getElementById('f-email');if(fEmail)fEmail.value=b.email||'';
+  document.getElementById('f-prijs').value=b.prijs||'';
+  document.getElementById('f-bet').value=b.betaling||'';
+  document.getElementById('f-opm').value=b.opmerking||'';
+  // Datums: stel in op vandaag als vertrekpunt
+  document.getElementById('f-levdatum').value=today();
+  document.getElementById('f-ophdatum').value=today();
+  document.getElementById('f-levuur').value=b.levuur||'09:00';
+  document.getElementById('f-ophuur').value=b.ophuur||'10:00';
+  // Herstel levType
+  fs.levType=b.levType||'levering';
+  fs.vertrek=b.vertrek||null;
+  fs.matStatus=b.matStatus||null;
+  fs.status=1; // Nieuwe boeking = offerte
+  document.querySelectorAll('#ltype-grp .tg').forEach(btn=>{
+    btn.classList.remove('sel');
+    const isMatch=(fs.levType==='levering'&&btn.textContent.includes('leveren'))||
+                  (fs.levType==='afhaling-kallo'&&btn.textContent.includes('Kallo'))||
+                  (fs.levType==='afhaling-stekene'&&btn.textContent.includes('Stekene'));
+    if(isMatch)btn.classList.add('sel');
+  });
+  const levOp=document.getElementById('lev-opties');
+  const afhInfo=document.getElementById('afhaling-info');
+  if(fs.levType==='levering'){if(levOp)levOp.style.display='block';if(afhInfo)afhInfo.style.display='none';}
+  else{if(levOp)levOp.style.display='none';if(afhInfo)afhInfo.style.display='block';}
+  document.querySelectorAll('#vt-grp .tg').forEach(btn=>{btn.classList.remove('sel');if(b.vertrek&&btn.textContent.trim()===b.vertrek)btn.classList.add('sel');});
+  document.querySelectorAll('#ms-grp .tg').forEach(btn=>{btn.classList.remove('sel','sel-gr','sel-or');if(b.matStatus&&btn.textContent.trim()===b.matStatus)btn.classList.add(b.matStatus==='Reeds geladen'?'sel-gr':'sel-or');});
+  document.querySelectorAll('#status-sel .status-opt').forEach((btn,i)=>btn.className='status-opt'+(i===1?' active-s1':''));
+  document.querySelectorAll('#op-grid-lev .tg').forEach(btn=>btn.classList.toggle('sel',b.opstellers_lev&&b.opstellers_lev.includes(btn.textContent.trim())));
+  document.querySelectorAll('#op-grid-oph .tg:not(.and-tog-oph)').forEach(btn=>btn.classList.toggle('sel',b.opstellers_oph&&b.opstellers_oph.includes(btn.textContent.trim())));
+  // Laad producten
+  setTimeout(function(){
+    ppQty={};ppInit();ppLoadFromField(b.materiaal||'');
+  },50);
+  document.getElementById('ics-panel').style.display='none';
+  var nieuwTab=document.getElementById('tab-nieuw');
+  if(nieuwTab)nieuwTab.innerHTML='<i class="ti ti-copy"></i> Duplicaat';
+  showTab('nieuw');
+  banner('ok','Boeking gekopieerd van '+b.naam+' — pas de datum aan en sla op.');
+}
+
+
+function addToGCal(id,type){
+  const b=boekingen.find(x=>x.id===id);if(!b)return;
+  const isLev=type==='lev';
+  const datum=isLev?b.levdatum:b.ophdatum;
+  const uur=isLev?b.levuur:b.ophuur;
+  const title=(isLev?'Levering':'Ophaling')+' — '+b.naam;
+  // Bereken start en eindtijd (levering +3u standaard)
+  const[h,m]=uur.split(':').map(Number);
+  const eH=pad((h+3)%24);
+  const datStr=datum.replace(/-/g,'');
+  const start=datStr+'T'+pad(h)+pad(m)+'00';
+  const end=datStr+'T'+eH+pad(m)+'00';
+  const details='Klant: '+b.naam+
+    (b.tel?'\nTel: '+b.tel:'')+
+    '\nAdres: '+b.adres+
+    '\nVertrek: '+(b.vertrek||'Kallo')+
+    (b.materiaal?'\n\nMateriaal:\n'+b.materiaal.split('\n').slice(0,5).join('\n'):'');
+  const url='https://calendar.google.com/calendar/render?action=TEMPLATE'+
+    '&text='+encodeURIComponent(title)+
+    '&dates='+start+'/'+end+
+    '&details='+encodeURIComponent(details)+
+    '&location='+encodeURIComponent(b.adres||'');
+  window.open(url,'_blank','noopener');
+}
+
+
+function toggleDark(){
+  var html=document.documentElement;
+  var cur=html.getAttribute('data-theme');
+  var next=cur==='dark'?'light':'dark';
+  html.setAttribute('data-theme',next);
+  var btn=document.getElementById('dark-toggle');
+  if(btn)btn.innerHTML=next==='dark'?'<i class="ti ti-sun"></i>':'<i class="ti ti-moon"></i>';
+  try{localStorage.setItem('fr_theme',next);}catch(e){}
+}
+
+function initTheme(){
+  var saved;
+  try{saved=localStorage.getItem('fr_theme');}catch(e){}
+  var theme=saved||(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+  document.documentElement.setAttribute('data-theme',theme);
+  var btn=document.getElementById('dark-toggle');
+  if(btn)btn.innerHTML=theme==='dark'?'<i class="ti ti-sun"></i>':'<i class="ti ti-moon"></i>';
+}
+
+
+var _deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',function(e){
+  e.preventDefault();_deferredPrompt=e;
+  var b=document.getElementById('pwa-banner');
+  if(b) b.style.display='flex';
+});
+window.addEventListener('appinstalled',function(){
+  var b=document.getElementById('pwa-banner');
+  if(b) b.style.display='none';
+  _deferredPrompt=null;
+});
+function installPWA(){
+  if(_deferredPrompt){
+    _deferredPrompt.prompt();
+    _deferredPrompt.userChoice.then(function(r){
+      _deferredPrompt=null;
+      var b=document.getElementById('pwa-banner');
+      if(b) b.style.display='none';
+    });
+  } else {
+    // iOS instructie
+    banner('ok','Op iPhone: tik de Deel-knop (vierkant met pijl) en kies "Zet op beginscherm"');
+  }
 }
 
 function backBB(){document.getElementById('bb-det').classList.remove('active');document.getElementById('bb-sel').style.display='block';}
@@ -2472,8 +2772,11 @@ function openDetail(id){
   document.getElementById('mo-act').innerHTML=`
     <button class="ics-btn" onclick="dlICS(${id},'lev')"><i class="ti ti-calendar-plus"></i> .ics lev</button>
     <button class="ics-btn" onclick="dlICS(${id},'oph')"><i class="ti ti-calendar-plus"></i> .ics oph</button>
+    <button class="ics-btn" style="background:#4285F4;color:#fff;border-color:#4285F4" onclick="addToGCal(${id},'lev')"><i class="ti ti-brand-google"></i> Cal lev</button>
+    <button class="ics-btn" style="background:#34A853;color:#fff;border-color:#34A853" onclick="addToGCal(${id},'oph')"><i class="ti ti-brand-google"></i> Cal oph</button>
     ${waUrl?`<a class="wa-btn wa-btn-lg" href="${waUrl}" target="_blank" rel="noopener"><i class="ti ti-brand-whatsapp"></i> We zijn onderweg</a>`:''}
     <button class="bsm" style="background:#E6F1FB;color:#0C447C;border-color:#61ABED;font-weight:500" onclick="openLaadbriefje(${id});closeMo()"><i class="ti ti-clipboard-list"></i> Laadbriefje</button>
+    <button class="bsm" style="background:#F3E8FF;color:#7C3AED;border-color:#C4A8E8" onclick="dupliceerBoeking(${id});closeMo()"><i class="ti ti-copy"></i> Dupliceer</button>
     <button class="bsm" onclick="editBoeking(${id});closeMo()"><i class="ti ti-edit"></i> Bewerken</button>
     <button class="bsm" style="background:#EAF3DE;color:#27500A;border-color:#97C459;font-weight:500" onclick="voltooiBoeking(${id});closeMo()"><i class="ti ti-circle-check"></i> Voltooien</button>
     <button class="bsm" style="color:#791F1F;border-color:#F09595" onclick="delBoeking(${id})"><i class="ti ti-trash"></i> Verwijderen</button>`;
@@ -2546,16 +2849,29 @@ function heeftBuitenProduct(materiaal){
   return BUITEN_PRODUCTEN.some(function(p){return lower.includes(p);});
 }
 
+var _weerCache={};
 async function laadWeer(datum,adres,containerId){
   var el=document.getElementById(containerId);
   if(!el) return;
   if(!datum||!adres){el.innerHTML='';return;}
-  // Controleer of er buitenproducten zijn in de boeking
+  // Check cache (geldig voor 1 uur)
+  var cacheKey=datum+'|'+adres.toLowerCase().trim();
+  var cached=_weerCache[cacheKey];
+  if(cached&&(Date.now()-cached.time)<3600000){
+    el.innerHTML=cached.html;
+    return;
+  }
   el.innerHTML='<div class="weer-loading"><i class="ti ti-loader" style="font-size:12px"></i> Weersvoorspelling laden...</div>';
   try{
     // Stap 1: Geocodeer het adres via Open-Meteo geocoding
+    // Gebruik gemeente (na komma) voor betere geocoding resultaten
+    var adresDelen=adres.split(',');
+    var zoekterm=adresDelen.length>1?adresDelen[adresDelen.length-1].trim():adresDelen[0].trim();
+    // Verwijder postcode als aanwezig (4 cijfers)
+    zoekterm=zoekterm.replace(/\b\d{4}\b/,'').trim();
+    if(!zoekterm) zoekterm=adresDelen[0].trim();
     var geoUrl='https://geocoding-api.open-meteo.com/v1/search?name='+
-      encodeURIComponent(adres.split(',')[0].trim())+'&count=1&language=nl&format=json';
+      encodeURIComponent(zoekterm)+'&count=1&language=nl&format=json&country=BE';
     var geoRes=await fetch(geoUrl);
     var geoData=await geoRes.json();
     var lat,lon;
@@ -2595,7 +2911,9 @@ async function laadWeer(datum,adres,containerId){
     if(gevaar.length>0&&(wind>=50||code>=95)){
       detail+='<br><strong>Bel de klant om de levering te bespreken.</strong>';
     }
-    el.innerHTML='<div class="weer-blok '+klasse+'"><span class="weer-icon">'+icon+'</span><div class="weer-info"><div class="weer-title">'+title+'</div><div class="weer-detail">'+detail+'</div></div></div>';
+    var weerHtml='<div class="weer-blok '+klasse+'"><span class="weer-icon">'+icon+'</span><div class="weer-info"><div class="weer-title">'+title+'</div><div class="weer-detail">'+detail+'</div></div></div>';
+    el.innerHTML=weerHtml;
+    _weerCache[cacheKey]={html:weerHtml,time:Date.now()};
   }catch(e){
     el.innerHTML='<div class="weer-loading"><i class="ti ti-wifi-off" style="font-size:12px"></i> Weer kon niet geladen worden.</div>';
   }
@@ -2623,6 +2941,12 @@ function weerCodeIcon(code){
   if(code<=79) return '<i class="ti ti-snowflake"></i>';
   if(code<=84) return '<i class="ti ti-cloud-storm"></i>';
   return '<i class="ti ti-bolt" style="color:#A32D2D"></i>';
+}
+
+var _weerTimer=null;
+function debounceWeer(){
+  clearTimeout(_weerTimer);
+  _weerTimer=setTimeout(updateWeerFormulier,800);
 }
 
 function updateWeerFormulier(){
@@ -2884,6 +3208,8 @@ document.getElementById('f-levdatum').value=today();
 document.getElementById('f-ophdatum').value=today();
 fs.status=1;
 document.querySelectorAll('#status-sel .status-opt').forEach((b,i)=>b.className='status-opt'+(i===1?' active-s1':''));
+// Initialiseer thema
+initTheme();
 // Start op dashboard tab
 showTab('dashboard');
 loadData();
