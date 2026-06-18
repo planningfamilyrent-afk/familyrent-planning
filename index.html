@@ -478,6 +478,17 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 .db-bb-chip-cnt{font-size:10px;color:var(--tx2)}
 .db-bb-chip.heeft-jobs{border-color:var(--sky);background:#E6F1FB}
 
+/* KLANTENDATABASE AUTOCOMPLETE */
+.ac-wrap{position:relative}
+.ac-dropdown{position:absolute;top:100%;left:0;right:0;background:var(--bg1);border:.5px solid var(--sky);border-top:none;border-radius:0 0 var(--rm) var(--rm);z-index:100;max-height:220px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.ac-item{padding:8px 12px;cursor:pointer;border-bottom:.5px solid var(--bl);display:flex;flex-direction:column;gap:2px}
+.ac-item:last-child{border-bottom:none}
+.ac-item:hover{background:var(--bg2)}
+.ac-naam{font-size:13px;font-weight:500;color:var(--tx1)}
+.ac-meta{font-size:11px;color:var(--tx2)}
+.ac-highlight{color:var(--sky);font-weight:600}
+.klanten-badge{font-size:10px;background:#E6F1FB;color:#0C447C;padding:2px 7px;border-radius:20px;margin-left:6px;font-weight:500}
+
 /* BETALEN VIEW */
 .bet-item{background:var(--bg1);border:.5px solid var(--bl);border-radius:var(--rm);padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:border-color .15s;display:flex;align-items:center;gap:12px}
 .bet-item:hover{border-color:var(--sky)}
@@ -488,6 +499,17 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 .bet-totaal{background:var(--navy);color:#fff;border-radius:var(--rm);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
 .bet-totaal-lbl{font-size:13px;color:rgba(255,255,255,.7)}
 .bet-totaal-val{font-size:22px;font-weight:700;color:#fff}
+
+/* WEERSWAARSCHUWING */
+.weer-blok{border-radius:var(--rm);padding:9px 13px;margin-bottom:10px;display:flex;align-items:flex-start;gap:10px;font-size:12px}
+.weer-ok{background:#EAF3DE;border:.5px solid #97C459;color:#27500A}
+.weer-warn{background:#FAEEDA;border:.5px solid #EF9F27;color:#854F0B}
+.weer-danger{background:#FCEBEB;border:.5px solid #F09595;color:#A32D2D}
+.weer-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.weer-info{flex:1}
+.weer-title{font-weight:600;margin-bottom:2px}
+.weer-detail{font-size:11px;opacity:.85;line-height:1.5}
+.weer-loading{color:var(--tx3);font-size:11px;display:flex;align-items:center;gap:5px;padding:6px 0}
 
 /* MOBILE */
 @media(max-width:480px){
@@ -617,7 +639,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
         <div class="fg"><label class="fl">E-mailadres klant <span style="font-weight:400;color:var(--tx3);font-size:11px">(voor bevestigingsmail)</span></label><input class="fi" type="email" id="f-email" placeholder="bv. jan@voorbeeld.be"></div>
         <div class="fg"></div>
       </div>
-      <div class="frow s1"><div class="fg"><label class="fl">Leveringsadres <span class="req">*</span></label><input class="fi" id="f-adres" placeholder="bv. Dorpstraat 12, Temse"></div></div>
+      <div class="frow s1"><div class="fg"><label class="fl">Leveringsadres <span class="req">*</span></label><input class="fi" id="f-adres" oninput="updateWeerFormulier()" placeholder="bv. Dorpstraat 12, Temse"></div></div>
     </div>
     <div class="fsec">
       <div class="fsec-title"><i class="ti ti-building-warehouse" aria-hidden="true"></i> Levering & afhaling <span class="req">*</span></div>
@@ -675,7 +697,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
     <div class="fsec">
       <div class="fsec-title"><i class="ti ti-truck-delivery" aria-hidden="true"></i> <span id="form-lev-title">Levering</span></div>
       <div class="frow">
-        <div class="fg"><label class="fl">Datum <span class="req">*</span></label><input class="fi" type="date" id="f-levdatum"></div>
+        <div class="fg"><label class="fl">Datum <span class="req">*</span></label><input class="fi" type="date" id="f-levdatum" onchange="updateWeerFormulier()"></div>
         <div class="fg"><label class="fl">Tijdstip</label><input class="fi" type="time" id="f-levuur" value="09:00"></div>
       </div>
     </div>
@@ -1034,6 +1056,19 @@ async function loadData(){
     boekingen=data.map(normB).filter(b=>b&&b.id&&b.naam&&b.levdatum);
     saveC(boekingen);
     banner('ok',boekingen.length+' boeking'+(boekingen.length!==1?'en':'')+' gesynchroniseerd');
+    // Bouw klantendatabase op uit geladen boekingen
+    try{
+      var klanten={};
+      boekingen.forEach(function(b){
+        if(!b.naam||!b.naam.trim()) return;
+        var key=b.naam.toLowerCase();
+        if(!klanten[key]){klanten[key]={naam:b.naam,adres:b.adres||'',tel:b.tel||'',email:b.email||'',aantalBoekingen:0,laatstGeboekt:'',materiaalVorig:''};}
+        klanten[key].aantalBoekingen++;
+        if((b.levdatum||'')>(klanten[key].laatstGeboekt||'')) klanten[key].laatstGeboekt=b.levdatum;
+        if(b.materiaal) klanten[key].materiaalVorig=b.materiaal;
+      });
+      localStorage.setItem(KLANTEN_KEY,JSON.stringify(Object.values(klanten)));
+    }catch(e){}
   } else if(!data){
     // Verbinding mislukt — toon duidelijke foutmelding
     if(boekingen.length===0){
@@ -1410,6 +1445,7 @@ async function saveBoeking(){
     saveC(boekingen);lastSavedId=b.id;
     const wasEdit=!!editId;
     editId=null;
+    slaKlantOp(b);
     updateStats();renderPlanning();
     if(wasEdit){
       banner('ok','Boeking bijgewerkt — '+b.naam);
@@ -1991,6 +2027,108 @@ function renderBetalen(){
   el.innerHTML=html;
 }
 
+
+// ============================================================
+// KLANTENDATABASE
+// ============================================================
+var KLANTEN_KEY='fr_klanten_v1';
+
+function slaKlantOp(b){
+  if(!b.naam||!b.naam.trim()) return;
+  var klanten=laadKlanten();
+  var existing=klanten.find(function(k){return k.naam.toLowerCase()===b.naam.toLowerCase();});
+  var entry={
+    naam:b.naam.trim(),
+    adres:b.adres||'',
+    tel:b.tel||'',
+    email:b.email||'',
+    aantalBoekingen:(existing?existing.aantalBoekingen:0)+1,
+    laatstGeboekt:b.levdatum||today(),
+    materiaalVorig:b.materiaal||''
+  };
+  if(existing){
+    var idx=klanten.indexOf(existing);
+    klanten[idx]=entry;
+  } else {
+    klanten.push(entry);
+  }
+  try{localStorage.setItem(KLANTEN_KEY,JSON.stringify(klanten));}catch(e){}
+}
+
+function laadKlanten(){
+  try{
+    var raw=localStorage.getItem(KLANTEN_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  // Bouw klantendatabase op uit bestaande boekingen
+  var klanten={};
+  boekingen.forEach(function(b){
+    if(!b.naam||!b.naam.trim()) return;
+    var key=b.naam.toLowerCase();
+    if(!klanten[key]){
+      klanten[key]={naam:b.naam,adres:b.adres||'',tel:b.tel||'',
+        email:b.email||'',aantalBoekingen:0,
+        laatstGeboekt:b.levdatum||'',materiaalVorig:b.materiaal||''};
+    }
+    klanten[key].aantalBoekingen++;
+    if((b.levdatum||'')>klanten[key].laatstGeboekt) klanten[key].laatstGeboekt=b.levdatum;
+  });
+  return Object.values(klanten);
+}
+
+function acZoek(q){
+  var list=document.getElementById('ac-list');
+  if(!list) return;
+  if(!q||q.length<2){list.style.display='none';return;}
+  var klanten=laadKlanten();
+  var matches=klanten.filter(function(k){
+    return k.naam.toLowerCase().includes(q.toLowerCase())||
+           (k.adres||'').toLowerCase().includes(q.toLowerCase());
+  }).slice(0,8);
+  if(matches.length===0){list.style.display='none';return;}
+  list.innerHTML=matches.map(function(k,i){
+    var highlight=k.naam.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<span class="ac-highlight">$1</span>');
+    return '<div class="ac-item" data-idx="'+i+'">'+
+      '<div class="ac-naam">'+highlight+'</div>'+
+      '<div class="ac-meta">'+
+        (k.adres?'<i class="ti ti-map-pin" style="font-size:10px"></i> '+esc(k.adres)+' &nbsp;':'') +
+        (k.tel?'<i class="ti ti-phone" style="font-size:10px"></i> '+esc(k.tel)+' &nbsp;':'')+
+        k.aantalBoekingen+' boeking'+(k.aantalBoekingen!==1?'en':'')+
+      '</div>'+
+    '</div>';
+  }).join('');
+  // Bewaar matches voor click handler
+  list._matches=matches;
+  list.style.display='block';
+}
+
+// Event delegation voor autocomplete
+document.addEventListener('mousedown', function(e){
+  var item=e.target.closest('.ac-item');
+  if(!item) return;
+  var list=document.getElementById('ac-list');
+  if(!list||!list._matches) return;
+  var idx=parseInt(item.dataset.idx);
+  if(!isNaN(idx)&&list._matches[idx]){
+    acKiesObj(list._matches[idx]);
+  }
+});
+
+function acKiesObj(k){
+  document.getElementById('f-naam').value=k.naam;
+  if(k.adres) document.getElementById('f-adres').value=k.adres;
+  if(k.tel) document.getElementById('f-tel').value=k.tel;
+  var fEmail=document.getElementById('f-email');
+  if(fEmail&&k.email) fEmail.value=k.email;
+  document.getElementById('ac-list').style.display='none';
+  updateWeerFormulier();
+}
+
+function acSluit(){
+  var list=document.getElementById('ac-list');
+  if(list) list.style.display='none';
+}
+
 function backBB(){document.getElementById('bb-det').classList.remove('active');document.getElementById('bb-sel').style.display='block';}
 
 function printPlanning(){
@@ -2295,6 +2433,7 @@ function openDetail(id){
     ${b.tel?`<div class="dr"><span class="dl"><i class="ti ti-phone" aria-hidden="true"></i> Tel</span><span class="dv"><a href="tel:${esc(b.tel)}" style="color:var(--sky)">${esc(b.tel)}</a></span></div>`:''}
     <div class="dd"></div>
     <div class="dr"><span class="dl"><i class="ti ti-truck-delivery" aria-hidden="true"></i> ${b.levType&&b.levType!=='levering'?'Afhalen door klant':'Levering'}</span><span class="dv">${fmtDate(b.levdatum)} om ${b.levuur}</span></div>
+    ${heeftBuitenProduct(b.materiaal)?`<div id="weer-detail-${id}"><div class="weer-loading"><i class="ti ti-loader" style="font-size:12px"></i> Weersvoorspelling laden...</div></div>`:''}
     <div class="dr"><span class="dl"><i class="ti ti-arrow-back-up" aria-hidden="true"></i> ${b.levType&&b.levType!=='levering'?'Terugbrengen door klant':'Ophaling'}</span><span class="dv">${fmtDate(b.ophdatum)} om ${b.ophuur}</span></div>
     <div class="dd"></div>
     ${b.levType&&b.levType!=='levering'?
@@ -2339,6 +2478,10 @@ function openDetail(id){
     <button class="bsm" style="background:#EAF3DE;color:#27500A;border-color:#97C459;font-weight:500" onclick="voltooiBoeking(${id});closeMo()"><i class="ti ti-circle-check"></i> Voltooien</button>
     <button class="bsm" style="color:#791F1F;border-color:#F09595" onclick="delBoeking(${id})"><i class="ti ti-trash"></i> Verwijderen</button>`;
   document.getElementById('mo').classList.add('open');
+  // Laad weersdata als er buitenproducten zijn
+  if(heeftBuitenProduct(b.materiaal)){
+    laadWeer(b.levdatum,b.adres,'weer-detail-'+id);
+  }
 }
 function closeMo(){document.getElementById('mo').classList.remove('open');}
 
@@ -2394,6 +2537,104 @@ var EXTRA_MATERIAAL={
 };
 
 // Detecteer welk extra materiaal nodig is op basis van productnaam
+// Weerswaarschuwingen via Open-Meteo (gratis, geen API key nodig)
+var BUITEN_PRODUCTEN=['tent','stretchtent','springkasteel','unicorn','ridder','piratenkasteel','disco'];
+
+function heeftBuitenProduct(materiaal){
+  if(!materiaal) return false;
+  var lower=materiaal.toLowerCase();
+  return BUITEN_PRODUCTEN.some(function(p){return lower.includes(p);});
+}
+
+async function laadWeer(datum,adres,containerId){
+  var el=document.getElementById(containerId);
+  if(!el) return;
+  if(!datum||!adres){el.innerHTML='';return;}
+  // Controleer of er buitenproducten zijn in de boeking
+  el.innerHTML='<div class="weer-loading"><i class="ti ti-loader" style="font-size:12px"></i> Weersvoorspelling laden...</div>';
+  try{
+    // Stap 1: Geocodeer het adres via Open-Meteo geocoding
+    var geoUrl='https://geocoding-api.open-meteo.com/v1/search?name='+
+      encodeURIComponent(adres.split(',')[0].trim())+'&count=1&language=nl&format=json';
+    var geoRes=await fetch(geoUrl);
+    var geoData=await geoRes.json();
+    var lat,lon;
+    if(geoData.results&&geoData.results.length>0){
+      lat=geoData.results[0].latitude;
+      lon=geoData.results[0].longitude;
+    } else {
+      // Fallback: gebruik centrum België
+      lat=51.05;lon=4.35;
+    }
+    // Stap 2: Haal weersdata op
+    var weerUrl='https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+
+      '&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,windspeed_10m_max,winddirection_10m_dominant'+
+      '&timezone=Europe%2FBrussels&start_date='+datum+'&end_date='+datum+'&forecast_days=16';
+    var weerRes=await fetch(weerUrl);
+    var weerData=await weerRes.json();
+    if(!weerData.daily||!weerData.daily.weathercode||weerData.daily.weathercode.length===0){
+      el.innerHTML='<div class="weer-blok weer-warn"><span class="weer-icon"><i class="ti ti-cloud-question"></i></span><div class="weer-info"><div class="weer-title">Weer niet beschikbaar</div><div class="weer-detail">Datum ligt te ver in de toekomst (max 16 dagen vooruit).</div></div></div>';
+      return;
+    }
+    var code=weerData.daily.weathercode[0];
+    var tempMax=Math.round(weerData.daily.temperature_2m_max[0]);
+    var tempMin=Math.round(weerData.daily.temperature_2m_min[0]);
+    var neerslag=Math.round(weerData.daily.precipitation_sum[0]*10)/10;
+    var wind=Math.round(weerData.daily.windspeed_10m_max[0]);
+    // Bepaal ernst
+    var gevaar=[];
+    if(wind>=50) gevaar.push('Windvlaag '+wind+' km/h');
+    if(neerslag>=10) gevaar.push('Zware regen '+neerslag+'mm');
+    else if(neerslag>=5) gevaar.push('Regen verwacht '+neerslag+'mm');
+    if(code>=95) gevaar.push('Onweer verwacht');
+    var weerLabel=weerCodeLabel(code);
+    var icon=weerCodeIcon(code);
+    var klasse=gevaar.length>0?(wind>=50||neerslag>=10||code>=95?'weer-danger':'weer-warn'):'weer-ok';
+    var title=gevaar.length>0?gevaar.join(' · '):weerLabel;
+    var detail='Max '+tempMax+'°C, min '+tempMin+'°C · Neerslag: '+neerslag+'mm · Wind: '+wind+' km/h';
+    if(gevaar.length>0&&(wind>=50||code>=95)){
+      detail+='<br><strong>Bel de klant om de levering te bespreken.</strong>';
+    }
+    el.innerHTML='<div class="weer-blok '+klasse+'"><span class="weer-icon">'+icon+'</span><div class="weer-info"><div class="weer-title">'+title+'</div><div class="weer-detail">'+detail+'</div></div></div>';
+  }catch(e){
+    el.innerHTML='<div class="weer-loading"><i class="ti ti-wifi-off" style="font-size:12px"></i> Weer kon niet geladen worden.</div>';
+  }
+}
+
+function weerCodeLabel(code){
+  if(code===0) return 'Helder';
+  if(code<=2) return 'Licht bewolkt';
+  if(code<=3) return 'Bewolkt';
+  if(code<=49) return 'Mist';
+  if(code<=59) return 'Motregen';
+  if(code<=69) return 'Regen';
+  if(code<=79) return 'Sneeuw';
+  if(code<=84) return 'Buien';
+  if(code<=94) return 'Hagel';
+  return 'Onweer';
+}
+
+function weerCodeIcon(code){
+  if(code===0) return '<i class="ti ti-sun" style="color:#EF9F27"></i>';
+  if(code<=2) return '<i class="ti ti-cloud-sun"></i>';
+  if(code<=3) return '<i class="ti ti-cloud"></i>';
+  if(code<=49) return '<i class="ti ti-mist"></i>';
+  if(code<=69) return '<i class="ti ti-cloud-rain"></i>';
+  if(code<=79) return '<i class="ti ti-snowflake"></i>';
+  if(code<=84) return '<i class="ti ti-cloud-storm"></i>';
+  return '<i class="ti ti-bolt" style="color:#A32D2D"></i>';
+}
+
+function updateWeerFormulier(){
+  var datum=document.getElementById('f-levdatum').value;
+  var adres=document.getElementById('f-adres').value;
+  var mat=document.getElementById('f-mat').value;
+  var el=document.getElementById('weer-formulier');
+  if(!el) return;
+  if(!datum||!heeftBuitenProduct(mat)){el.innerHTML='';return;}
+  laadWeer(datum,adres,'weer-formulier');
+}
+
 function detecteerExtraMateriaal(productnaam){
   var n=productnaam.toLowerCase();
   // Tenten
