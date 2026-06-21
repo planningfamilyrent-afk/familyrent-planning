@@ -433,6 +433,44 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 .ik-btn.aangemeld:hover{background:#E24B4A;border-color:#E24B4A}
 .ik-btn.aangemeld:hover::after{content:' ✕';font-size:11px}
 
+/* VOORRAAD MODULE */
+.vr-wrap{display:flex;flex-direction:column;gap:14px}
+.vr-hdr{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+.vr-hdr-title{font-size:15px;font-weight:600;color:var(--tx1)}
+.vr-hdr-sub{font-size:12px;color:var(--tx2)}
+.vr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px}
+.vr-item{background:var(--bg1);border:.5px solid var(--bl);border-radius:var(--rm);padding:12px 14px;display:flex;align-items:center;gap:10px}
+.vr-item.vr-ok{border-color:#97C459}
+.vr-item.vr-warn{border-color:#EF9F27}
+.vr-item.vr-conflict{border-color:#E24B4A}
+.vr-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.vr-dot-ok{background:#97C459}
+.vr-dot-warn{background:#EF9F27}
+.vr-dot-conflict{background:#E24B4A}
+.vr-dot-na{background:var(--tx3)}
+.vr-info{flex:1;min-width:0}
+.vr-naam{font-size:13px;font-weight:500;color:var(--tx1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vr-meta{font-size:11px;color:var(--tx2);margin-top:2px}
+.vr-stock{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0}
+.vr-stock-val{font-size:16px;font-weight:700;color:var(--tx1);line-height:1}
+.vr-stock-lbl{font-size:10px;color:var(--tx3)}
+.vr-edit-btn{width:28px;height:28px;border-radius:var(--rm);border:.5px solid var(--bm);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--tx2);flex-shrink:0}
+.vr-edit-btn:hover{background:var(--bg2);color:var(--tx1)}
+.vr-cat-hdr{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--tx2);padding:6px 0 4px;border-bottom:.5px solid var(--bl);margin-bottom:6px}
+/* Conflict badges in boeking */
+.conflict-badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;white-space:nowrap;display:inline-flex;align-items:center;gap:3px}
+.cb-ok{background:#EAF3DE;color:#27500A}
+.cb-warn{background:#FAEEDA;color:#854F0B}
+.cb-conflict{background:#FCEBEB;color:#A32D2D}
+/* Inline beschikbaarheid in productpicker */
+.pp-avail{font-size:10px;margin-top:2px}
+.pp-avail-ok{color:#27500A}
+.pp-avail-warn{color:#854F0B}
+.pp-avail-conflict{color:#A32D2D}
+/* Voorraad input modal */
+.vr-modal-body{padding:16px}
+.vr-modal-titel{font-size:15px;font-weight:600;color:var(--tx1);margin-bottom:12px}
+
 /* AFDRUKKEN */
 @media print{
   :root{--bg:#fff;--bg1:#fff;--bg2:#f5f7fc;--tx1:#0C1135;--tx2:#6b7280;--bl:rgba(12,17,53,.12)}
@@ -610,6 +648,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
   <button class="tab" onclick="showTab('tijdlijn')" id="tab-tijdlijn"><i class="ti ti-timeline" aria-hidden="true"></i> Tijdlijn</button>
   <button class="tab" onclick="showTab('rit')" id="tab-rit"><i class="ti ti-route" aria-hidden="true"></i> Ritplanning</button>
   <button class="tab" onclick="showTab('mijn')" id="tab-mijn"><i class="ti ti-user" aria-hidden="true"></i> Mijn planning</button>
+  <button class="tab" onclick="showTab('voorraad')" id="tab-voorraad"><i class="ti ti-package" aria-hidden="true"></i> Voorraad</button>
   <button class="tab" onclick="showTab('rapport')" id="tab-rapport"><i class="ti ti-chart-bar" aria-hidden="true"></i> Rapport</button>
   <button class="tab" onclick="showTab('nieuw')" id="tab-nieuw"><i class="ti ti-plus" aria-hidden="true"></i> Nieuw</button>
   
@@ -679,6 +718,44 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
     </div>
     <div class="bb-stats" id="bb-stats"></div>
     <div id="bb-list"></div>
+  </div>
+</div>
+
+<!-- VOORRAAD -->
+<div class="view" id="view-voorraad">
+  <div class="vr-wrap" id="vr-wrap">
+    <div class="loading"><i class="ti ti-loader"></i>Voorraad laden...</div>
+  </div>
+</div>
+
+<!-- VOORRAAD EDIT MODAL -->
+<div class="mo" id="vr-mo">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-hdr">
+      <div class="modal-title" id="vr-mo-title">Voorraad aanpassen</div>
+      <button class="bcl" onclick="document.getElementById('vr-mo').classList.remove('open')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="vr-modal-body">
+      <input type="hidden" id="vr-mo-id">
+      <div class="fg" style="margin-bottom:12px">
+        <label class="fl">Product</label>
+        <div style="font-size:14px;font-weight:600;color:var(--tx1)" id="vr-mo-naam">—</div>
+      </div>
+      <div class="fg" style="margin-bottom:12px">
+        <label class="fl">Totale voorraad (eigen materiaal) <span class="req">*</span></label>
+        <input class="fi" type="number" id="vr-mo-stock" min="0" max="9999" placeholder="bv. 4">
+        <div style="font-size:11px;color:var(--tx2);margin-top:4px">Het totaal aantal stuks dat Familyrent bezit.</div>
+      </div>
+      <div class="fg" style="margin-bottom:16px">
+        <label class="fl">Minimum buffer (waarschuwingslevel)</label>
+        <input class="fi" type="number" id="vr-mo-buffer" min="0" max="999" placeholder="bv. 1" value="0">
+        <div style="font-size:11px;color:var(--tx2);margin-top:4px">Oranje waarschuwing als beschikbaar ≤ buffer.</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="bprim" onclick="vrSlaOp()"><i class="ti ti-check"></i> Opslaan</button>
+        <button class="bsec" onclick="document.getElementById('vr-mo').classList.remove('open')">Annuleren</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -871,7 +948,10 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
         <div class="laad-title"><i class="ti ti-clipboard-list"></i> Laadbriefje</div>
         <div class="laad-sub" id="laad-sub">—</div>
       </div>
-      <button class="bcl" onclick="document.getElementById('laad-mo').classList.remove('open')" style="color:#fff"><i class="ti ti-x"></i></button>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button onclick="printLaadlijst()" style="background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:var(--rm);padding:5px 10px;font-size:11px;cursor:pointer;font-family:'Poppins',sans-serif;display:flex;align-items:center;gap:4px"><i class="ti ti-printer" style="font-size:12px"></i> Print / PDF</button>
+        <button class="bcl" onclick="document.getElementById('laad-mo').classList.remove('open')" style="color:#fff"><i class="ti ti-x"></i></button>
+      </div>
     </div>
     <div class="laad-body">
       <div class="laad-info" id="laad-info"></div>
@@ -1129,6 +1209,11 @@ function normB(b){
   b.vertrek = b.vertrek||'Kallo';
   b.levType = b.levType||'levering';
   b.afhaalpunt = b.afhaalpunt||'';
+  // Datum sanitatie — voorkom crashes bij lege/ongeldige datums
+  if(!b.levdatum||!/^\d{4}-\d{2}-\d{2}$/.test(b.levdatum)) b.levdatum='';
+  if(!b.ophdatum||!/^\d{4}-\d{2}-\d{2}$/.test(b.ophdatum)) b.ophdatum=b.levdatum;
+  if(!b.levuur||!/^\d{2}:\d{2}$/.test(b.levuur)) b.levuur='09:00';
+  if(!b.ophuur||!/^\d{2}:\d{2}$/.test(b.ophuur)) b.ophuur='10:00';
   b.matStatus = b.matStatus||'';
   b.levuur = b.levuur||'09:00';
   b.ophuur = b.ophuur||'10:00';
@@ -1168,6 +1253,7 @@ async function loadData(){
     boekingen=data.map(normB).filter(b=>b&&b.id&&b.naam&&b.levdatum);
     saveC(boekingen);
     banner('ok',boekingen.length+' boeking'+(boekingen.length!==1?'en':'')+' gesynchroniseerd');
+    vrHerlaad();
     // Bouw klantendatabase op uit geladen boekingen
     try{
       var klanten={};
@@ -1255,6 +1341,7 @@ function showTab(tab){
   if(tab==='tijdlijn')renderTijdlijn();
   if(tab==='rit')renderRit();
   if(tab==='mijn')renderBBGrid();
+  if(tab==='voorraad')renderVoorraad();
   if(tab==='rapport')renderRapport();
   if(tab==='nieuw'&&!editId){clearForm();document.getElementById('ics-panel').style.display='none';}
   if(tab==='nieuw'){setTimeout(function(){ppInit();},10);}
@@ -1530,11 +1617,24 @@ async function saveBoeking(){
   const ophdatum=document.getElementById('f-ophdatum').value;
   const mat=document.getElementById('f-mat').value.trim();
   const errEl=document.getElementById('ferr');
-  if(!naam||!adres||!levdatum||!ophdatum||!mat){errEl.textContent='Vul alle verplichte velden in.';errEl.style.display='block';return;}
+  if(!naam){errEl.textContent='Naam klant is verplicht.';errEl.style.display='block';document.getElementById('f-naam').focus();return;}
+  if(!adres){errEl.textContent='Adres is verplicht.';errEl.style.display='block';document.getElementById('f-adres').focus();return;}
+  if(!levdatum){errEl.textContent='Leverdatum is verplicht.';errEl.style.display='block';document.getElementById('f-levdatum').focus();return;}
+  if(!ophdatum){errEl.textContent='Ophaaldatum is verplicht.';errEl.style.display='block';document.getElementById('f-ophdatum').focus();return;}
+  if(ophdatum<levdatum){errEl.textContent='Ophaaldatum mag niet vóór de leverdatum liggen.';errEl.style.display='block';return;}
+  if(!mat){errEl.textContent='Selecteer minstens één product.';errEl.style.display='block';return;}
   if(!fs.levType){errEl.textContent='Selecteer het type levering (wij leveren of zelf afhalen).';errEl.style.display='block';return;}
   if(fs.levType==='levering'&&(!fs.vertrek||!fs.matStatus)){errEl.textContent='Selecteer vertrekpunt en materiaalstatus.';errEl.style.display='block';return;}
   errEl.style.display='none';
   const _ops=getOps();
+  // Voorraad conflict check (niet-blokkerend)
+  const _tempB={
+    id:editId||0,
+    materiaal:document.getElementById('f-mat').value.trim(),
+    levdatum:document.getElementById('f-levdatum').value,
+    ophdatum:document.getElementById('f-ophdatum').value||document.getElementById('f-levdatum').value
+  };
+  const _vrConflicten=vrCheckBoeking(_tempB);
   const b={
     id:editId||Date.now(),naam,adres,
     tel:document.getElementById('f-tel').value.trim(),
@@ -1585,6 +1685,16 @@ async function saveBoeking(){
     } else {
       // Nieuwe boeking: toon succes banner, reset formulier, ga naar planning
       banner('ok','Boeking opgeslagen — '+b.naam);
+      // Toon voorraadconflicten als waarschuwing
+      if(_vrConflicten.length>0){
+        var conflictNamen=_vrConflicten.filter(function(c){return c.check.status==='conflict';}).map(function(c){return c.product.naam;});
+        var warnNamen=_vrConflicten.filter(function(c){return c.check.status==='warn';}).map(function(c){return c.product.naam;});
+        if(conflictNamen.length>0){
+          setTimeout(function(){banner('er','Voorraadconflict: '+conflictNamen.slice(0,2).join(', ')+(conflictNamen.length>2?' +'+( conflictNamen.length-2)+' meer':''));},1000);
+        } else if(warnNamen.length>0){
+          setTimeout(function(){banner('ok','Beperkte voorraad: '+warnNamen.slice(0,2).join(', '));},1000);
+        }
+      }
       var nieuwTab=document.getElementById('tab-nieuw');
       if(nieuwTab) nieuwTab.innerHTML='<i class="ti ti-plus"></i> Nieuw';
       // Stuur bevestigingsmail naar klant
@@ -1649,6 +1759,10 @@ function renderPlanning(){
       const isLev=b.eventType==='lev';
       const mth=(b.materiaal||'').split('\n').filter(x=>x&&x.trim()).map(m=>`<span class="mtag">${esc(m.trim())}</span>`).join('');
       const opstLev=b.opstellers_lev&&b.opstellers_lev.length>0?b.opstellers_lev.map(esc).join(' + '):(b.opstellers&&b.opstellers.length>0?b.opstellers.map(esc).join(' + '):'<span style="color:#E24B4A;font-weight:500">⚠ Niemand</span>');
+      // Snel conflict check voor badge
+      const _vrCheck=b.materiaal&&b.levdatum?vrCheckBoeking(b):[];
+      const _vrHasConflict=_vrCheck.some(function(c){return c.check.status==='conflict';});
+      const _vrHasWarn=!_vrHasConflict&&_vrCheck.some(function(c){return c.check.status==='warn';});
       const opstOph=b.opstellers_oph&&b.opstellers_oph.length>0?b.opstellers_oph.map(esc).join(' + '):(b.opstellers&&b.opstellers.length>0?b.opstellers.map(esc).join(' + '):'<span style="color:#E24B4A;font-weight:500">⚠ Niemand</span>');
       const opst=opstLev;
       const stIdx=b.status!==undefined&&b.status!==null?Number(b.status):1;
@@ -1824,10 +1938,20 @@ function _buildDashboard(){
 
   // Stat blokken
   html+='<div class="db-grid">';
-  html+='<div class="db-stat db-lev" data-goto="planning" data-filter="vandaag"><div class="db-stat-icon"><i class="ti ti-truck-delivery"></i></div><div class="db-stat-val">'+vandaagLev.length+'</div><div class="db-stat-lbl">Leveringen vandaag</div><div class="db-stat-sub">'+morgenLev.length+' morgen</div></div>';
+  html+='<div class="db-stat db-lev" data-goto="planning" data-filter="vandaag"><div class="db-stat-icon"><i class="ti ti-truck-delivery"></i></div><div class="db-stat-val">'+(vandaagLev.length+vandaagAfh.length)+'</div><div class="db-stat-lbl">Leveringen vandaag</div><div class="db-stat-sub">'+(morgenLev.length+morgenAfh.length)+' morgen</div></div>';
   html+='<div class="db-stat db-oph" data-goto="planning" data-filter="vandaag"><div class="db-stat-icon"><i class="ti ti-arrow-back-up"></i></div><div class="db-stat-val">'+vandaagOph.length+'</div><div class="db-stat-lbl">Ophalingen vandaag</div><div class="db-stat-sub">'+morgenOph.length+' morgen</div></div>';
   html+='<div class="db-stat db-tak" data-goto="planning" data-filter="alle"><div class="db-stat-icon"><i class="ti ti-checklist"></i></div><div class="db-stat-val">'+openTaken.length+'</div><div class="db-stat-lbl">Open taken</div><div class="db-stat-sub">over alle boekingen</div></div>';
   html+='<div class="db-stat db-bet" data-goto="betalen"><div class="db-stat-icon"><i class="ti ti-currency-euro"></i></div><div class="db-stat-val">'+nietBetaald.length+'</div><div class="db-stat-lbl">Nog te betalen</div><div class="db-stat-sub">actieve boekingen</div></div>';
+  // Voorraad conflict blok
+  var _vrCheck30=[];
+  var _t30=new Date(t+'T00:00:00');_t30.setDate(_t30.getDate()+30);
+  var _t30s=_t30.toISOString().split('T')[0];
+  actief.filter(function(b){return b.levdatum&&b.levdatum<=_t30s;}).forEach(function(b){
+    vrCheckBoeking(b).forEach(function(c){if(c.check.status==='conflict')_vrCheck30.push(c);});
+  });
+  if(_vrCheck30.length>0){
+    html+='<div class="db-stat" style="border-color:#E24B4A;background:rgba(226,75,74,.06)" data-goto="voorraad"><div class="db-stat-icon" style="background:#FCEBEB;color:#A32D2D"><i class="ti ti-alert-triangle"></i></div><div class="db-stat-val" style="color:#A32D2D">'+_vrCheck30.length+'</div><div class="db-stat-lbl">Voorraadconflicten</div><div class="db-stat-sub">komende 30 dagen</div></div>';
+  }
   html+='</div>';
 
   // Belevingsbouwers vandaag
@@ -2064,6 +2188,10 @@ function renderRit(){
         <div class="rit-stime"><i class="ti ti-clock" style="font-size:11px" aria-hidden="true"></i> ${isLev?s.boeking.levuur:s.boeking.ophuur}</div>
         ${s.boeking.opmerking?`<div class="rit-stime" style="color:#854F0B"><i class="ti ti-alert-circle" style="font-size:11px" aria-hidden="true"></i> ${esc(s.boeking.opmerking)}</div>`:''}
         ${s.boeking.tel&&isLev?`<div style="margin-top:7px"><a class="wa-btn" href="${waLink(s.boeking.tel,s.boeking.naam,s.boeking.levuur,s.adres)||'#'}" target="_blank" rel="noopener" ${!waLink(s.boeking.tel,s.boeking.naam,s.boeking.levuur,s.adres)?'style="opacity:.4;pointer-events:none"':''}><i class="ti ti-brand-whatsapp"></i> We zijn onderweg</a></div>`:''}
+        <div style="margin-top:7px;display:flex;gap:6px;flex-wrap:wrap">
+          <button class="bsm-bl" data-laad-id="${s.boeking.id}" style="font-size:11px"><i class="ti ti-clipboard-list" style="font-size:11px"></i> Laadlijst</button>
+          <button class="bsm" data-detail-id="${s.boeking.id}" style="font-size:11px"><i class="ti ti-info-circle" style="font-size:11px"></i> Detail</button>
+        </div>
       </div></div>`;
     });
     html+=`<div class="rit-leg"><i class="ti ti-arrow-down" style="font-size:11px" aria-hidden="true"></i> ~${Math.round(ret)} km terug</div>
@@ -2073,6 +2201,16 @@ function renderRit(){
     <a class="rit-maps" href="${mapsUrl}" target="_blank" rel="noopener"><i class="ti ti-map" aria-hidden="true"></i> Open in Google Maps</a></div>`;
   });
   content.innerHTML=html;
+  // Event delegation voor laadlijst en detail knoppen in ritplanning
+  if(!content._ritListenerAdded){
+    content._ritListenerAdded=true;
+    content.addEventListener('click',function(e){
+      var laadBtn=e.target.closest('[data-laad-id]');
+      if(laadBtn){openLaadbriefje(Number(laadBtn.dataset.laadId));return;}
+      var detailBtn=e.target.closest('[data-detail-id]');
+      if(detailBtn){openDetail(Number(detailBtn.dataset.detailId));return;}
+    });
+  }
 }
 function ritSelDate(d){document.getElementById('rit-ds').dataset.sel=d;renderRit();}
 
@@ -2120,11 +2258,25 @@ function showBBDetail(name){
       <div class="bcard-actions" style="margin-top:7px">
         <button class="bsm-bl" onclick="dlICS(${b.id},'${b.eventType}')"><i class="ti ti-calendar-plus" style="font-size:11px"></i> .ics</button>
         ${b.tel&&isLev?`<a class="wa-btn" href="${waLink(b.tel,b.naam,b.levuur,b.adres)||'#'}" target="_blank" rel="noopener"><i class="ti ti-brand-whatsapp"></i> We zijn onderweg</a>`:''}
+        <div style="margin-top:6px;display:flex;gap:5px;flex-wrap:wrap">
+          <button class="bsm-bl" data-laad-bb-id="${b.id}" style="font-size:11px"><i class="ti ti-clipboard-list" style="font-size:11px"></i> Laadlijst</button>
+          <button class="bsm" data-detail-bb-id="${b.id}" style="font-size:11px"><i class="ti ti-info-circle" style="font-size:11px"></i> Detail</button>
+        </div>
       </div></div>`;
     });
     html+='</div>';
   });
-  document.getElementById('bb-list').innerHTML=html;
+  var bbList=document.getElementById('bb-list');
+  bbList.innerHTML=html;
+  if(!bbList._bbListenerAdded){
+    bbList._bbListenerAdded=true;
+    bbList.addEventListener('click',function(e){
+      var laadBtn=e.target.closest('[data-laad-bb-id]');
+      if(laadBtn){openLaadbriefje(Number(laadBtn.dataset.laadBbId));return;}
+      var detailBtn=e.target.closest('[data-detail-bb-id]');
+      if(detailBtn){openDetail(Number(detailBtn.dataset.detailBbId));return;}
+    });
+  }
 }
 
 function renderBetalen(){
@@ -2472,6 +2624,467 @@ function installPWA(){
   }
 }
 
+
+function laadVoortgangLabel(id){
+  var b=boekingen.find(function(x){return x.id===id;});
+  if(!b||!b.materiaal) return 'Laadbriefje';
+  // Bereken totaal items (inclusief extra)
+  var regels=(b.materiaal||'').split('\n').filter(function(r){return r.trim();});
+  if(regels.length===0) return 'Laadbriefje';
+  var savedStatus=laadStatusLaden(id);
+  if(savedStatus.length===0) return 'Laadbriefje';
+  // Schat totaal (basis + extra)
+  var totaal=regels.length; // Minimum
+  regels.forEach(function(r){
+    var m=r.trim().match(/^(\d+)[x×]?\s+(.+)$/i);
+    var naam=m?m[2].trim():r.trim();
+    var key=detecteerExtraMateriaal(naam);
+    if(key&&EXTRA_MATERIAAL[key]) totaal+=EXTRA_MATERIAAL[key].length;
+  });
+  return 'Laadbriefje ('+savedStatus.length+'/'+totaal+')';
+}
+
+
+function printLaadlijst(){
+  var b=window._laadBoekingId?boekingen.find(function(x){return x.id===window._laadBoekingId;}):null;
+  if(!window._laadItems||window._laadItems.length===0){
+    banner('er','Geen laadlijst om af te drukken.');return;
+  }
+  var items=window._laadItems;
+  var nu=new Date();
+  var datum=nu.getDate()+'/'+(nu.getMonth()+1)+'/'+nu.getFullYear();
+  var basisItems=items.filter(function(x){return !x.isExtra;});
+  var extraItems=items.filter(function(x){return x.isExtra;});
+  var done=items.filter(function(x){return x.geladen;}).length;
+
+  function itemRow(item){
+    var check=item.geladen
+      ?'<td style="width:18px;text-align:center;color:#27500A;font-size:14px">✓</td>'
+      :'<td style="width:18px;text-align:center"><span style="display:inline-block;width:14px;height:14px;border:1.5px solid #0C1135;border-radius:3px"></span></td>';
+    var strike=item.geladen?'text-decoration:line-through;color:#9ca3af':'';
+    return '<tr style="border-bottom:1px solid #eee">'+check+
+      '<td style="padding:6px 4px;font-size:12px;'+strike+'">'+escPlain(item.naam)+'</td>'+
+      '<td style="padding:6px 4px;font-size:12px;text-align:right;font-weight:600;color:#0C1135;'+strike+'">'+item.aantal+'×</td>'+
+    '</tr>';
+  }
+
+  var html='<!DOCTYPE html><html lang="nl"><head><meta charset="UTF-8">'+
+    '<title>Laadbriefje — '+(b?escPlain(b.naam):'Boeking')+'</title>'+
+    '<style>'+
+      'body{font-family:Arial,sans-serif;margin:0;padding:20mm;font-size:12px;color:#0C1135}'+
+      'h1{font-size:18px;font-weight:700;margin:0 0 4px}'+
+      '.sub{font-size:11px;color:#6b7280;margin-bottom:12px}'+
+      '.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #0C1135}'+
+      '.logo{font-size:16px;font-weight:700;color:#0C1135}'+
+      '.logo span{color:#61ABED}'+
+      '.meta{font-size:10px;color:#6b7280;text-align:right;line-height:1.6}'+
+      '.info-blok{background:#f5f7fc;padding:10px 14px;border-radius:6px;margin-bottom:14px;display:grid;grid-template-columns:1fr 1fr;gap:4px 16px}'+
+      '.info-lbl{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.4px}'+
+      '.info-val{font-size:12px;font-weight:600;color:#0C1135}'+
+      'table{width:100%;border-collapse:collapse}'+
+      '.sectie-titel{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;padding:8px 0 4px;border-bottom:1px solid #0C1135;margin-top:14px}'+
+      '.voortgang{background:#EAF3DE;border:1px solid #97C459;border-radius:4px;padding:6px 10px;margin-bottom:12px;font-size:11px;color:#27500A;font-weight:600}'+
+      '.footer{margin-top:16px;padding-top:10px;border-top:1px solid #ddd;font-size:10px;color:#9ca3af;display:flex;justify-content:space-between}'+
+      '@media print{button{display:none}body{padding:15mm}}'+
+    '</style></head><body>'+
+    '<div class="hdr">'+
+      '<div><div class="logo">FAMILY<span>RENT</span></div><div style="font-size:10px;color:#6b7280">www.familyrent.be · 0497 03 52 23</div></div>'+
+      '<div class="meta"><strong>Laadbriefje</strong><br>'+datum+'</div>'+
+    '</div>';
+
+  if(b){
+    html+='<div class="info-blok">'+
+      '<div><div class="info-lbl">Klant</div><div class="info-val">'+escPlain(b.naam)+'</div></div>'+
+      '<div><div class="info-lbl">Adres</div><div class="info-val">'+escPlain(b.adres||'—')+'</div></div>'+
+      '<div><div class="info-lbl">Levering</div><div class="info-val">'+escPlain(b.levdatum?b.levdatum+' om '+b.levuur:'—')+'</div></div>'+
+      '<div><div class="info-lbl">Vertrek</div><div class="info-val">'+escPlain(b.vertrek||'Kallo')+'</div></div>'+
+    '</div>';
+    if(b.opmerking){html+='<div style="background:#FFF3CD;border-left:3px solid #EF9F27;padding:6px 10px;font-size:11px;color:#633806;margin-bottom:12px">⚠️ '+escPlain(b.opmerking)+'</div>';}
+  }
+
+  html+='<div class="voortgang">Voortgang: '+done+' / '+items.length+' items geladen</div>';
+
+  html+='<div class="sectie-titel">Materiaal</div>';
+  html+='<table>';
+  basisItems.forEach(function(item){ html+=itemRow(item); });
+  html+='</table>';
+
+  if(extraItems.length>0){
+    html+='<div class="sectie-titel">Extra benodigdheden</div>';
+    html+='<table>';
+    extraItems.forEach(function(item){ html+=itemRow(item); });
+    html+='</table>';
+  }
+
+  html+='<div class="footer"><span>Familyrent · info@familyrent.be</span><span>Afgedrukt: '+datum+'</span></div>';
+  html+='</body></html>';
+
+  var win=window.open('','_blank','width=800,height=900');
+  if(win){
+    win.document.write(html);
+    win.document.close();
+    win.addEventListener('load',function(){
+      setTimeout(function(){win.print();},200);
+    });
+  } else {
+    // Fallback als popup geblokkeerd
+    banner('er','Sta pop-ups toe om de PDF te openen, of gebruik de browser printfunctie.');
+  }
+}
+
+function escPlain(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+
+// ============================================================
+// VOORRAAD MODULE
+// ============================================================
+var VR_KEY = 'fr_voorraad_v1';
+
+// Standaard voorraadlijst — gekoppeld aan CATALOGUS IDs
+// Jony kan dit aanpassen via de Voorraad tab
+// TENTCOMBINATIES:
+// Een Partytent 4x4 zwart is de basiseenheid (10 stuks beschikbaar)
+// Bij het boeken van een 4x8m = 2x 4x4m modules nodig
+// Bij een 4x12m = 3x 4x4m modules, 4x16m = 4x 4x4m modules
+// Dit wordt afgehandeld in vrBerekenVerhuurd via TENT_COMBINATIES
+var TENT_BASIS_ID = 'tent4x4';        // De zwarte 4x4 is de basistent
+var TENT_COMBINATIES = {
+  // productId -> aantal basistenten dat het verbruikt
+  'tent4x4':    1,
+  'tent4x8':    2,
+  'tent4x12':   3,
+  'tent4x16':   4
+};
+
+var VR_DEFAULT = [
+  // ── PARTYTENTEN ──────────────────────────────────────────
+  // Partytent 4×4 zwart = basiseenheid (10 stuks)
+  // 4×8m = 2 modules, 4×12m = 3 modules, 4×16m = 4 modules
+  // Stock hier = aantal 4×4 modules (= 10)
+  {id:'tent3x3',    stock:1,  buffer:0},
+  {id:'tent4x4',    stock:10, buffer:1},   // 10 zwarte 4x4 modules
+  {id:'tent4x4wit', stock:2,  buffer:0},   // 2 witte 4x4
+  {id:'tent4x8',    stock:0,  buffer:0},   // Niet apart in stock — gebruikt 2x tent4x4
+  {id:'tent4x8wit', stock:0,  buffer:0},   // Niet apart — wit: 2x tent4x4wit
+  {id:'tent4x12',   stock:0,  buffer:0},   // Niet apart — 3x tent4x4
+  {id:'tent4x16',   stock:0,  buffer:0},   // Niet apart — 4x tent4x4
+  {id:'zijwand_r',  stock:0,  buffer:0},   // Niet bijgehouden
+  {id:'zijwand_d',  stock:0,  buffer:0},   // Niet bijgehouden
+  // ── STRETCHTENTEN ────────────────────────────────────────
+  {id:'stretch6x6',    stock:1, buffer:0},
+  {id:'stretch6x105',  stock:1, buffer:0},
+  {id:'stretch75x105', stock:1, buffer:0},
+  {id:'stretch105x12', stock:1, buffer:0},
+  {id:'stretch105x18', stock:1, buffer:0},
+  {id:'stretch21x24',  stock:1, buffer:0},
+  {id:'sailcloth1016', stock:1, buffer:0},
+  {id:'sailcloth1022', stock:1, buffer:0},
+  {id:'zijwand_stretch',stock:0, buffer:0},
+  // ── HOUTEN VLOER ─────────────────────────────────────────
+  {id:'vloer_ophalen', stock:100, buffer:10},
+  {id:'vloer_gelegd',  stock:100, buffer:10},
+  // ── MOBIELE BAR ──────────────────────────────────────────
+  {id:'bardag',     stock:1, buffer:0},
+  {id:'barweekend', stock:1, buffer:0},
+  // ── VERLICHTING & SFEER ──────────────────────────────────
+  {id:'verlich',  stock:9,  buffer:1},
+  {id:'verwarm',  stock:5,  buffer:1},
+  {id:'gasfles',  stock:0,  buffer:0},
+  {id:'loper',    stock:1,  buffer:0},
+  {id:'cavawall', stock:1,  buffer:0},
+  // ── STOELEN & MEUBILAIR ──────────────────────────────────
+  {id:'stoel_pvc',  stock:110, buffer:10},
+  {id:'stoel_cb',   stock:60,  buffer:5},
+  {id:'stoel_cbk',  stock:60,  buffer:5},
+  {id:'barkruk',    stock:32,  buffer:3},
+  // ── TAFELS ───────────────────────────────────────────────
+  {id:'recept',       stock:20, buffer:2},
+  {id:'klaptafel',    stock:20, buffer:2},
+  {id:'rondh152',     stock:6,  buffer:1},
+  {id:'rondh180',     stock:1,  buffer:0},
+  {id:'stretch_r',    stock:20, buffer:2},
+  {id:'stretch_k',    stock:20, buffer:2},
+  {id:'tafelkleed152',stock:6,  buffer:1},
+  {id:'tafelkleed183',stock:1,  buffer:0},
+  // ── BAR & KOELING ────────────────────────────────────────
+  {id:'toog_b',   stock:1, buffer:0},
+  {id:'toog_s',   stock:1, buffer:0},
+  {id:'ijskast',  stock:3, buffer:0},
+  {id:'ijsblok',  stock:2, buffer:0},
+  // ── ENTERTAINMENT ────────────────────────────────────────
+  {id:'krokko',    stock:1,  buffer:0},
+  {id:'unicorn',   stock:1,  buffer:0},
+  {id:'muziekbox', stock:1,  buffer:0},
+  {id:'silent',    stock:50, buffer:5},
+  {id:'audiotel',  stock:1,  buffer:0},
+  {id:'audiogast', stock:1,  buffer:0},
+  // ── PHOTOBOOTH ───────────────────────────────────────────
+  {id:'houten',      stock:2, buffer:0},
+  {id:'spiegel',     stock:2, buffer:0},
+  {id:'achtergrond', stock:1, buffer:0},
+  // ── HORECA & CATERING ────────────────────────────────────
+  {id:'partybar',   stock:1, buffer:0},
+  {id:'perculator', stock:2, buffer:0},
+  {id:'dranktoren', stock:2, buffer:0},
+  // ── KINDERMATERIAAL ──────────────────────────────────────
+  {id:'kindertafel', stock:4,  buffer:0},
+  {id:'kinderstoel', stock:12, buffer:2},
+  // ── BORDEN & BESTEK ──────────────────────────────────────
+  {id:'bord_groot',  stock:100, buffer:10},
+  {id:'bord_klein',  stock:100, buffer:10},
+  {id:'vork',        stock:100, buffer:10},
+  {id:'mes',         stock:100, buffer:10},
+  {id:'lepel_groot', stock:100, buffer:10},
+  {id:'lepel_klein', stock:100, buffer:10},
+  // ── GLAZEN & BEKERS ──────────────────────────────────────
+  {id:'champagne_beker', stock:90,  buffer:40},
+  {id:'wijnbeker',       stock:25,  buffer:5},
+  {id:'beker_gewoon',    stock:200, buffer:20},
+  {id:'cava_glas',       stock:120, buffer:40},  // 3×40 = 120
+  {id:'wijn_glas',       stock:48,  buffer:24},  // 2×24 = 48
+  {id:'fris_glas',       stock:48,  buffer:24},  // 2×24 = 48
+  {id:'gin_glas',        stock:12,  buffer:3},
+  // ── KEUKEN ───────────────────────────────────────────────
+  {id:'kookplaat', stock:2, buffer:0}
+];
+
+// Laad voorraad uit localStorage, merge met defaults
+function vrLaad(){
+  var opgeslagen = {};
+  try{
+    var raw = localStorage.getItem(VR_KEY);
+    if(raw){
+      var arr = JSON.parse(raw);
+      arr.forEach(function(item){ opgeslagen[item.id]=item; });
+    }
+  }catch(e){}
+  // Merge: gebruik opgeslagen waarden, vul aan met defaults
+  return VR_DEFAULT.map(function(d){
+    var op = opgeslagen[d.id];
+    return {
+      id: d.id,
+      stock: op!==undefined ? Number(op.stock) : d.stock,
+      buffer: op!==undefined ? Number(op.buffer||0) : (d.buffer||0)
+    };
+  });
+}
+
+function vrSlaData(voorraad){
+  try{
+    localStorage.setItem(VR_KEY, JSON.stringify(voorraad));
+  }catch(e){}
+}
+
+// Bereken hoeveel van een product verhuurd is op een bepaalde periode
+// Exclusief de opgegeven boekingId (voor edit-modus)
+function vrBerekenVerhuurd(productId, levdatum, ophdatum, uitgesloten_id){
+  var totaal = 0;
+  boekingen.forEach(function(b){
+    if(b.voltooid===true||b.voltooid==='true') return;
+    if(b.id === uitgesloten_id) return;
+    if(!b.levdatum||!b.ophdatum) return;
+    // Overlap check
+    if(b.levdatum > ophdatum || b.ophdatum < levdatum) return;
+    var matches = matchProducten(b.materiaal||'');
+    matches.forEach(function(m){
+      if(!m.product) return;
+      // Directe match
+      if(m.product.id === productId){
+        totaal += m.aantal;
+        return;
+      }
+      // Tentcombinatie: een 4x8 verbruikt 2x 4x4, een 4x12 verbruikt 3x 4x4, enz.
+      if(productId === TENT_BASIS_ID && TENT_COMBINATIES[m.product.id]){
+        var modules = TENT_COMBINATIES[m.product.id];
+        if(modules > 1){
+          totaal += m.aantal * modules;
+        }
+      }
+    });
+  });
+  return totaal;
+}
+
+// Beschikbaarheidscheck voor één product op een periode
+function vrCheckBeschikbaar(productId, benodigdAantal, levdatum, ophdatum, uitgesloten_id){
+  var voorraad = vrLaad();
+  var vr = voorraad.find(function(v){ return v.id === productId; });
+  if(!vr) return {status:'ok', beschikbaar:999, stock:999, verhuurd:0, buffer:0};
+  var verhuurd = vrBerekenVerhuurd(productId, levdatum, ophdatum, uitgesloten_id);
+  var beschikbaar = vr.stock - verhuurd;
+  var status;
+  if(beschikbaar - benodigdAantal < 0) status = 'conflict';
+  else if(beschikbaar - benodigdAantal <= vr.buffer) status = 'warn';
+  else status = 'ok';
+  return {
+    status: status,
+    beschikbaar: beschikbaar,
+    stock: vr.stock,
+    verhuurd: verhuurd,
+    buffer: vr.buffer,
+    benodigdAantal: benodigdAantal
+  };
+}
+
+// Check alle producten in een boeking
+function vrCheckBoeking(boeking){
+  if(!boeking.materiaal||!boeking.levdatum) return [];
+  var matches = matchProducten(boeking.materiaal);
+  var resultaten = [];
+  matches.forEach(function(m){
+    if(!m.product) return; // onbekend product, skip
+    var check = vrCheckBeschikbaar(
+      m.product.id, m.aantal,
+      boeking.levdatum, boeking.ophdatum||boeking.levdatum,
+      boeking.id
+    );
+    if(check.status !== 'ok'){
+      resultaten.push({
+        product: m.product,
+        aantal: m.aantal,
+        check: check
+      });
+    }
+  });
+  return resultaten; // enkel conflicten/waarschuwingen
+}
+
+// Render de voorraad view
+function renderVoorraad(){
+  var wrap = document.getElementById('vr-wrap');
+  if(!wrap) return;
+  var voorraad = vrLaad();
+  var t = today();
+  // Selecteer datum voor conflict check (standaard: vandaag + 30 dagen)
+  var van = t;
+  var tot = new Date(t+'T00:00:00');
+  tot.setDate(tot.getDate()+30);
+  var totStr = tot.toISOString().split('T')[0];
+
+  // Groepeer per categorie
+  var perCat = {};
+  voorraad.forEach(function(vr){
+    var prod = CATALOGUS.find(function(p){ return p.id === vr.id; });
+    if(!prod) return;
+    if(!perCat[prod.cat]) perCat[prod.cat] = [];
+    // Bereken max verhuurd in komende 30 dagen
+    var maxVerhuurd = 0;
+    boekingen.filter(function(b){
+      return !(b.voltooid===true||b.voltooid==='true') && b.levdatum && b.levdatum<=totStr && (b.ophdatum||b.levdatum)>=van;
+    }).forEach(function(b){
+      var matches = matchProducten(b.materiaal||'');
+      matches.forEach(function(m){
+        if(m.product && m.product.id === vr.id) maxVerhuurd = Math.max(maxVerhuurd, m.aantal);
+      });
+    });
+    var beschikbaar = vr.stock - maxVerhuurd;
+    var status = beschikbaar < 0 ? 'conflict' : beschikbaar <= vr.buffer ? 'warn' : 'ok';
+    perCat[prod.cat].push({vr:vr, prod:prod, beschikbaar:beschikbaar, maxVerhuurd:maxVerhuurd, status:status});
+  });
+
+  var conflicten = Object.values(perCat).flat().filter(function(x){return x.status==='conflict';}).length;
+  var warns = Object.values(perCat).flat().filter(function(x){return x.status==='warn';}).length;
+
+  var html = '<div class="vr-hdr">';
+  html += '<div><div class="vr-hdr-title"><i class="ti ti-package" style="color:var(--sky)"></i> Voorraadoverzicht</div>';
+  html += '<div class="vr-hdr-sub">Beschikbaarheid komende 30 dagen &nbsp;·&nbsp; ';
+  if(conflicten>0) html += '<span style="color:#A32D2D;font-weight:600">'+conflicten+' conflict'+(conflicten!==1?'en':'')+'</span> &nbsp;·&nbsp; ';
+  if(warns>0) html += '<span style="color:#854F0B">'+warns+' waarschuwing'+(warns!==1?'en':'')+'</span>';
+  if(conflicten===0&&warns===0) html += '<span style="color:#27500A">Alles beschikbaar</span>';
+  html += '</div></div>';
+  html += '<button class="bsm-bl" onclick="vrReset()" style="font-size:11px"><i class="ti ti-refresh" style="font-size:11px"></i> Herstel standaard</button>';
+  html += '</div>';
+
+  Object.keys(perCat).forEach(function(cat){
+    var items = perCat[cat];
+    html += '<div>';
+    html += '<div class="vr-cat-hdr">'+cat+'</div>';
+    html += '<div class="vr-grid">';
+    items.forEach(function(item){
+      var dotCls = 'vr-dot-'+item.status;
+      var itemCls = 'vr-item vr-'+item.status;
+      html += '<div class="'+itemCls+'">';
+      html += '<div class="vr-dot '+dotCls+'"></div>';
+      html += '<div class="vr-info">';
+      html += '<div class="vr-naam">'+item.prod.naam+'</div>';
+      html += '<div class="vr-meta">Verhuurd: '+item.maxVerhuurd+' &nbsp;/&nbsp; Totaal: '+item.vr.stock+'</div>';
+      html += '</div>';
+      html += '<div class="vr-stock">';
+      html += '<div class="vr-stock-val" style="color:'+(item.status==='conflict'?'#A32D2D':item.status==='warn'?'#854F0B':'#27500A')+'">'+Math.max(0,item.beschikbaar)+'</div>';
+      html += '<div class="vr-stock-lbl">beschikbaar</div>';
+      html += '</div>';
+      html += '<button class="vr-edit-btn" data-vr-id="'+item.vr.id+'" title="Voorraad aanpassen"><i class="ti ti-pencil" style="font-size:12px"></i></button>';
+      html += '</div>';
+    });
+    html += '</div></div>';
+  });
+
+  wrap.innerHTML = html;
+  // Event delegation
+  if(!wrap._vrListener){
+    wrap._vrListener = true;
+    wrap.addEventListener('click', function(e){
+      var btn = e.target.closest('[data-vr-id]');
+      if(btn) vrOpenEdit(btn.dataset.vrId);
+    });
+  }
+}
+
+function vrOpenEdit(productId){
+  var voorraad = vrLaad();
+  var vr = voorraad.find(function(v){ return v.id===productId; });
+  var prod = CATALOGUS.find(function(p){ return p.id===productId; });
+  if(!vr||!prod) return;
+  document.getElementById('vr-mo-id').value = productId;
+  document.getElementById('vr-mo-naam').textContent = prod.naam;
+  document.getElementById('vr-mo-stock').value = vr.stock;
+  document.getElementById('vr-mo-buffer').value = vr.buffer||0;
+  document.getElementById('vr-mo').classList.add('open');
+}
+
+function vrSlaOp(){
+  var id = document.getElementById('vr-mo-id').value;
+  var stock = parseInt(document.getElementById('vr-mo-stock').value)||0;
+  var buffer = parseInt(document.getElementById('vr-mo-buffer').value)||0;
+  var voorraad = vrLaad();
+  var idx = voorraad.findIndex(function(v){ return v.id===id; });
+  if(idx>=0){ voorraad[idx].stock=stock; voorraad[idx].buffer=buffer; }
+  vrSlaData(voorraad);
+  document.getElementById('vr-mo').classList.remove('open');
+  renderVoorraad();
+  banner('ok','Voorraad bijgewerkt');
+}
+
+function vrReset(){
+  if(!confirm('Voorraad terugzetten naar standaardwaarden?')) return;
+  try{ localStorage.removeItem(VR_KEY); }catch(e){}
+  renderVoorraad();
+  banner('ok','Voorraad hersteld naar standaard');
+}
+
+// Genereer conflict badges voor een boeking (HTML string)
+function vrConflictBadgesHtml(boekingId){
+  var b = boekingen.find(function(x){return x.id===boekingId;});
+  if(!b||!b.materiaal||!b.levdatum) return '';
+  var conflicten = vrCheckBoeking(b);
+  if(conflicten.length===0) return '';
+  var html = '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">';
+  conflicten.forEach(function(c){
+    var cls = c.check.status==='conflict'?'cb-conflict':'cb-warn';
+    var icon = c.check.status==='conflict'?'<i class="ti ti-alert-triangle" style="font-size:9px"></i>':'<i class="ti ti-alert-circle" style="font-size:9px"></i>';
+    html += '<span class="conflict-badge '+cls+'">'+icon+' '+c.product.naam+': nog '+Math.max(0,c.check.beschikbaar)+'/'+c.check.stock+'</span>';
+  });
+  html += '</div>';
+  return html;
+}
+
+// Update loadData — herlaad voorraad tab als actief
+function vrHerlaad(){
+  if(document.getElementById('view-voorraad')&&document.getElementById('view-voorraad').classList.contains('active')){
+    renderVoorraad();
+  }
+}
+
 function backBB(){document.getElementById('bb-det').classList.remove('active');document.getElementById('bb-sel').style.display='block';}
 
 function printPlanning(){
@@ -2790,6 +3403,7 @@ function openDetail(id){
     </div>`:''}
     <div class="dr" style="flex-direction:column;gap:4px"><span class="dl"><i class="ti ti-package" aria-hidden="true"></i> Materiaal</span><div style="width:100%;margin-top:4px">${mth||'<span style=\"color:var(--tx3)\">Geen materiaal</span>'}</div></div>
     ${b.prijs?`<div class="dr"><span class="dl"><i class="ti ti-currency-euro" aria-hidden="true"></i> Prijs</span><span class="dv">€ ${esc(b.prijs)}${b.betaling?' — '+esc(b.betaling):''}</span></div>`:''}
+    ${vrConflictBadgesHtml(id)}
     <div class="dr"><span class="dl"><i class="ti ti-truck-delivery" style="color:var(--sky)" aria-hidden="true"></i> ${b.levType&&b.levType!=='levering'?'Aanwezig bij afhaling':'Levering'}</span><span class="dv">${(b.opstellers_lev&&b.opstellers_lev.length?b.opstellers_lev:(b.opstellers||[])).map(esc).join(' + ')||'<span style="color:var(--tx3)">—</span>'}</span></div>
     <div class="dr"><span class="dl"><i class="ti ti-arrow-back-up" style="color:#3B6D11" aria-hidden="true"></i> ${b.levType&&b.levType!=='levering'?'Aanwezig bij terugbreng':'Ophaling'}</span><span class="dv">${(b.opstellers_oph&&b.opstellers_oph.length?b.opstellers_oph:(b.opstellers||[])).map(esc).join(' + ')||'<span style="color:var(--tx3)">—</span>'}</span></div>
     ${b.opmerking?`<div class="opmerking-block" style="margin:8px 0"><i class="ti ti-alert-circle" style="font-size:14px;flex-shrink:0" aria-hidden="true"></i><span>${esc(b.opmerking)}</span></div>`:''}
@@ -2818,7 +3432,7 @@ function openDetail(id){
     <button class="ics-btn" style="background:#4285F4;color:#fff;border-color:#4285F4" onclick="addToGCal(${id},'lev')"><i class="ti ti-brand-google"></i> Cal lev</button>
     <button class="ics-btn" style="background:#34A853;color:#fff;border-color:#34A853" onclick="addToGCal(${id},'oph')"><i class="ti ti-brand-google"></i> Cal oph</button>
     ${waUrl?`<a class="wa-btn wa-btn-lg" href="${waUrl}" target="_blank" rel="noopener"><i class="ti ti-brand-whatsapp"></i> We zijn onderweg</a>`:''}
-    <button class="bsm" style="background:#E6F1FB;color:#0C447C;border-color:#61ABED;font-weight:500" onclick="openLaadbriefje(${id});closeMo()"><i class="ti ti-clipboard-list"></i> Laadbriefje</button>
+    <button class="bsm" style="background:#E6F1FB;color:#0C447C;border-color:#61ABED;font-weight:500" onclick="openLaadbriefje(${id});closeMo()"><i class="ti ti-clipboard-list"></i> ${laadVoortgangLabel(id)}</button>
     <button class="bsm" style="background:#F3E8FF;color:#7C3AED;border-color:#C4A8E8" onclick="dupliceerBoeking(${id});closeMo()"><i class="ti ti-copy"></i> Dupliceer</button>
     <button class="bsm" onclick="editBoeking(${id});closeMo()"><i class="ti ti-edit"></i> Bewerken</button>
     <button class="bsm" style="background:#EAF3DE;color:#27500A;border-color:#97C459;font-weight:500" onclick="voltooiBoeking(${id});closeMo()"><i class="ti ti-circle-check"></i> Voltooien</button>
@@ -2845,8 +3459,50 @@ function openDetail(id){
 function closeMo(){document.getElementById('mo').classList.remove('open');}
 
 // Extra materiaal regels per producttype
+
+// ============================================================
+// LAADLIJST PERSISTENTIE MODULE
+// Slaat de checkboxstatus per boeking op in localStorage
+// Key: fr_laad_{id}, Value: JSON array van geldane item indices
+// ============================================================
+var LAAD_KEY_PREFIX = 'fr_laad_';
+
+function laadStatusLaden(boekingId){
+  try{
+    var raw = localStorage.getItem(LAAD_KEY_PREFIX + boekingId);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return [];
+}
+
+function laadStatusOpslaan(boekingId, geladen){
+  try{
+    localStorage.setItem(LAAD_KEY_PREFIX + boekingId, JSON.stringify(geladen));
+  }catch(e){}
+}
+
+function laadStatusWissen(boekingId){
+  try{ localStorage.removeItem(LAAD_KEY_PREFIX + boekingId); }catch(e){}
+}
+
+function laadStatusVolledigWissen(){
+  // Wis alle laadstatussen (bv. na voltooien boeking)
+  try{
+    var keys = Object.keys(localStorage);
+    keys.forEach(function(k){
+      if(k.startsWith(LAAD_KEY_PREFIX)) localStorage.removeItem(k);
+    });
+  }catch(e){}
+}
+
 var EXTRA_MATERIAAL={
-  // TENTEN
+  // ============================================================
+  // TENTEN — betonblokken en spanriemen per tentmodule
+  // ============================================================
+  'tent3x3':[
+    {aantal:4,naam:'Betonnen blok'},
+    {aantal:4,naam:'Spanriem'}
+  ],
   'tent4x4':[
     {aantal:4,naam:'Betonnen blok'},
     {aantal:4,naam:'Spanriem'}
@@ -2865,7 +3521,49 @@ var EXTRA_MATERIAAL={
     {aantal:8,naam:'Betonnen blok'},
     {aantal:8,naam:'Spanriem'}
   ],
+  'tent6x6':[
+    {aantal:1,naam:'Gootstuk'},
+    {aantal:2,naam:'Verbindingsstuk tent'},
+    {aantal:2,naam:'Tussenstuk zijwanden'},
+    {aantal:6,naam:'Betonnen blok'},
+    {aantal:6,naam:'Spanriem'}
+  ],
+  'tent6x12':[
+    {aantal:2,naam:'Gootstuk'},
+    {aantal:4,naam:'Verbindingsstuk tent'},
+    {aantal:4,naam:'Tussenstuk zijwanden'},
+    {aantal:8,naam:'Betonnen blok'},
+    {aantal:8,naam:'Spanriem'}
+  ],
+  // ============================================================
+  // STRETCHTENTEN — pennen en spanners per stuk
+  // ============================================================
+  'stretch3x3':[
+    {aantal:8,naam:'Grondspin / haring'},
+    {aantal:4,naam:'Spanner'}
+  ],
+  'stretch4x4':[
+    {aantal:8,naam:'Grondspin / haring'},
+    {aantal:4,naam:'Spanner'}
+  ],
+  'stretch3x6':[
+    {aantal:8,naam:'Grondspin / haring'},
+    {aantal:4,naam:'Spanner'}
+  ],
+  'stretch4x8':[
+    {aantal:12,naam:'Grondspin / haring'},
+    {aantal:6,naam:'Spanner'}
+  ],
+  // ============================================================
+  // SPRINGKASTELEN — stopcontact / verlengsnoer
+  // ============================================================
+  'springkasteel':[
+    {aantal:1,naam:'Verlengkabel (min. 20m)'},
+    {aantal:1,naam:'Grondzeil / beschermingsmat'}
+  ],
+  // ============================================================
   // PHOTOBOOTHS
+  // ============================================================
   'spiegel':[
     {aantal:1,naam:'Kleine kist (Spiegelbooth)'},
     {aantal:1,naam:'Flitser'},
@@ -2892,6 +3590,23 @@ var EXTRA_MATERIAAL={
     {aantal:1,naam:'Paraplu voor flitser'},
     {aantal:1,naam:'Verlengkabel'},
     {aantal:1,naam:'Props (eventueel)'}
+  ],
+  // ============================================================
+  // SILENT DISCO
+  // ============================================================
+  'silentdisco':[
+    {aantal:1,naam:'Zender / transmitter'},
+    {aantal:1,naam:'Oplaadstation hoofdtelefoons'},
+    {aantal:1,naam:'Audiokabel (AUX/RCA)'},
+    {aantal:1,naam:'Verlengkabel'}
+  ],
+  // ============================================================
+  // MOBIELE BAR
+  // ============================================================
+  'bar':[
+    {aantal:1,naam:'Barmat'},
+    {aantal:1,naam:'Ijsemmer / koeling'},
+    {aantal:1,naam:'Verlengkabel'}
   ]
 };
 
@@ -3017,21 +3732,39 @@ function updateWeerFormulier(){
 
 function detecteerExtraMateriaal(productnaam){
   var n=productnaam.toLowerCase();
-  // Tenten
+  // Tenten (groot naar klein voor correcte match)
+  if(n.includes('6x12')||n.includes('6×12')||n.includes('6 x 12'))return 'tent6x12';
+  if(n.includes('6x6')||n.includes('6×6')||n.includes('6 x 6'))return 'tent6x6';
   if(n.includes('4x12')||n.includes('4×12')||n.includes('4 x 12'))return 'tent4x12';
   if(n.includes('4x8')||n.includes('4×8')||n.includes('4 x 8'))return 'tent4x8';
   if(n.includes('4x4')||n.includes('4×4')||n.includes('4 x 4'))return 'tent4x4';
+  if(n.includes('3x3')||n.includes('3×3')||n.includes('3 x 3'))return 'tent3x3';
+  // Stretchtenten
+  if(n.includes('stretch')||n.includes('strechtent')||n.includes('stretchtent')){
+    if(n.includes('4x8')||n.includes('4×8'))return 'stretch4x8';
+    if(n.includes('3x6')||n.includes('3×6'))return 'stretch3x6';
+    if(n.includes('4x4')||n.includes('4×4'))return 'stretch4x4';
+    return 'stretch3x3';
+  }
+  // Springkastelen
+  if(n.includes('springkasteel')||n.includes('luchtkussen'))return 'springkasteel';
   // Photobooths
   if(n.includes('spiegelbooth')||n.includes('spiegel booth')||n.includes('43 inch')||n.includes('touchscreen')){
     if(n.includes('zwart')||n.includes('black'))return 'spiegel_zwart';
     return 'spiegel';
   }
   if(n.includes('houten photobooth')||n.includes('houten booth'))return 'houten';
+  // Silent disco
+  if(n.includes('silent disco')||n.includes('silent')||n.includes('hoofdtelefoon'))return 'silentdisco';
+  // Mobiele bar
+  if(n.includes('mobiele bar')||n.includes('cava wall')||n.includes('bardekoration'))return 'bar';
   return null;
 }
 
 function openLaadbriefje(id){
   const b=boekingen.find(x=>x.id===id);if(!b)return;
+  // Laad persistente checkboxstatus
+  var savedStatus = laadStatusLaden(id);
   // Verwerk materiaallijst
   const regels=(b.materiaal||'').split('\n').filter(x=>x&&x.trim());
   var basisItems=regels.map((r,i)=>{
@@ -3068,9 +3801,14 @@ function openLaadbriefje(id){
   });
   // Combineer basis + extra, geef elk een index
   var allItems=basisItems.concat(extraItems).map(function(item,i){
-    item.idx=i; return item;
+    item.idx=i;
+    // Herstel opgeslagen status
+    item.geladen = savedStatus.indexOf(i) >= 0;
+    return item;
   });
   const items=allItems;
+  // Sla boekingId op voor gebruik in toggleLaadItem
+  window._laadBoekingId = id;
   // Header info
   document.getElementById('laad-sub').textContent=b.naam+' — '+fmtDate(b.levdatum)+' om '+b.levuur;
   document.getElementById('laad-info').innerHTML=`
@@ -3086,49 +3824,58 @@ function openLaadbriefje(id){
     return;
   }
   document.getElementById('laad-prog').style.display='flex';
-  // Render items
-  function renderLaadItems(){
-    const done=items.filter(x=>x.geladen).length;
-    const pct=items.length>0?Math.round(done/items.length*100):0;
-    document.getElementById('laad-fill').style.width=pct+'%';
-    document.getElementById('laad-fill').className='laad-prog-fill'+(pct===100?' done':'');
-    document.getElementById('laad-prog-val').textContent=done+' / '+items.length;
-    // Groepeer basis en extra items
-    var basisList=items.filter(function(x){return !x.isExtra;});
-    var extraList=items.filter(function(x){return x.isExtra;});
-    var html='';
-    if(basisList.length>0){
-      html+=basisList.map(function(item){
-        return '<div class="laad-item'+(item.geladen?' done':'')+'" onclick="toggleLaadItem('+item.idx+')">'+
-          '<div class="laad-cb'+(item.geladen?' checked':'')+'"></div>'+
-          '<div class="laad-naam">'+esc(item.naam)+'</div>'+
-          '<div class="laad-aantal">'+item.aantal+'×</div>'+
-        '</div>';
-      }).join('');
-    }
-    if(extraList.length>0){
-      html+='<div style="margin:10px 0 6px;font-size:11px;font-weight:600;color:var(--sky);text-transform:uppercase;letter-spacing:.5px;padding:6px 0;border-top:1px solid var(--bl)">'+
-        '<i class="ti ti-tool" style="font-size:11px"></i> Extra benodigdheden</div>';
-      html+=extraList.map(function(item){
-        return '<div class="laad-item'+(item.geladen?' done':'')+'" onclick="toggleLaadItem('+item.idx+')" style="background:rgba(97,171,237,.05)">'+
-          '<div class="laad-cb'+(item.geladen?' checked':'')+'"></div>'+
-          '<div class="laad-naam" style="color:var(--tx2)">'+esc(item.naam)+'</div>'+
-          '<div class="laad-aantal">'+item.aantal+'×</div>'+
-        '</div>';
-      }).join('');
-    }
-    document.getElementById('laad-items').innerHTML=html;
-  }
+  // renderLaadItems is globale functie (zie hieronder)
   window._laadItems=items;
-  window._renderLaad=renderLaadItems;
   renderLaadItems();
   document.getElementById('laad-mo').classList.add('open');
+}
+
+function renderLaadItems(){
+  var items=window._laadItems||[];
+  var basisList=items.filter(function(x){return !x.isExtra;});
+  var extraList=items.filter(function(x){return x.isExtra;});
+  var done=items.filter(function(x){return x.geladen;}).length;
+  var pct=items.length>0?Math.round(done/items.length*100):0;
+  var fillEl=document.getElementById('laad-fill');
+  var progEl=document.getElementById('laad-prog-val');
+  if(fillEl){fillEl.style.width=pct+'%';fillEl.className='laad-prog-fill'+(pct===100?' done':'');}
+  if(progEl)progEl.textContent=done+' / '+items.length;
+  var html='';
+  if(basisList.length>0){
+    html+=basisList.map(function(item){
+      return '<div class="laad-item'+(item.geladen?' done':'')+'" onclick="toggleLaadItem('+item.idx+')">'+
+        '<div class="laad-cb'+(item.geladen?' checked':'')+'"></div>'+
+        '<div class="laad-naam">'+esc(item.naam)+'</div>'+
+        '<div class="laad-aantal">'+item.aantal+'×</div>'+
+      '</div>';
+    }).join('');
+  }
+  if(extraList.length>0){
+    html+='<div style="margin:10px 0 6px;font-size:11px;font-weight:600;color:var(--sky);text-transform:uppercase;letter-spacing:.5px;padding:6px 0;border-top:1px solid var(--bl)">'+
+      '<i class="ti ti-tool" style="font-size:11px"></i> Extra benodigdheden</div>';
+    html+=extraList.map(function(item){
+      return '<div class="laad-item'+(item.geladen?' done':'')+'" onclick="toggleLaadItem('+item.idx+')" style="background:rgba(97,171,237,.05)">'+
+        '<div class="laad-cb'+(item.geladen?' checked':'')+'"></div>'+
+        '<div class="laad-naam" style="color:var(--tx2)">'+esc(item.naam)+'</div>'+
+        '<div class="laad-aantal">'+item.aantal+'×</div>'+
+      '</div>';
+    }).join('');
+  }
+  var el=document.getElementById('laad-items');
+  if(el) el.innerHTML=html;
 }
 
 function toggleLaadItem(idx){
   if(!window._laadItems) return;
   window._laadItems[idx].geladen=!window._laadItems[idx].geladen;
-  window._renderLaad();
+  // Persisteer de status
+  if(window._laadBoekingId){
+    var geladenIndices = window._laadItems
+      .filter(function(x){return x.geladen;})
+      .map(function(x){return x.idx;});
+    laadStatusOpslaan(window._laadBoekingId, geladenIndices);
+  }
+  renderLaadItems();
 }
 
 async function ikDitToggle(id,type,naam){
@@ -3237,6 +3984,8 @@ async function voltooiBoeking(id){
   if(!confirm('Boeking markeren als voltooid? Ze verdwijnt uit het overzicht maar blijft bewaard in het archief en omzetrapport.'))return;
   b.voltooid=true;b.status=5;
   saveC(boekingen);
+  // Wis laadstatus — boeking is afgehandeld
+  laadStatusWissen(id);
   closeMo();
   const r=await api({action:'save',body:{action:'save',boeking:b}});
   if(r&&r.success){banner('ok',b.naam+' gemarkeerd als voltooid');renderPlanning();updateStats();}
