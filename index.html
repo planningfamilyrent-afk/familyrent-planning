@@ -1634,13 +1634,21 @@ async function saveBoeking(){
   const adres=document.getElementById('f-adres').value.trim();
   const levdatum=document.getElementById('f-levdatum').value;
   const ophdatum=document.getElementById('f-ophdatum').value;
-  const mat=document.getElementById('f-mat').value.trim();
+  let mat=document.getElementById('f-mat').value.trim();
   const errEl=document.getElementById('ferr');
   if(!naam){errEl.textContent='Naam klant is verplicht.';errEl.style.display='block';document.getElementById('f-naam').focus();return;}
   if(!adres){errEl.textContent='Adres is verplicht.';errEl.style.display='block';document.getElementById('f-adres').focus();return;}
   if(!levdatum){errEl.textContent='Leverdatum is verplicht.';errEl.style.display='block';document.getElementById('f-levdatum').focus();return;}
   if(!ophdatum){errEl.textContent='Ophaaldatum is verplicht.';errEl.style.display='block';document.getElementById('f-ophdatum').focus();return;}
   if(ophdatum<levdatum){errEl.textContent='Ophaaldatum mag niet vóór de leverdatum liggen.';errEl.style.display='block';return;}
+  // Fallback bij bewerken: als f-mat leeg is door timing, gebruik de opgeslagen boeking
+  if(!mat && editId){
+    const _bestaand=boekingen.find(x=>x.id===editId);
+    if(_bestaand&&_bestaand.materiaal){
+      mat=_bestaand.materiaal;
+      document.getElementById('f-mat').value=mat;
+    }
+  }
   if(!mat){errEl.textContent='Selecteer minstens één product.';errEl.style.display='block';return;}
   if(!fs.levType){errEl.textContent='Selecteer het type levering (wij leveren of zelf afhalen).';errEl.style.display='block';return;}
   if(fs.levType==='levering'&&(!fs.vertrek||!fs.matStatus)){errEl.textContent='Selecteer vertrekpunt en materiaalstatus.';errEl.style.display='block';return;}
@@ -1823,7 +1831,8 @@ function renderPlanning(){
           <button class="bsm-bl bca-ics-oph"><i class="ti ti-calendar-plus" style="font-size:11px"></i> .ics oph</button>
           ${b.tel?`<a class="wa-btn" href="${waLink(b.tel,b.naam,b.levuur,b.adres)||'#'}" target="_blank" rel="noopener" onclick="event.stopPropagation()"><i class="ti ti-brand-whatsapp"></i> WhatsApp</a>`:''}
           <button class="bsm bca-edit"><i class="ti ti-edit" style="font-size:11px"></i> Bewerken</button>
-          <button class="bsm bca-volt" style="background:#EAF3DE;color:#27500A;border-color:#97C459;font-weight:500"><i class="ti ti-circle-check" style="font-size:11px"></i> Voltooien</button>
+          <button class="bsm bca-lev-volt" style="background:#EAF3DE;color:#27500A;border-color:#97C459;font-weight:500"><i class="ti ti-truck-delivery" style="font-size:11px"></i> Lev. voltooid</button>
+          <button class="bsm bca-volt" style="background:#f0f3f0;color:#173404;border-color:#3B6D11"><i class="ti ti-archive" style="font-size:11px"></i> Archiveer</button>
         </div>
       </div>`;
     });
@@ -1844,6 +1853,7 @@ function renderPlanning(){
       if(btn.classList.contains('bca-ics-lev')){dlICS(id,'lev');}
       else if(btn.classList.contains('bca-ics-oph')){dlICS(id,'oph');}
       else if(btn.classList.contains('bca-edit')){editBoeking(id);}
+      else if(btn.classList.contains('bca-lev-volt')){voltooiLevering(id);}
       else if(btn.classList.contains('bca-volt')){voltooiBoeking(id);}
     });
   }
@@ -3603,7 +3613,8 @@ function openDetail(id){
     <button class="bsm" style="background:#E6F1FB;color:#0C447C;border-color:#61ABED;font-weight:500" onclick="openLaadbriefje(${id});closeMo()"><i class="ti ti-clipboard-list"></i> ${laadVoortgangLabel(id)}</button>
     <button class="bsm" style="background:#F3E8FF;color:#7C3AED;border-color:#C4A8E8" onclick="dupliceerBoeking(${id});closeMo()"><i class="ti ti-copy"></i> Dupliceer</button>
     <button class="bsm" onclick="editBoeking(${id});closeMo()"><i class="ti ti-edit"></i> Bewerken</button>
-    <button class="bsm" style="background:#EAF3DE;color:#27500A;border-color:#97C459;font-weight:500" onclick="voltooiBoeking(${id});closeMo()"><i class="ti ti-circle-check"></i> Voltooien</button>
+    <button class="bsm" style="background:#EAF3DE;color:#27500A;border-color:#97C459;font-weight:500" onclick="voltooiLevering(${id})"><i class="ti ti-truck-delivery" style="font-size:11px"></i> Levering voltooid</button>
+    <button class="bsm" style="background:#EAF3DE;color:#173404;border-color:#3B6D11;font-weight:500" onclick="voltooiBoeking(${id})"><i class="ti ti-archive" style="font-size:11px"></i> Archiveren</button>
     <button class="bsm" style="color:#791F1F;border-color:#F09595" onclick="delBoeking(${id})"><i class="ti ti-trash"></i> Verwijderen</button>`;
   document.getElementById('mo').classList.add('open');
   // Event delegation voor ik-btn knoppen
@@ -4139,11 +4150,23 @@ function editBoeking(id){
   const fAndLevEl=document.getElementById('f-and-lev');if(fAndLevEl)fAndLevEl.value='';
   const fAndOphEl=document.getElementById('f-and-oph');if(fAndOphEl)fAndOphEl.value='';
   ppQty={};
-  // ppInit na showTab zodat DOM elementen zichtbaar zijn
+  // ppInit na showTab zodat DOM elementen volledig zichtbaar zijn
+  // 150ms geeft de tab-transitie tijd om te voltooien op alle toestellen
+  var _editMateriaal = b.materiaal||'';
+  var _editId_backup = id; // bewaar id voor fallback in saveBoeking
   setTimeout(function(){
     ppInit();
-    ppLoadFromField(b.materiaal||'');
-  },50);
+    ppLoadFromField(_editMateriaal);
+    // Extra check: als ppRender het veld niet vulde, doe het handmatig
+    setTimeout(function(){
+      var fmat = document.getElementById('f-mat');
+      if(fmat && !fmat.value.trim() && _editMateriaal){
+        fmat.value = _editMateriaal;
+        // Trigger weersblok update
+        updateWeerFormulier();
+      }
+    }, 100);
+  },150);
   const w=document.getElementById('taken-wrap');
   Array.from(w.querySelectorAll('.taak-input-row')).forEach(r=>r.remove());
   if(b.taken&&b.taken.length>0)b.taken.forEach(tk=>addTaakInput(tk.tekst,tk.gedaan));
@@ -4152,9 +4175,30 @@ function editBoeking(id){
   if(nieuwTab) nieuwTab.innerHTML='<i class="ti ti-edit"></i> Bewerken';
   showTab('nieuw');
 }
-async function voltooiBoeking(id){
+async function voltooiLevering(id){
+  // Markeer enkel de LEVERING als voltooid — ophaling blijft actief in de planner
   const b=boekingen.find(x=>x.id===id);if(!b)return;
-  if(!confirm('Boeking markeren als voltooid? Ze verdwijnt uit het overzicht maar blijft bewaard in het archief en omzetrapport.'))return;
+  if(b.status>=3){
+    // Al op Geleverd of verder — vraag of volledig archiveren
+    if(confirm('Levering is al gemarkeerd als geleverd.\nVolledig voltooien en archiveren? De ophaling verdwijnt dan ook uit het overzicht.')){
+      return voltooiBoeking(id);
+    }
+    return;
+  }
+  if(!confirm('Levering markeren als voltooid? De ophaling op '+fmtShort(b.ophdatum)+' blijft zichtbaar in de planner.'))return;
+  b.status=3; // Geleverd
+  saveC(boekingen);
+  closeMo();
+  let r;
+  try{ r=await api({action:'save',body:{action:'save',boeking:b}}); }
+  catch(e){ banner('er','Opslaan mislukt — probeer opnieuw.'); return; }
+  if(r&&r.success){banner('ok','Levering '+b.naam+' gemarkeerd als Geleverd — ophaling blijft in de planner');renderPlanning();updateStats();}
+}
+
+async function voltooiBoeking(id){
+  // Archiveer de VOLLEDIGE boeking — verdwijnt uit alle overzichten
+  const b=boekingen.find(x=>x.id===id);if(!b)return;
+  if(!confirm('Boeking volledig voltooien en archiveren?\n\nZowel de levering als de ophaling verdwijnen uit het overzicht.\nDe boeking blijft bewaard in het archief en omzetrapport.'))return;
   b.voltooid=true;b.status=5;
   saveC(boekingen);
   // Wis laadstatus — boeking is afgehandeld
@@ -4163,7 +4207,7 @@ async function voltooiBoeking(id){
   let r;
   try{ r=await api({action:'save',body:{action:'save',boeking:b}}); }
   catch(e){ banner('er','Opslaan mislukt — probeer opnieuw.'); return; }
-  if(r&&r.success){banner('ok',b.naam+' gemarkeerd als voltooid');renderPlanning();updateStats();}
+  if(r&&r.success){banner('ok',b.naam+' volledig gearchiveerd');renderPlanning();updateStats();}
 }
 async function delBoeking(id){
   if(!confirm('Boeking verwijderen?'))return;
