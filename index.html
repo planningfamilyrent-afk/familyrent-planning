@@ -457,6 +457,11 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 .vr-edit-btn{width:28px;height:28px;border-radius:var(--rm);border:.5px solid var(--bm);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--tx2);flex-shrink:0}
 .vr-edit-btn:hover{background:var(--bg2);color:var(--tx1)}
 .vr-cat-hdr{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--tx2);padding:6px 0 4px;border-bottom:.5px solid var(--bl);margin-bottom:6px}
+.vr-datum-sel{display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:4px}
+.vr-datum-sel .rit-db{font-size:11px;padding:4px 9px}
+.vr-datum-sel .rit-db.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+[data-theme="dark"] .vr-datum-sel .rit-db.active{background:var(--sky);color:#0C1135;border-color:var(--sky)}
+.vr-dag-input{font-size:12px;padding:4px 8px;border:.5px solid var(--bm);border-radius:var(--rm);background:var(--bg1);color:var(--tx1);font-family:'Poppins',sans-serif}
 /* Conflict badges in boeking */
 .conflict-badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;white-space:nowrap;display:inline-flex;align-items:center;gap:3px}
 .cb-ok{background:#EAF3DE;color:#27500A}
@@ -3026,60 +3031,101 @@ function vrCheckBoeking(boeking){
 }
 
 // Render de voorraad view
+// Geselecteerde datum voor voorraad tab — bewaard bij tab-wissels
+var _vrSelDatum = null;
+
+function vrSelDatum(d){
+  _vrSelDatum = d;
+  renderVoorraad();
+}
+
 function renderVoorraad(){
   var wrap = document.getElementById('vr-wrap');
   if(!wrap) return;
   var voorraad = vrLaad();
   var t = today();
-  // Selecteer datum voor conflict check (standaard: vandaag + 30 dagen)
-  var van = t;
-  var tot = new Date(t+'T00:00:00');
-  tot.setDate(tot.getDate()+30);
-  var totStr = tot.toISOString().split('T')[0];
 
-  // Groepeer per categorie
+  // Verzamel alle relevante datums: vandaag + alle lev/oph datums van actieve boekingen
+  var datumSet = new Set();
+  datumSet.add(t);
+  boekingen.forEach(function(b){
+    if(b.voltooid===true||b.voltooid==='true') return;
+    if(b.levdatum) datumSet.add(b.levdatum);
+    if(b.ophdatum) datumSet.add(b.ophdatum);
+  });
+  var datums = Array.from(datumSet).filter(function(d){return d;}).sort();
+
+  // Geselecteerde datum — standaard vandaag, of eerste toekomstige datum
+  if(!_vrSelDatum || !datums.includes(_vrSelDatum)){
+    _vrSelDatum = datums.find(function(d){return d>=t;}) || t;
+  }
+  var sel = _vrSelDatum;
+
+  // Bereken per product hoeveel er verhuurd is op de geselecteerde dag
+  // vrBerekenVerhuurd(id, sel, sel) = alle boekingen die op die dag actief zijn
   var perCat = {};
   voorraad.forEach(function(vr){
     var prod = CATALOGUS.find(function(p){ return p.id === vr.id; });
     if(!prod) return;
     if(!perCat[prod.cat]) perCat[prod.cat] = [];
-    // Bereken het TOTAAL gelijktijdig verhuurd over de komende 30 dagen
-    // vrBerekenVerhuurd(id, van, totStr) geeft de som van ALLE overlappende boekingen
-    // Dit is correct: alle boekingen die in de window actief zijn tellen mee
-    var maxVerhuurd = vrBerekenVerhuurd(vr.id, van, totStr, null, null, null);
-    var beschikbaar = vr.stock - maxVerhuurd;
+    var verhuurd = vrBerekenVerhuurd(vr.id, sel, sel, null, null, null);
+    var nietBeschikbaar = itemsNietBeschikbaar(vr.id);
+    var beschikbaar = vr.stock - verhuurd - nietBeschikbaar;
     var status = beschikbaar < 0 ? 'conflict' : beschikbaar <= vr.buffer ? 'warn' : 'ok';
-    perCat[prod.cat].push({vr:vr, prod:prod, beschikbaar:beschikbaar, maxVerhuurd:maxVerhuurd, status:status});
+    perCat[prod.cat].push({
+      vr:vr, prod:prod,
+      verhuurd:verhuurd,
+      beschikbaar:beschikbaar,
+      status:status,
+      nietBeschikbaar:nietBeschikbaar
+    });
   });
 
   var conflicten = Object.values(perCat).flat().filter(function(x){return x.status==='conflict';}).length;
-  var warns = Object.values(perCat).flat().filter(function(x){return x.status==='warn';}).length;
+  var warns    = Object.values(perCat).flat().filter(function(x){return x.status==='warn';}).length;
+  var isVandaag = sel === t;
 
   var html = '<div class="vr-hdr">';
-  html += '<div><div class="vr-hdr-title"><i class="ti ti-package" style="color:var(--sky)"></i> Voorraadoverzicht</div>';
-  html += '<div class="vr-hdr-sub">Beschikbaarheid komende 30 dagen &nbsp;·&nbsp; ';
-  if(conflicten>0) html += '<span style="color:#A32D2D;font-weight:600">'+conflicten+' conflict'+(conflicten!==1?'en':'')+'</span> &nbsp;·&nbsp; ';
+  html += '<div>';
+  html += '<div class="vr-hdr-title"><i class="ti ti-package" style="color:var(--sky)"></i> Voorraadoverzicht</div>';
+  // Status samenvatting
+  html += '<div class="vr-hdr-sub">';
+  if(conflicten>0) html += '<span style="color:#A32D2D;font-weight:600"><i class="ti ti-alert-triangle" style="font-size:11px"></i> '+conflicten+' conflict'+(conflicten!==1?'en':'')+'</span> &nbsp;·&nbsp; ';
   if(warns>0) html += '<span style="color:#854F0B">'+warns+' waarschuwing'+(warns!==1?'en':'')+'</span>';
-  if(conflicten===0&&warns===0) html += '<span style="color:#27500A">Alles beschikbaar</span>';
-  html += '</div></div>';
-  html += '<button class="bsm-bl" onclick="vrReset()" style="font-size:11px"><i class="ti ti-refresh" style="font-size:11px"></i> Herstel standaard</button>';
+  if(conflicten===0&&warns===0) html += '<span style="color:#27500A"><i class="ti ti-check" style="font-size:11px"></i> Alles beschikbaar op deze datum</span>';
+  html += '</div>';
+  html += '</div>';
+  html += '<button class="bsm-bl" onclick="vrReset()" style="font-size:11px"><i class="ti ti-refresh" style="font-size:11px"></i> Standaard</button>';
   html += '</div>';
 
+  // Datumkiezer
+  html += '<div class="vr-datum-sel">';
+  html += '<span style="font-size:12px;color:var(--tx2);flex-shrink:0">Datum:</span>';
+  datums.forEach(function(d){
+    var isPast = d < t;
+    html += '<button class="rit-db'+(d===sel?' active':'')+'" style="'+(isPast?'opacity:.55':'')+'" data-vr-datum="'+d+'">'+fmtShort(d)+(d===t?' (vandaag)':'')+'</button>';
+  });
+  html += '</div>';
+
+  // Per categorie de voorraad tonen
   Object.keys(perCat).forEach(function(cat){
     var items = perCat[cat];
+    // Toon categorie enkel als er minstens 1 product met stock > 0 is
+    var zichtbaar = items.filter(function(x){ return x.vr.stock > 0; });
+    if(zichtbaar.length === 0) return;
     html += '<div>';
     html += '<div class="vr-cat-hdr">'+cat+'</div>';
     html += '<div class="vr-grid">';
-    items.forEach(function(item){
+    zichtbaar.forEach(function(item){
       var dotCls = 'vr-dot-'+item.status;
       var itemCls = 'vr-item vr-'+item.status;
       html += '<div class="'+itemCls+'">';
       html += '<div class="vr-dot '+dotCls+'"></div>';
       html += '<div class="vr-info">';
       html += '<div class="vr-naam">'+item.prod.naam+'</div>';
-      var _nitems = itemsNietBeschikbaar(item.vr.id);
-      var _metaExtra = _nitems>0 ? ' &nbsp;·&nbsp; <span style="color:#A32D2D">'+_nitems+' niet beschikbaar</span>':'';
-      html += '<div class="vr-meta">Verhuurd: '+item.maxVerhuurd+' &nbsp;/&nbsp; Totaal: '+item.vr.stock+_metaExtra+'</div>';
+      var metaParts = ['Verhuurd: '+item.verhuurd, 'Totaal: '+item.vr.stock];
+      if(item.nietBeschikbaar > 0) metaParts.push('<span style="color:#A32D2D">'+item.nietBeschikbaar+' niet beschikbaar</span>');
+      html += '<div class="vr-meta">'+metaParts.join(' &nbsp;·&nbsp; ')+'</div>';
       html += '</div>';
       html += '<div class="vr-stock">';
       html += '<div class="vr-stock-val" style="color:'+(item.status==='conflict'?'#A32D2D':item.status==='warn'?'#854F0B':'#27500A')+'">'+Math.max(0,item.beschikbaar)+'</div>';
@@ -3092,10 +3138,12 @@ function renderVoorraad(){
   });
 
   wrap.innerHTML = html;
-  // Event delegation
+  // Event delegation (eenmalig registreren)
   if(!wrap._vrListener){
     wrap._vrListener = true;
     wrap.addEventListener('click', function(e){
+      var datumBtn = e.target.closest('[data-vr-datum]');
+      if(datumBtn){ vrSelDatum(datumBtn.dataset.vrDatum); return; }
       var btn = e.target.closest('[data-vr-id]');
       if(btn) vrOpenEdit(btn.dataset.vrId);
     });
