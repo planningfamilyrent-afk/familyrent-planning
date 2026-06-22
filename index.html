@@ -435,6 +435,45 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 
 /* VOORRAAD MODULE */
 .vr-wrap{display:flex;flex-direction:column;gap:14px}
+/* DASHBOARD UITBREIDING */
+.db-sectie-titel{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--tx2);padding:10px 0 6px;display:flex;align-items:center;gap:5px}
+.db-7d-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:4px}
+.db-7d-dag{background:var(--bg2);border-radius:var(--rm);padding:6px 4px;text-align:center;cursor:pointer;border:.5px solid var(--bl);transition:background .15s}
+.db-7d-dag:hover{background:var(--bg1);border-color:var(--sky)}
+.db-7d-dag.druk{border-color:#EF9F27;background:#FAEEDA}
+.db-7d-dag.conflict{border-color:#E24B4A;background:rgba(226,75,74,.08)}
+.db-7d-lbl{font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:.3px}
+.db-7d-datum{font-size:11px;font-weight:600;color:var(--tx1)}
+.db-7d-cnt{font-size:10px;color:var(--tx2);margin-top:2px}
+[data-theme="dark"] .db-7d-dag.druk{background:rgba(239,159,39,.15)}
+[data-theme="dark"] .db-7d-dag.conflict{background:rgba(226,75,74,.15)}
+/* WAARSCHUWINGEN */
+.wg-wrap{position:fixed;top:0;right:0;width:360px;height:100vh;background:var(--bg1);border-left:.5px solid var(--bl);z-index:300;transform:translateX(100%);transition:transform .25s;overflow-y:auto;display:flex;flex-direction:column}
+.wg-wrap.open{transform:translateX(0)}
+.wg-hdr{padding:16px;border-bottom:.5px solid var(--bl);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg1);z-index:1}
+.wg-titel{font-size:14px;font-weight:600;color:var(--tx1)}
+.wg-body{padding:12px;flex:1;display:flex;flex-direction:column;gap:8px}
+.wg-item{background:var(--bg2);border-radius:var(--rm);padding:10px 12px;border-left:3px solid var(--bl);cursor:pointer}
+.wg-item:hover{background:var(--bg1);border-color:var(--sky)}
+.wg-item.krit{border-left-color:#E24B4A}
+.wg-item.warn{border-left-color:#EF9F27}
+.wg-item.info{border-left-color:#61ABED}
+.wg-item-hdr{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.wg-badge{font-size:10px;font-weight:600;padding:1px 6px;border-radius:20px}
+.wg-badge-krit{background:#FCEBEB;color:#A32D2D}
+.wg-badge-warn{background:#FAEEDA;color:#854F0B}
+.wg-badge-info{background:#E6F1FB;color:#0C447C}
+.wg-cat{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.4px}
+.wg-tekst{font-size:12px;color:var(--tx1);line-height:1.4}
+.wg-empty{text-align:center;padding:40px 20px;color:var(--tx2);font-size:13px}
+.wg-overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:299;display:none}
+.wg-overlay.open{display:block}
+/* Notificatieknop in header */
+.notif-btn{position:relative;width:32px;height:32px;border-radius:var(--rm);border:.5px solid var(--bm);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--tx2)}
+.notif-btn:hover{background:var(--bg2);color:var(--tx1)}
+.notif-dot{position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:#E24B4A;display:none;border:1.5px solid var(--bg1)}
+.notif-dot.zichtbaar{display:block}
+[data-theme="dark"] .wg-wrap{border-left-color:var(--bl)}
 .vr-hdr{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:4px}
 .vr-hdr-title{font-size:15px;font-weight:600;color:var(--tx1)}
 .vr-hdr-sub{font-size:12px;color:var(--tx2)}
@@ -656,7 +695,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
   <button class="tab" onclick="showTab('voorraad')" id="tab-voorraad"><i class="ti ti-package" aria-hidden="true"></i> Voorraad</button>
   <button class="tab" onclick="showTab('rapport')" id="tab-rapport"><i class="ti ti-chart-bar" aria-hidden="true"></i> Rapport</button>
   <button class="tab" onclick="showTab('nieuw')" id="tab-nieuw"><i class="ti ti-plus" aria-hidden="true"></i> Nieuw</button>
-  
+  <button class="notif-btn" id="notif-btn" onclick="wgOpen()" title="Waarschuwingen"><i class="ti ti-bell" style="font-size:15px"></i><span class="notif-dot" id="notif-dot"></span></button>
 </div>
 
 <!-- DASHBOARD -->
@@ -1279,6 +1318,7 @@ async function loadData(){
     boekingen=data.map(normB).filter(b=>b&&b.id&&b.naam&&b.levdatum);
     saveC(boekingen);
     matchProductenCache_invalideer(); // Nieuwe data → cache wissen
+    wgHerlaad(); // Herbereken notificaties
     banner('ok',boekingen.length+' boeking'+(boekingen.length!==1?'en':'')+' gesynchroniseerd');
     vrHerlaad();
     // Bouw klantendatabase op uit geladen boekingen
@@ -1980,22 +2020,98 @@ function _buildDashboard(){
   html+='<div class="db-datum"><i class="ti ti-calendar" style="color:var(--sky)"></i> <strong>'+greeting+'</strong> — '+datumStr+'</div>';
 
   // Stat blokken
-  html+='<div class="db-grid">';
-  html+='<div class="db-stat db-lev" data-goto="planning" data-filter="vandaag"><div class="db-stat-icon"><i class="ti ti-truck-delivery"></i></div><div class="db-stat-val">'+(vandaagLev.length+vandaagAfh.length)+'</div><div class="db-stat-lbl">Leveringen vandaag</div><div class="db-stat-sub">'+(morgenLev.length+morgenAfh.length)+' morgen</div></div>';
-  html+='<div class="db-stat db-oph" data-goto="planning" data-filter="vandaag"><div class="db-stat-icon"><i class="ti ti-arrow-back-up"></i></div><div class="db-stat-val">'+vandaagOph.length+'</div><div class="db-stat-lbl">Ophalingen vandaag</div><div class="db-stat-sub">'+morgenOph.length+' morgen</div></div>';
-  html+='<div class="db-stat db-tak" data-goto="planning" data-filter="alle"><div class="db-stat-icon"><i class="ti ti-checklist"></i></div><div class="db-stat-val">'+openTaken.length+'</div><div class="db-stat-lbl">Open taken</div><div class="db-stat-sub">over alle boekingen</div></div>';
-  html+='<div class="db-stat db-bet" data-goto="betalen"><div class="db-stat-icon"><i class="ti ti-currency-euro"></i></div><div class="db-stat-val">'+nietBetaald.length+'</div><div class="db-stat-lbl">Nog te betalen</div><div class="db-stat-sub">actieve boekingen</div></div>';
-  // Voorraad conflict blok
+  // ── Laadstatus vandaag ─────────────────────────────────────
+  var teLastenVandaag=actief.filter(function(b){return b.levdatum===t&&(b.levType==='levering'||!b.levType||b.levType==='');});
+  var nLaadGestart=0,nLaadKlaar=0;
+  teLastenVandaag.forEach(function(b){
+    var st=laadStatusLaden(b.id);
+    var regels=(b.materiaal||'').split('\n').filter(function(r){return r.trim();});
+    if(regels.length===0) return;
+    if(st.length===0){/* nog niet gestart */}
+    else if(st.length>=regels.length){nLaadKlaar++;}
+    else{nLaadGestart++;}
+  });
+  var nLaadNietGestart=teLastenVandaag.length-nLaadGestart-nLaadKlaar;
+
+  // ── Komende 7 dagen ────────────────────────────────────────
+  var d7=new Date(t+'T00:00:00');d7.setDate(d7.getDate()+7);
+  var d7s=d7.toISOString().split('T')[0];
+  var week7lev=actief.filter(function(b){return b.levdatum>t&&b.levdatum<=d7s;});
+  var week7oph=actief.filter(function(b){return b.ophdatum>t&&b.ophdatum<=d7s&&b.ophdatum!==b.levdatum;});
+  // Drukste dag = dag met meeste stops
+  var dagTelling={};
+  week7lev.forEach(function(b){dagTelling[b.levdatum]=(dagTelling[b.levdatum]||0)+1;});
+  week7oph.forEach(function(b){dagTelling[b.ophdatum]=(dagTelling[b.ophdatum]||0)+1;});
+  var druksteDag=null,druksteCnt=0;
+  Object.keys(dagTelling).forEach(function(d){if(dagTelling[d]>druksteCnt){druksteCnt=dagTelling[d];druksteDag=d;}});
+
+  // ── Onderhoud ──────────────────────────────────────────────
+  var itemsData=itemsLaad();
+  var nOnderhoud=0,nBlokkeerd=0;
+  Object.values(itemsData).forEach(function(lijst){
+    lijst.forEach(function(i){
+      if(i.status==='onderhoud')nOnderhoud++;
+      else if(i.status==='beschadigd'||i.status==='verloren')nBlokkeerd++;
+    });
+  });
+
+  // ── Voorraadconflicten (komende 30 dagen) ─────────────────
   var _vrCheck30=[];
   var _t30=new Date(t+'T00:00:00');_t30.setDate(_t30.getDate()+30);
   var _t30s=_t30.toISOString().split('T')[0];
   actief.filter(function(b){return b.levdatum&&b.levdatum<=_t30s;}).forEach(function(b){
     vrCheckBoeking(b).forEach(function(c){if(c.check.status==='conflict')_vrCheck30.push(c);});
   });
+
+  // ── Render grid ────────────────────────────────────────────
+  html+='<div class="db-grid">';
+  html+='<div class="db-stat db-lev" data-goto="planning" data-filter="vandaag"><div class="db-stat-icon"><i class="ti ti-truck-delivery"></i></div><div class="db-stat-val">'+(vandaagLev.length+vandaagAfh.length)+'</div><div class="db-stat-lbl">Leveringen vandaag</div><div class="db-stat-sub">'+(morgenLev.length+morgenAfh.length)+' morgen</div></div>';
+  html+='<div class="db-stat db-oph" data-goto="planning" data-filter="vandaag"><div class="db-stat-icon"><i class="ti ti-arrow-back-up"></i></div><div class="db-stat-val">'+vandaagOph.length+'</div><div class="db-stat-lbl">Ophalingen vandaag</div><div class="db-stat-sub">'+morgenOph.length+' morgen</div></div>';
+  // Widget: te laden vandaag
+  var laadKleur=nLaadNietGestart>0?'#854F0B':'#27500A';
+  var laadBg=nLaadNietGestart>0?'rgba(239,159,39,.06)':'';
+  var laadBorder=nLaadNietGestart>0?'#EF9F27':'';
+  html+='<div class="db-stat" style="'+(laadBorder?'border-color:'+laadBorder+';background:'+laadBg:'')+'"><div class="db-stat-icon" style="'+(nLaadNietGestart>0?'background:#FAEEDA;color:#854F0B':'')+'"><i class="ti ti-package"></i></div><div class="db-stat-val" style="color:'+laadKleur+'">'+teLastenVandaag.length+'</div><div class="db-stat-lbl">Te laden vandaag</div><div class="db-stat-sub">'+(nLaadKlaar>0?nLaadKlaar+' klaar':nLaadGestart>0?nLaadGestart+' gestart':'klik voor laadlijst')+'</div></div>';
+  html+='<div class="db-stat db-bet" data-goto="betalen"><div class="db-stat-icon"><i class="ti ti-currency-euro"></i></div><div class="db-stat-val">'+nietBetaald.length+'</div><div class="db-stat-lbl">Nog te betalen</div><div class="db-stat-sub">actieve boekingen</div></div>';
+  // Widget: komende 7 dagen
+  html+='<div class="db-stat" data-goto="planning" data-filter="week"><div class="db-stat-icon" style="background:#E6F1FB;color:#0C447C"><i class="ti ti-calendar-week"></i></div><div class="db-stat-val" style="color:#0C447C">'+(week7lev.length+week7oph.length)+'</div><div class="db-stat-lbl">Komende 7 dagen</div><div class="db-stat-sub">'+(druksteDag?'Drukst: '+fmtShort(druksteDag):'geen stops')+'</div></div>';
+  // Widget: onderhoud
+  if(nOnderhoud>0||nBlokkeerd>0){
+    html+='<div class="db-stat" data-goto="voorraad" style="'+(nBlokkeerd>0?'border-color:#EF9F27':'')+'"><div class="db-stat-icon" style="'+(nBlokkeerd>0?'background:#FAEEDA;color:#854F0B':'')+'"><i class="ti ti-tool"></i></div><div class="db-stat-val" style="'+(nBlokkeerd>0?'color:#854F0B':'')+'">'+( nOnderhoud+nBlokkeerd)+'</div><div class="db-stat-lbl">In onderhoud</div><div class="db-stat-sub">'+(nBlokkeerd>0?nBlokkeerd+' geblokkeerd':'')+(nOnderhoud>0?(nBlokkeerd>0?' · ':'') +nOnderhoud+' onderhoud':'')+'</div></div>';
+  }
+  // Widget: voorraadconflicten
   if(_vrCheck30.length>0){
     html+='<div class="db-stat" style="border-color:#E24B4A;background:rgba(226,75,74,.06)" data-goto="voorraad"><div class="db-stat-icon" style="background:#FCEBEB;color:#A32D2D"><i class="ti ti-alert-triangle"></i></div><div class="db-stat-val" style="color:#A32D2D">'+_vrCheck30.length+'</div><div class="db-stat-lbl">Voorraadconflicten</div><div class="db-stat-sub">komende 30 dagen</div></div>';
   }
+  // Widget: open taken
+  html+='<div class="db-stat db-tak" data-goto="planning" data-filter="alle"><div class="db-stat-icon"><i class="ti ti-checklist"></i></div><div class="db-stat-val">'+openTaken.length+'</div><div class="db-stat-lbl">Open taken</div><div class="db-stat-sub">over alle boekingen</div></div>';
   html+='</div>';
+
+  // ── Komende 7 dagen dagblokken sectie ────────────────────────
+  if(week7lev.length+week7oph.length > 0){
+    html+='<div class="db-section">';
+    html+='<div class="db-sec-hdr"><div class="db-sec-hdr-left"><i class="ti ti-calendar-week"></i> Komende 7 dagen</div><span class="db-sec-cnt">'+(week7lev.length+week7oph.length)+' stops</span></div>';
+    html+='<div style="padding:0 14px 12px">';
+    html+='<div class="db-7d-grid">';
+    for(var di=1;di<=7;di++){
+      var dd7=new Date(t+'T00:00:00');dd7.setDate(dd7.getDate()+di);
+      var dds7=dd7.toISOString().split('T')[0];
+      var nLev7=week7lev.filter(function(b){return b.levdatum===dds7;}).length;
+      var nOph7=week7oph.filter(function(b){return b.ophdatum===dds7;}).length;
+      var nTot7=nLev7+nOph7;
+      var dagNamen7=['zo','ma','di','wo','do','vr','za'];
+      var dagNm7=dagNamen7[dd7.getDay()];
+      var dagCls7='db-7d-dag'+(nTot7>=3?' conflict':nTot7>0?' druk':'');
+      html+='<div class="'+dagCls7+'" data-goto="planning">';
+      html+='<div class="db-7d-lbl">'+dagNm7+'</div>';
+      html+='<div class="db-7d-datum">'+dd7.getDate()+'/'+(dd7.getMonth()+1)+'</div>';
+      html+='<div class="db-7d-cnt">'+(nTot7>0?nTot7+' stop'+(nTot7!==1?'s':''):'vrij')+'</div>';
+      html+='</div>';
+    }
+    html+='</div>';
+    html+='</div>';
+    html+='</div>';
+  }
 
   // Belevingsbouwers vandaag
   if(vandaagAll.length>0){
@@ -2085,6 +2201,7 @@ function renderDashboard(){
   var wrap=document.getElementById('db-wrap');
   if(!wrap) return;
   _buildDashboard();
+  setTimeout(wgHerlaad, 100);
 }
 
 function renderTijdlijn(){
@@ -3310,6 +3427,226 @@ function itemStatusSlaAlleOp(productId){
   banner('ok','Itemstatus opgeslagen');
 }
 
+
+// ============================================================
+// WAARSCHUWINGSENGINE — Centraal systeem voor operationele risico's
+// Berekent automatisch alle waarschuwingen en retourneert een array
+// [{prio:'krit'|'warn'|'info', cat, tekst, boekingId, actie}]
+// ============================================================
+
+function waarschuwingsEngine(){
+  var resultaat = [];
+  var t = today();
+  var actief = boekingen.filter(function(b){
+    return !(b.voltooid===true||b.voltooid==='true');
+  });
+
+  // ── VOORRAAD: conflicten en bijna-vol ─────────────────────
+  var geziendeConflicten = {};
+  actief.forEach(function(b){
+    if(!b.levdatum) return;
+    var conflicten = vrCheckBoeking(b);
+    conflicten.forEach(function(c){
+      var key = c.product.id + '_' + b.levdatum;
+      if(geziendeConflicten[key]) return;
+      geziendeConflicten[key] = true;
+      if(c.check.status === 'conflict'){
+        resultaat.push({
+          prio:'krit', cat:'Voorraad',
+          tekst: c.product.naam + ' volledig volgeboekt op ' + fmtShort(b.levdatum) +
+                 ' (nog ' + Math.max(0,c.check.beschikbaar) + '/' + c.check.stock + ' beschikbaar)',
+          boekingId: b.id,
+          actie: function(id){ return function(){ openDetail(id); }; }(b.id)
+        });
+      } else if(c.check.status === 'warn'){
+        resultaat.push({
+          prio:'warn', cat:'Voorraad',
+          tekst: c.product.naam + ': nog slechts ' + Math.max(0,c.check.beschikbaar) +
+                 ' beschikbaar op ' + fmtShort(b.levdatum),
+          boekingId: b.id,
+          actie: function(id){ return function(){ openDetail(id); }; }(b.id)
+        });
+      }
+    });
+  });
+
+  // ── ONDERHOUD: geboekt materiaal in onderhoud ─────────────
+  var items = itemsLaad();
+  Object.keys(items).forEach(function(productId){
+    var lijst = items[productId]||[];
+    var inOnderhoud = lijst.filter(function(i){ return i.status==='onderhoud'||i.status==='beschadigd'; });
+    if(inOnderhoud.length === 0) return;
+    var prod = CATALOGUS.find(function(p){ return p.id===productId; });
+    if(!prod) return;
+    // Check of dit product geboekt is
+    var geboektOp = actief.filter(function(b){
+      if(!b.levdatum||!b.materiaal) return false;
+      var matches = matchProducten(b.materiaal);
+      return matches.some(function(m){ return m.product&&m.product.id===productId; });
+    });
+    if(geboektOp.length > 0){
+      geboektOp.forEach(function(b){
+        resultaat.push({
+          prio:'krit', cat:'Onderhoud',
+          tekst: prod.naam + ' (' + inOnderhoud.length + ' stuk' + (inOnderhoud.length!==1?'s':'') +
+                 ' in ' + (inOnderhoud[0].status) + ') staat ingepland op ' + fmtShort(b.levdatum),
+          boekingId: b.id,
+          actie: function(id){ return function(){ openDetail(id); }; }(b.id)
+        });
+      });
+    }
+  });
+
+  // ── MAGAZIJN: niet geladen dossiers van vandaag ───────────
+  var teLastenVandaag = actief.filter(function(b){
+    return b.levdatum===t && (b.levType==='levering'||!b.levType);
+  });
+  teLastenVandaag.forEach(function(b){
+    var status = laadStatusLaden(b.id);
+    var regels = (b.materiaal||'').split('\n').filter(function(r){return r.trim();});
+    if(regels.length > 0 && status.length === 0){
+      resultaat.push({
+        prio:'warn', cat:'Magazijn',
+        tekst: b.naam + ': laadlijst nog niet gestart (levering vandaag om ' + (b.levuur||'?') + ')',
+        boekingId: b.id,
+        actie: function(id){ return function(){ openLaadbriefje(id); }; }(b.id)
+      });
+    }
+  });
+
+  // ── LOGISTIEK: geen BB aangeduid voor vandaag ─────────────
+  var vandaagLev = actief.filter(function(b){
+    return b.levdatum===t && (b.levType==='levering'||!b.levType);
+  });
+  vandaagLev.forEach(function(b){
+    if(!b.opstellers_lev || b.opstellers_lev.length===0){
+      resultaat.push({
+        prio:'warn', cat:'Logistiek',
+        tekst: 'Niemand aangeduid voor levering ' + b.naam + ' vandaag om ' + (b.levuur||'?'),
+        boekingId: b.id,
+        actie: function(id){ return function(){ openDetail(id); }; }(b.id)
+      });
+    }
+  });
+  var vandaagOph = actief.filter(function(b){
+    return b.ophdatum===t && b.ophdatum!==b.levdatum;
+  });
+  vandaagOph.forEach(function(b){
+    if(!b.opstellers_oph || b.opstellers_oph.length===0){
+      resultaat.push({
+        prio:'warn', cat:'Logistiek',
+        tekst: 'Niemand aangeduid voor ophaling ' + b.naam + ' vandaag om ' + (b.ophuur||'?'),
+        boekingId: b.id,
+        actie: function(id){ return function(){ openDetail(id); }; }(b.id)
+      });
+    }
+  });
+
+  // ── FINANCIEEL: lang openstaande betalingen (>30 dagen) ───
+  var nu = new Date(t+'T00:00:00');
+  actief.forEach(function(b){
+    if(b.betaling || !b.levdatum) return;
+    var levDt = new Date(b.levdatum+'T00:00:00');
+    var dagenGeleden = Math.floor((nu-levDt)/(1000*60*60*24));
+    if(dagenGeleden > 30){
+      resultaat.push({
+        prio:'warn', cat:'Financieel',
+        tekst: b.naam + ': betaling al ' + dagenGeleden + ' dagen openstaand (levering ' + fmtShort(b.levdatum) + ')',
+        boekingId: b.id,
+        actie: function(id){ return function(){ showTab('betalen'); }; }(b.id)
+      });
+    }
+  });
+
+  // Sorteer: kritiek eerst, dan waarschuwing, dan info
+  var volgorde = {krit:0, warn:1, info:2};
+  resultaat.sort(function(a,b){ return (volgorde[a.prio]||2)-(volgorde[b.prio]||2); });
+  return resultaat;
+}
+
+// Render het waarschuwingspanel
+function wgRender(){
+  var body = document.getElementById('wg-body');
+  var dot = document.getElementById('notif-dot');
+  if(!body) return;
+  var items = waarschuwingsEngine();
+
+  // Update notificatiedot
+  var kritiek = items.filter(function(x){return x.prio==='krit';}).length;
+  if(dot) dot.className = 'notif-dot' + (kritiek>0?' zichtbaar':'');
+
+  if(items.length === 0){
+    body.innerHTML = '<div class="wg-empty"><i class="ti ti-check" style="font-size:24px;color:#97C459;display:block;margin-bottom:8px"></i>Geen actieve waarschuwingen</div>';
+    return;
+  }
+
+  var html = '';
+  // Groepeer per categorie
+  var cats = {};
+  items.forEach(function(item){
+    if(!cats[item.cat]) cats[item.cat] = [];
+    cats[item.cat].push(item);
+  });
+
+  Object.keys(cats).forEach(function(cat){
+    html += '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);padding:6px 0 3px">' + cat + '</div>';
+    cats[cat].forEach(function(item, i){
+      var badgeCls = 'wg-badge wg-badge-'+item.prio;
+      var badgeLbl = item.prio==='krit'?'Kritiek':item.prio==='warn'?'Waarschuwing':'Info';
+      var itemCls = 'wg-item '+item.prio;
+      html += '<div class="'+itemCls+'" data-wg-idx="'+i+'_'+cat+'">';
+      html += '<div class="wg-item-hdr"><span class="'+badgeCls+'">'+badgeLbl+'</span></div>';
+      html += '<div class="wg-tekst">'+esc(item.tekst)+'</div>';
+      if(item.boekingId) html += '<div style="font-size:10px;color:var(--sky);margin-top:4px">→ Bekijk boeking</div>';
+      html += '</div>';
+    });
+  });
+
+  body.innerHTML = html;
+
+  // Event delegation voor klikbare waarschuwingen
+  if(!body._wgListener){
+    body._wgListener = true;
+    body.addEventListener('click', function(e){
+      var wgItem = e.target.closest('.wg-item');
+      if(!wgItem) return;
+      var idx = wgItem.dataset.wgIdx;
+      if(!idx) return;
+      // Zoek het item terug via de live engine
+      var allItems = waarschuwingsEngine();
+      // Eenvoudigste aanpak: gebruik boekingId
+      if(wgItem.querySelector('[style*="Bekijk boeking"]')){
+        // Zoek het item op basis van positie in html
+        var allWgItems = body.querySelectorAll('.wg-item');
+        var pos = Array.from(allWgItems).indexOf(wgItem);
+        if(pos >= 0 && allItems[pos] && allItems[pos].actie){
+          wgSluit();
+          setTimeout(allItems[pos].actie, 200);
+        }
+      }
+    });
+  }
+}
+
+function wgOpen(){
+  wgRender();
+  document.getElementById('wg-panel').classList.add('open');
+  document.getElementById('wg-overlay').classList.add('open');
+}
+
+function wgSluit(){
+  document.getElementById('wg-panel').classList.remove('open');
+  document.getElementById('wg-overlay').classList.remove('open');
+}
+
+// Herbereken notificatiedot na elke datasync
+function wgHerlaad(){
+  var items = waarschuwingsEngine();
+  var dot = document.getElementById('notif-dot');
+  var kritiek = items.filter(function(x){return x.prio==='krit';}).length;
+  if(dot) dot.className = 'notif-dot' + (kritiek>0?' zichtbaar':'');
+}
+
 function backBB(){document.getElementById('bb-det').classList.remove('active');document.getElementById('bb-sel').style.display='block';}
 
 function printPlanning(){
@@ -4307,5 +4644,20 @@ setInterval(()=>{
   else if(document.getElementById('view-voorraad')&&document.getElementById('view-voorraad').classList.contains('active'))vrHerlaad();
 },60000);
 </script>
+
+<!-- WAARSCHUWINGEN OVERLAY -->
+<div class="wg-overlay" id="wg-overlay" onclick="wgSluit()"></div>
+
+<!-- WAARSCHUWINGEN PANEL -->
+<div class="wg-wrap" id="wg-panel">
+  <div class="wg-hdr">
+    <div class="wg-titel"><i class="ti ti-bell" style="color:var(--sky)"></i> Waarschuwingen</div>
+    <button class="bcl" onclick="wgSluit()"><i class="ti ti-x"></i></button>
+  </div>
+  <div class="wg-body" id="wg-body">
+    <div class="wg-empty"><i class="ti ti-check" style="font-size:24px;color:#97C459;display:block;margin-bottom:8px"></i>Geen actieve waarschuwingen</div>
+  </div>
+</div>
+
 </body>
 </html>
