@@ -1432,10 +1432,7 @@ function getOps(){
   if(andOph)oph.push(andOph);
   return {lev,oph};
 }
-function getOpsFlat(){
-  const o=getOps();
-  return [...new Set([...o.lev,...o.oph])];
-}
+
 
 function addTaakInput(tekst='',gedaan=false){
   const w=document.getElementById('taken-wrap');
@@ -1678,7 +1675,14 @@ async function saveBoeking(){
     taken:getTaken()
   };
   const btn=document.getElementById('savebtn');btn.disabled=true;btn.textContent='Opslaan...';
-  const result=await api({action:'save',body:{action:'save',boeking:b}});
+  let result;
+  try{ result=await api({action:'save',body:{action:'save',boeking:b}}); }
+  catch(e){
+    btn.disabled=false;
+    btn.textContent='Opslaan';
+    banner('er','Opslaan mislukt — verbindingsfout. Probeer opnieuw.');
+    return;
+  }
   btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Boeking opslaan';
   if(result&&result.success){
     if(editId){const i=boekingen.findIndex(x=>x.id===editId);if(i>=0)boekingen[i]=b;}else boekingen.push(b);
@@ -2399,7 +2403,9 @@ async function snelStatusBetalen(id){
   const b=boekingen.find(x=>x.id===id);if(!b)return;
   b.status=5;b.betaling='Cash bij levering';
   saveC(boekingen);
-  const r=await api({action:'save',body:{action:'save',boeking:b}});
+  let r;
+  try{ r=await api({action:'save',body:{action:'save',boeking:b}}); }
+  catch(e){ banner('er','Opslaan mislukt — probeer opnieuw.'); return; }
   if(r&&r.success){renderBetalen();renderPlanning();banner('ok',b.naam+' gemarkeerd als betaald');}
 }
 
@@ -3028,16 +3034,10 @@ function renderVoorraad(){
     var prod = CATALOGUS.find(function(p){ return p.id === vr.id; });
     if(!prod) return;
     if(!perCat[prod.cat]) perCat[prod.cat] = [];
-    // Bereken max verhuurd in komende 30 dagen
-    var maxVerhuurd = 0;
-    boekingen.filter(function(b){
-      return !(b.voltooid===true||b.voltooid==='true') && b.levdatum && b.levdatum<=totStr && (b.ophdatum||b.levdatum)>=van;
-    }).forEach(function(b){
-      var matches = matchProducten(b.materiaal||'');
-      matches.forEach(function(m){
-        if(m.product && m.product.id === vr.id) maxVerhuurd = Math.max(maxVerhuurd, m.aantal);
-      });
-    });
+    // Bereken het TOTAAL gelijktijdig verhuurd over de komende 30 dagen
+    // vrBerekenVerhuurd(id, van, totStr) geeft de som van ALLE overlappende boekingen
+    // Dit is correct: alle boekingen die in de window actief zijn tellen mee
+    var maxVerhuurd = vrBerekenVerhuurd(vr.id, van, totStr, null, null, null);
     var beschikbaar = vr.stock - maxVerhuurd;
     var status = beschikbaar < 0 ? 'conflict' : beschikbaar <= vr.buffer ? 'warn' : 'ok';
     perCat[prod.cat].push({vr:vr, prod:prod, beschikbaar:beschikbaar, maxVerhuurd:maxVerhuurd, status:status});
@@ -4067,7 +4067,9 @@ async function ikDitToggle(id,type,naam){
   }
   const typeLabel=type==='lev'?'levering':'ophaling';
   const statusMsg=wasAan?naam+' afgemeld van '+typeLabel:naam+' aangemeld voor '+typeLabel;
-  const r=await api({action:'save',body:{action:'save',boeking:b}});
+  let r;
+  try{ r=await api({action:'save',body:{action:'save',boeking:b}}); }
+  catch(e){ banner('er','Opslaan mislukt — probeer opnieuw.'); return; }
   if(r&&r.success){renderPlanning();banner('ok',statusMsg);}
 }
 
@@ -4075,7 +4077,9 @@ async function snelStatus(id,statusIdx){
   const b=boekingen.find(x=>x.id===id);if(!b)return;
   b.status=statusIdx;
   saveC(boekingen);
-  const r=await api({action:'save',body:{action:'save',boeking:b}});
+  let r;
+  try{ r=await api({action:'save',body:{action:'save',boeking:b}}); }
+  catch(e){ banner('er','Opslaan mislukt — probeer opnieuw.'); return; }
   if(r&&r.success){
     banner('ok','Status bijgewerkt: '+STATUSSEN[statusIdx]);
     renderPlanning();updateStats();
@@ -4086,7 +4090,8 @@ async function toggleTaak(boekingId,taakIdx,checked){
   const b=boekingen.find(x=>x.id===boekingId);if(!b||!b.taken)return;
   b.taken[taakIdx].gedaan=checked;
   saveC(boekingen);
-  await api({action:'save',body:{action:'save',boeking:b}});
+  try{ await api({action:'save',body:{action:'save',boeking:b}}); }
+  catch(e){ banner('er','Taak opslaan mislukt — verbindingsfout.'); }
   renderPlanning();
 }
 
@@ -4155,12 +4160,16 @@ async function voltooiBoeking(id){
   // Wis laadstatus — boeking is afgehandeld
   laadStatusWissen(id);
   closeMo();
-  const r=await api({action:'save',body:{action:'save',boeking:b}});
+  let r;
+  try{ r=await api({action:'save',body:{action:'save',boeking:b}}); }
+  catch(e){ banner('er','Opslaan mislukt — probeer opnieuw.'); return; }
   if(r&&r.success){banner('ok',b.naam+' gemarkeerd als voltooid');renderPlanning();updateStats();}
 }
 async function delBoeking(id){
   if(!confirm('Boeking verwijderen?'))return;
-  const r=await api({action:'delete',body:{action:'delete',id}});
+  let r;
+  try{ r=await api({action:'delete',body:{action:'delete',id}}); }
+  catch(e){ banner('er','Verwijderen mislukt — verbindingsfout.'); return; }
   if(r&&r.success){boekingen=boekingen.filter(b=>b.id!==id);saveC(boekingen);closeMo();renderPlanning();banner('ok','Boeking verwijderd');}
 }
 function toICS(ds,ts){const[y,m,d]=ds.split('-'),[h,mn]=ts.split(':');return y+m+d+'T'+h+mn+'00';}
@@ -4189,6 +4198,7 @@ loadData();
 setInterval(()=>{
   if(document.getElementById('view-planning').classList.contains('active'))loadData();
   else if(document.getElementById('view-dashboard').classList.contains('active'))renderDashboard();
+  else if(document.getElementById('view-voorraad')&&document.getElementById('view-voorraad').classList.contains('active'))vrHerlaad();
 },60000);
 </script>
 </body>
