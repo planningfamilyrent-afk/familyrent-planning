@@ -14,6 +14,8 @@
 <script>(function(){emailjs.init({publicKey:"tSEO9Yx-6g3asaLE-"});})();</script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -200,6 +202,20 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 .rit-ds{display:flex;gap:7px;margin-bottom:14px;align-items:center;flex-wrap:wrap}
 .rit-db{font-size:12px;padding:5px 12px;border-radius:20px;border:.5px solid var(--bm);background:transparent;cursor:pointer;font-family:'Poppins',sans-serif;color:var(--tx2)}
 .rit-db.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+/* RITPLANNING KAART */
+.rit-layout{display:grid;grid-template-columns:1fr 380px;gap:12px;align-items:start}
+.rit-kaart-wrap{position:sticky;top:12px;background:var(--bg1);border:.5px solid var(--bl);border-radius:var(--rl);overflow:hidden}
+.rit-kaart-hdr{padding:10px 14px;border-bottom:.5px solid var(--bl);display:flex;align-items:center;justify-content:space-between}
+.rit-kaart-titel{font-size:13px;font-weight:500;color:var(--tx1)}
+#rit-kaart{height:480px;width:100%}
+/* Leaflet dark mode overrides */
+[data-theme="dark"] .leaflet-tile-pane{filter:brightness(.7) invert(1) contrast(3) hue-rotate(200deg) saturate(.3) brightness(.7)}
+[data-theme="dark"] .leaflet-control-attribution{background:rgba(0,0,0,.7);color:#aaa}
+/* Marker kleuren */
+.rit-marker-lev{background:#61ABED;color:#fff;border:2px solid #fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.rit-marker-oph{background:#3B6D11;color:#fff;border:2px solid #fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.rit-marker-depot{background:#0C1135;color:#fff;border:2px solid var(--sky);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+@media(max-width:700px){.rit-layout{grid-template-columns:1fr}.rit-kaart-wrap{position:static}}
 .rit-card{background:var(--bg1);border:.5px solid var(--bl);border-radius:var(--rl);padding:16px;margin-bottom:14px}
 .rit-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:7px}
 .rit-name{font-size:15px;font-weight:600;color:var(--tx1);display:flex;align-items:center;gap:7px}
@@ -676,7 +692,21 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
   .bname{font-size:13px}
   .bcard-actions .bsm,.bcard-actions .bsm-bl{font-size:10px;padding:3px 8px}
   .modal{padding:14px}
-  .rit-card{padding:12px}
+  /* RITPLANNING KAART */
+.rit-layout{display:grid;grid-template-columns:1fr 380px;gap:12px;align-items:start}
+.rit-kaart-wrap{position:sticky;top:12px;background:var(--bg1);border:.5px solid var(--bl);border-radius:var(--rl);overflow:hidden}
+.rit-kaart-hdr{padding:10px 14px;border-bottom:.5px solid var(--bl);display:flex;align-items:center;justify-content:space-between}
+.rit-kaart-titel{font-size:13px;font-weight:500;color:var(--tx1)}
+#rit-kaart{height:480px;width:100%}
+/* Leaflet dark mode overrides */
+[data-theme="dark"] .leaflet-tile-pane{filter:brightness(.7) invert(1) contrast(3) hue-rotate(200deg) saturate(.3) brightness(.7)}
+[data-theme="dark"] .leaflet-control-attribution{background:rgba(0,0,0,.7);color:#aaa}
+/* Marker kleuren */
+.rit-marker-lev{background:#61ABED;color:#fff;border:2px solid #fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.rit-marker-oph{background:#3B6D11;color:#fff;border:2px solid #fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.rit-marker-depot{background:#0C1135;color:#fff;border:2px solid var(--sky);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+@media(max-width:700px){.rit-layout{grid-template-columns:1fr}.rit-kaart-wrap{position:static}}
+.rit-card{padding:12px}
   .rpt-stats{grid-template-columns:repeat(2,1fr)}
 }
 </style>
@@ -756,7 +786,16 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 <div class="view" id="view-rit">
   <p style="font-size:13px;color:var(--tx2);margin-bottom:12px">Optimale rijvolgorde per belevingsbouwer. Vertrekpunt komt automatisch uit de boeking.</p>
   <div class="rit-ds" id="rit-ds"></div>
-  <div id="rit-content"><div class="empty"><i class="ti ti-route"></i>Voeg boekingen toe om de ritplanning te zien.</div></div>
+  <div class="rit-layout">
+    <div id="rit-content"><div class="empty"><i class="ti ti-route"></i>Voeg boekingen toe om de ritplanning te zien.</div></div>
+    <div class="rit-kaart-wrap" id="rit-kaart-wrap" style="display:none">
+      <div class="rit-kaart-hdr">
+        <div class="rit-kaart-titel"><i class="ti ti-map" style="color:var(--sky)"></i> Kaartoverzicht</div>
+        <div style="font-size:11px;color:var(--tx3)" id="rit-kaart-info">—</div>
+      </div>
+      <div id="rit-kaart"></div>
+    </div>
+  </div>
 </div>
 
 <!-- MIJN PLANNING -->
@@ -1428,7 +1467,7 @@ function showTab(tab){
   if(tab==='planning')renderPlanning();
   if(tab==='betalen')renderBetalen();
   if(tab==='tijdlijn')renderTijdlijn();
-  if(tab==='rit')renderRit();
+  if(tab==='rit'){renderRit();setTimeout(function(){if(_ritKaart)_ritKaart.invalidateSize();},300);}
   if(tab==='mijn')renderBBGrid();
   if(tab==='voorraad')renderVoorraad();
   if(tab==='rapport')renderRapport();
@@ -2390,6 +2429,10 @@ function renderRit(){
       var detailBtn=e.target.closest('[data-detail-id]');
       if(detailBtn){openDetail(Number(detailBtn.dataset.detailId));return;}
     });
+  }
+  // Teken de kaart asynchroon na de lijst-render
+  if(typeof tekenRitKaart === 'function'){
+    tekenRitKaart(dayStops, selDate);
   }
 }
 function ritSelDate(d){document.getElementById('rit-ds').dataset.sel=d;renderRit();}
@@ -4041,6 +4084,242 @@ function wgHerlaad(){
   // Als panel open is, herrender
   var panel = document.getElementById('wg-panel');
   if(panel && panel.classList.contains('open')) wgRender();
+}
+
+
+// ============================================================
+// RITKAART MODULE — Leaflet + OpenStreetMap
+// Geocoding via Open-Meteo (al aanwezig in de app)
+// ============================================================
+
+var _ritKaart = null;        // Leaflet kaartinstantie
+var _ritKaartMarkers = [];   // Actieve markers
+var _ritKaartPolylines = []; // Actieve polylijnen
+var _geoCache = {};          // sessionStorage cache voor geocoding
+
+// Laad geocache uit sessionStorage
+try{
+  var _rawGeoCache = sessionStorage.getItem('fr_geocache');
+  if(_rawGeoCache) _geoCache = JSON.parse(_rawGeoCache);
+}catch(e){}
+
+function _geoCacheSla(adres, coord){
+  _geoCache[adres.toLowerCase().trim()] = coord;
+  try{ sessionStorage.setItem('fr_geocache', JSON.stringify(_geoCache)); }catch(e){}
+}
+
+function _geoCacheHaal(adres){
+  return _geoCache[adres.toLowerCase().trim()] || null;
+}
+
+// Geocodeer een adres via Open-Meteo + fallback op gCoord()
+// Retourneert Promise<{lat, lng}>
+async function geocodeerAdres(adres){
+  if(!adres) return KALLO;
+  var cached = _geoCacheHaal(adres);
+  if(cached) return cached;
+
+  // Probeer Open-Meteo geocoding
+  try{
+    var delen = adres.split(',');
+    var zoekterm = delen.length>1 ? delen[delen.length-1].trim() : delen[0].trim();
+    zoekterm = zoekterm.replace(/\b\d{4}\b/,'').trim();
+    if(!zoekterm) zoekterm = delen[0].trim();
+
+    var url = 'https://geocoding-api.open-meteo.com/v1/search?name=' +
+      encodeURIComponent(zoekterm) + '&count=1&language=nl&format=json&country=BE';
+    var res = await fetch(url);
+    var data = await res.json();
+    if(data.results && data.results.length > 0){
+      var coord = {lat: data.results[0].latitude, lng: data.results[0].longitude};
+      _geoCacheSla(adres, coord);
+      return coord;
+    }
+  }catch(e){}
+
+  // Fallback: gebruik de bestaande gCoord functie (postcode-matching)
+  var fallback = gCoord(adres);
+  _geoCacheSla(adres, fallback);
+  return fallback;
+}
+
+// Initialiseer of reset de Leaflet kaart
+function _ritKaartInit(){
+  var container = document.getElementById('rit-kaart');
+  if(!container) return null;
+
+  if(_ritKaart){
+    // Verwijder bestaande markers en polylijnen
+    _ritKaartMarkers.forEach(function(m){ m.remove(); });
+    _ritKaartPolylines.forEach(function(p){ p.remove(); });
+    _ritKaartMarkers = [];
+    _ritKaartPolylines = [];
+    return _ritKaart;
+  }
+
+  // Maak nieuwe kaart aan
+  _ritKaart = L.map('rit-kaart', {
+    center: [51.20, 4.15],
+    zoom: 10,
+    zoomControl: true
+  });
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
+    maxZoom: 18
+  }).addTo(_ritKaart);
+
+  return _ritKaart;
+}
+
+// Maak een custom HTML marker
+function _maakMarker(coord, cls, label, popup){
+  var icon = L.divIcon({
+    className: '',
+    html: '<div class="' + cls + '">' + label + '</div>',
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+    popupAnchor: [0, -16]
+  });
+  var marker = L.marker([coord.lat, coord.lng], {icon: icon});
+  marker.bindPopup(popup, {maxWidth: 240});
+  return marker;
+}
+
+// Teken de kaart voor de geselecteerde datum in renderRit
+async function tekenRitKaart(dayStops, selDate){
+  var wrap = document.getElementById('rit-kaart-wrap');
+  var info = document.getElementById('rit-kaart-info');
+  if(!wrap) return;
+
+  // Verberg kaart als er geen stops zijn
+  if(!dayStops || dayStops.length === 0){
+    wrap.style.display = 'none';
+    return;
+  }
+
+  wrap.style.display = '';
+  if(info) info.textContent = dayStops.length + ' stop' + (dayStops.length !== 1 ? 's' : '');
+
+  var kaart = _ritKaartInit();
+  if(!kaart) return;
+
+  // Geocodeer alle adressen parallel
+  var uniekAdressen = {};
+  dayStops.forEach(function(s){ uniekAdressen[s.adres] = true; });
+
+  // Depot adressen
+  var depots = {};
+  dayStops.forEach(function(s){
+    var vt = s.boeking.vertrek || 'Kallo';
+    depots[vt] = vt.includes('Stekene') ? STK : KALLO;
+  });
+
+  // Geocodeer alle unieke adressen
+  var adressen = Object.keys(uniekAdressen);
+  var coordPromises = adressen.map(function(adres){ return geocodeerAdres(adres); });
+  var coords = await Promise.all(coordPromises);
+
+  var adresCoords = {};
+  adressen.forEach(function(adres, i){ adresCoords[adres] = coords[i]; });
+
+  // Verzamel alle punten voor auto-zoom
+  var allePunten = [];
+
+  // Depot markers
+  Object.keys(depots).forEach(function(naam){
+    var coord = depots[naam];
+    allePunten.push([coord.lat, coord.lng]);
+    var popup = '<strong>Depot ' + naam + '</strong><br>Familyrent vertrekpunt';
+    var marker = _maakMarker(coord, 'rit-marker-depot', '🏠', popup);
+    marker.addTo(kaart);
+    _ritKaartMarkers.push(marker);
+  });
+
+  // Stop markers per BB — met nummering per route
+  var perBB = {};
+  dayStops.forEach(function(s){
+    var bbs = s.type === 'lev'
+      ? (s.boeking.opstellers_lev && s.boeking.opstellers_lev.length ? s.boeking.opstellers_lev : ['Niet toegewezen'])
+      : (s.boeking.opstellers_oph && s.boeking.opstellers_oph.length ? s.boeking.opstellers_oph : ['Niet toegewezen']);
+    bbs.forEach(function(bb){
+      if(!perBB[bb]) perBB[bb] = [];
+      if(!perBB[bb].find(function(x){ return x.boeking.id === s.boeking.id && x.type === s.type; })){
+        perBB[bb].push(s);
+      }
+    });
+  });
+
+  // Teken routes per BB
+  var bbKleuren = ['#61ABED','#3B6D11','#854F0B','#7C3AED','#A32D2D','#0C447C'];
+  var bbLijst = Object.keys(perBB);
+
+  bbLijst.forEach(function(bb, bbIdx){
+    var stops = perBB[bb];
+    var kleur = bbKleuren[bbIdx % bbKleuren.length];
+    var vt = stops[0] ? stops[0].boeking.vertrek || 'Kallo' : 'Kallo';
+    var depotCoord = vt.includes('Stekene') ? STK : KALLO;
+
+    // Sorteer stops op tijdstip
+    var gesorteerd = stops.slice().sort(function(a, b){
+      var tA = a.type === 'lev' ? timeToMin(a.boeking.levuur) : timeToMin(a.boeking.ophuur);
+      var tB = b.type === 'lev' ? timeToMin(b.boeking.levuur) : timeToMin(b.boeking.ophuur);
+      return tA - tB;
+    });
+
+    // Stop markers
+    gesorteerd.forEach(function(s, idx){
+      var coord = adresCoords[s.adres] || gCoord(s.adres);
+      allePunten.push([coord.lat, coord.lng]);
+      var isLev = s.type === 'lev';
+      var uur = isLev ? s.boeking.levuur : s.boeking.ophuur;
+      var popupHtml =
+        '<div style="font-size:13px;font-weight:600;margin-bottom:4px">' + s.boeking.naam + '</div>' +
+        '<div style="font-size:11px;color:#666;margin-bottom:3px">' + s.adres + '</div>' +
+        '<div style="font-size:11px">' +
+          '<span style="background:' + (isLev?'#E6F1FB':'#EAF3DE') + ';color:' + (isLev?'#0C447C':'#27500A') + ';padding:1px 6px;border-radius:10px;font-weight:600">' +
+          (isLev ? '🚚 Levering' : '↩ Ophaling') + '</span>' +
+          ' om ' + uur +
+        '</div>' +
+        '<div style="font-size:11px;margin-top:3px;color:#666">BB: ' + bb + '</div>';
+
+      var markerCls = isLev ? 'rit-marker-lev' : 'rit-marker-oph';
+      var marker = _maakMarker(coord, markerCls, (idx+1).toString(), popupHtml);
+      marker.addTo(kaart);
+      _ritKaartMarkers.push(marker);
+    });
+
+    // Polyline: depot → stops → depot
+    if(gesorteerd.length > 0){
+      var routePunten = [[depotCoord.lat, depotCoord.lng]];
+      gesorteerd.forEach(function(s){
+        var coord = adresCoords[s.adres] || gCoord(s.adres);
+        routePunten.push([coord.lat, coord.lng]);
+      });
+      routePunten.push([depotCoord.lat, depotCoord.lng]);
+
+      var polyline = L.polyline(routePunten, {
+        color: kleur,
+        weight: 3,
+        opacity: 0.75,
+        dashArray: '6 4'
+      });
+      polyline.addTo(kaart);
+      _ritKaartPolylines.push(polyline);
+    }
+  });
+
+  // Auto-zoom naar alle punten
+  if(allePunten.length > 0){
+    try{
+      kaart.fitBounds(allePunten, {padding: [20, 20], maxZoom: 13});
+    }catch(e){
+      kaart.setView([51.20, 4.15], 10);
+    }
+  }
+
+  // Kaart vernieuwen na DOM-wijziging (sticky layout)
+  setTimeout(function(){ kaart.invalidateSize(); }, 200);
 }
 
 function backBB(){document.getElementById('bb-det').classList.remove('active');document.getElementById('bb-sel').style.display='block';}
