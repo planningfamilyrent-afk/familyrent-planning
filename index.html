@@ -1349,19 +1349,27 @@ function normB(b){
   if(typeof b.taken==='string'&&b.taken){
     try{b.taken=JSON.parse(b.taken);}catch(e){b.taken=[];}
   } else if(!Array.isArray(b.taken)){b.taken=[];}
-  // opstellers: kan string zijn
+  // opstellers: kan string zijn (vanuit Google Sheets als CSV)
   if(typeof b.opstellers==='string'){
-    b.opstellers=b.opstellers?b.opstellers.split(',').map(s=>s.trim()).filter(s=>s):[];
+    b.opstellers=b.opstellers?b.opstellers.split(',').map(function(s){return s.trim();}).filter(function(s){return s;}):[];
   } else if(!Array.isArray(b.opstellers)){b.opstellers=[];}
+
+  // opstellers_lev en opstellers_oph zijn VOLLEDIG ONAFHANKELIJK van elkaar
+  // en mogen NOOIT terugvallen op b.opstellers — dat veroorzaakt kruisbestuiving
   if(typeof b.opstellers_lev==='string'){
-    b.opstellers_lev=b.opstellers_lev?b.opstellers_lev.split(',').map(s=>s.trim()).filter(s=>s):[];
+    // Lees uit string (vanuit Google Sheets)
+    b.opstellers_lev=b.opstellers_lev?b.opstellers_lev.split(',').map(function(s){return s.trim();}).filter(function(s){return s;}):[]; 
   } else if(!Array.isArray(b.opstellers_lev)){
-    b.opstellers_lev=b.opstellers||[];
+    // Ontbreekt of ongeldig type → lege array, NIET b.opstellers
+    b.opstellers_lev=[];
   }
+
   if(typeof b.opstellers_oph==='string'){
-    b.opstellers_oph=b.opstellers_oph?b.opstellers_oph.split(',').map(s=>s.trim()).filter(s=>s):[];
+    // Lees uit string (vanuit Google Sheets)
+    b.opstellers_oph=b.opstellers_oph?b.opstellers_oph.split(',').map(function(s){return s.trim();}).filter(function(s){return s;}):[]; 
   } else if(!Array.isArray(b.opstellers_oph)){
-    b.opstellers_oph=b.opstellers||[];
+    // Ontbreekt of ongeldig type → lege array, NIET b.opstellers
+    b.opstellers_oph=[];
   }
   b.id=Number(b.id);
   return b;
@@ -2458,7 +2466,27 @@ function showBBDetail(name){
   document.getElementById('bb-sub').textContent=my.length+' boeking'+(my.length!==1?'en':'')+' totaal';
   document.getElementById('bb-stats').innerHTML=`<div class="bb-stat"><div class="bb-sv">${up.length}</div><div class="bb-sl">Komend</div></div><div class="bb-stat"><div class="bb-sv">${wk.length}</div><div class="bb-sl">Deze week</div></div><div class="bb-stat"><div class="bb-sv">${past.length}</div><div class="bb-sl">Afgerond</div></div>`;
   if(my.length===0){document.getElementById('bb-list').innerHTML=`<div class="empty"><i class="ti ti-calendar-off"></i>Geen boekingen voor ${esc(name)}.</div>`;return;}
-  const byDate={};my.forEach(b=>{[b.levdatum,b.ophdatum].forEach((d,idx)=>{if(!byDate[d])byDate[d]=[];byDate[d].push({...b,eventType:idx===0?'lev':'oph'});});});
+  // Bouw stops per datum — enkel de stops waarbij deze BB effectief staat
+  // Niet automatisch beide levering én ophaling tonen voor dezelfde boeking
+  const byDate={};
+  my.forEach(b=>{
+    const inLev=b.opstellers_lev&&b.opstellers_lev.includes(name);
+    const inOph=b.opstellers_oph&&b.opstellers_oph.includes(name);
+    if(inLev&&b.levdatum){
+      if(!byDate[b.levdatum])byDate[b.levdatum]=[];
+      byDate[b.levdatum].push({...b,eventType:'lev'});
+    }
+    if(inOph&&b.ophdatum&&b.ophdatum!==b.levdatum){
+      if(!byDate[b.ophdatum])byDate[b.ophdatum]=[];
+      byDate[b.ophdatum].push({...b,eventType:'oph'});
+    }
+    // Als dezelfde dag én beide aangeduid: toon als levering met oph-badge
+    if(inLev&&inOph&&b.ophdatum===b.levdatum){
+      // Markeer de lev-entry dat er ook een ophaling is op die dag
+      const entry=byDate[b.levdatum]&&byDate[b.levdatum].find(e=>e.id===b.id&&e.eventType==='lev');
+      if(entry) entry.hasOph=true;
+    }
+  });
   let html='';
   Object.keys(byDate).sort().forEach(date=>{
     const items=byDate[date],isPast=date<t;
@@ -2466,7 +2494,11 @@ function showBBDetail(name){
     items.forEach(b=>{
       const isLev=b.eventType==='lev',mth=(b.materiaal||'').split('\n').filter(x=>x&&x.trim()).map(m=>`<span class="mtag">${esc(m.trim())}</span>`).join(''),
         mUrl='https://www.google.com/maps/dir/'+encodeURIComponent((b.vertrek||'Kallo')+', België')+'/'+encodeURIComponent(b.adres||''),
-        samen=b.opstellers?b.opstellers.filter(n=>n!==name):[];
+        // Gebruik de juiste opstellers per type stop, niet de gecombineerde b.opstellers
+        samen=(b.eventType==='lev'
+          ?(b.opstellers_lev||[])
+          :(b.opstellers_oph||[])
+        ).filter(function(n){return n!==name;});
       html+=`<div class="pc"><div class="pc-top"><div class="pc-info">
         <div class="pc-nm">${esc(b.naam)}</div>
         <div class="pc-ln"><i class="ti ti-map-pin" style="font-size:12px" aria-hidden="true"></i><a href="${mUrl}" style="color:var(--sky)">${esc(b.adres)} <i class="ti ti-external-link" style="font-size:10px"></i></a></div>
@@ -4338,7 +4370,7 @@ function printPlanning(){
     if(b.voltooid===true||b.voltooid==='true') return false;
     var inLev=b.opstellers_lev&&b.opstellers_lev.includes(naam);
     var inOph=b.opstellers_oph&&b.opstellers_oph.includes(naam);
-    return inLev||inOph||inOld;
+    return inLev||inOph;
   });
 
   // Maak stops voor vandaag en de komende 7 dagen
@@ -5118,7 +5150,9 @@ function toggleLaadItem(idx){
 async function ikDitToggle(id,type,naam){
   const b=boekingen.find(x=>x.id===id);if(!b)return;
   const field=type==='lev'?'opstellers_lev':'opstellers_oph';
-  if(!b[field])b[field]=(b.opstellers||[]).slice();
+  // Initialiseer als lege array — NOOIT vanuit b.opstellers
+  // want dat bevat de gecombineerde namen van lev + oph samen
+  if(!Array.isArray(b[field]))b[field]=[];
   const wasAan=b[field].includes(naam);
   if(wasAan){b[field]=b[field].filter(n=>n!==naam);}
   else{b[field].push(naam);}
