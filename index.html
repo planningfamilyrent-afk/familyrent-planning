@@ -1358,17 +1358,17 @@ function normB(b){
   // en mogen NOOIT terugvallen op b.opstellers — dat veroorzaakt kruisbestuiving
   if(typeof b.opstellers_lev==='string'){
     // Lees uit string (vanuit Google Sheets)
+    // Lege string = niemand aangeduid → lege array. NOOIT terugvallen op b.opstellers.
     b.opstellers_lev=b.opstellers_lev?b.opstellers_lev.split(',').map(function(s){return s.trim();}).filter(function(s){return s;}):[]; 
   } else if(!Array.isArray(b.opstellers_lev)){
-    // Ontbreekt of ongeldig type → lege array, NIET b.opstellers
     b.opstellers_lev=[];
   }
 
   if(typeof b.opstellers_oph==='string'){
     // Lees uit string (vanuit Google Sheets)
+    // Lege string = niemand aangeduid → lege array. NOOIT terugvallen op b.opstellers.
     b.opstellers_oph=b.opstellers_oph?b.opstellers_oph.split(',').map(function(s){return s.trim();}).filter(function(s){return s;}):[]; 
   } else if(!Array.isArray(b.opstellers_oph)){
-    // Ontbreekt of ongeldig type → lege array, NIET b.opstellers
     b.opstellers_oph=[];
   }
   b.id=Number(b.id);
