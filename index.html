@@ -1384,7 +1384,29 @@ async function loadData(){
   }
   const data=await api({action:'getAll'});
   if(data&&Array.isArray(data)){
-    boekingen=data.map(normB).filter(b=>b&&b.id&&b.naam&&b.levdatum);
+    // Bewaar de huidige gecachede versie als referentie voor BB-velden
+    // Google Sheets kan opstellers_lev/oph teruggeven als lege string terwijl
+    // de lokale cache de correcte waarden bevat (race condition na save).
+    const _cacheVoorMerge=loadC()||[];
+    const _cacheMap={};
+    _cacheVoorMerge.forEach(function(cb){if(cb&&cb.id)_cacheMap[cb.id]=cb;});
+
+    boekingen=data.map(normB).filter(b=>b&&b.id&&b.naam&&b.levdatum).map(function(b){
+      // Als Sheets lege BB-arrays teruggeeft maar de cache heeft waarden → gebruik cache
+      const cached=_cacheMap[b.id];
+      if(cached){
+        if((!b.opstellers_lev||b.opstellers_lev.length===0)&&cached.opstellers_lev&&cached.opstellers_lev.length>0){
+          b.opstellers_lev=cached.opstellers_lev;
+        }
+        if((!b.opstellers_oph||b.opstellers_oph.length===0)&&cached.opstellers_oph&&cached.opstellers_oph.length>0){
+          b.opstellers_oph=cached.opstellers_oph;
+        }
+        if((!b.opstellers||b.opstellers.length===0)&&cached.opstellers&&cached.opstellers.length>0){
+          b.opstellers=cached.opstellers;
+        }
+      }
+      return b;
+    });
     saveC(boekingen);
     matchProductenCache_invalideer(); // Nieuwe data → cache wissen
     wgHerlaad(); // Herbereken notificaties
@@ -1808,7 +1830,7 @@ async function saveBoeking(){
   btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Boeking opslaan';
   if(result&&result.success){
     if(editId){const i=boekingen.findIndex(x=>x.id===editId);if(i>=0)boekingen[i]=b;}else boekingen.push(b);
-    saveC(boekingen);lastSavedId=b.id;matchProductenCache_invalideer();
+    saveC(boekingen);lastSavedId=b.id;window._lastSaveTS=Date.now();matchProductenCache_invalideer();
     const wasEdit=!!editId;
     editId=null;
     // Sla klant op: bij bewerken aantalBoekingen niet verhogen
@@ -5283,7 +5305,7 @@ async function voltooiStap(id){
     // Levering al gedaan, ophaling nog niet → markeer als Opgehaald
     if(!confirm('Ophaling markeren als voltooid voor '+b.naam+'?'))return;
     b.status=4; // Opgehaald
-    saveC(boekingen);
+    saveC(boekingen);window._lastSaveTS=Date.now();
     closeMo();
     let r;
     try{ r=await api({action:'save',body:{action:'save',boeking:b}}); }
@@ -5295,7 +5317,7 @@ async function voltooiStap(id){
   // Levering nog niet gedaan → markeer als Geleverd, ophaling blijft actief
   if(!confirm('Levering markeren als voltooid?\n\nDe ophaling op '+fmtShort(b.ophdatum)+' om '+b.ophuur+' blijft zichtbaar in de planner.'))return;
   b.status=3; // Geleverd
-  saveC(boekingen);
+  saveC(boekingen);window._lastSaveTS=Date.now();
   closeMo();
   let r;
   try{ r=await api({action:'save',body:{action:'save',boeking:b}}); }
@@ -5308,7 +5330,7 @@ async function voltooiBoeking(id){
   const b=boekingen.find(x=>x.id===id);if(!b)return;
   if(!confirm('Boeking volledig voltooien en archiveren?\n\nZowel de levering als de ophaling verdwijnen uit het overzicht.\nDe boeking blijft bewaard in het archief en omzetrapport.'))return;
   b.voltooid=true;b.status=5;
-  saveC(boekingen);
+  saveC(boekingen);window._lastSaveTS=Date.now();
   // Wis laadstatus — boeking is afgehandeld
   laadStatusWissen(id);
   closeMo();
@@ -5348,6 +5370,11 @@ initTheme();
 showTab('dashboard');
 loadData();
 setInterval(()=>{
+  // Wacht minstens 15 seconden na een save voor auto-refresh
+  // om race conditions met Google Sheets te vermijden
+  var _nu=Date.now();
+  var _msSedertSave=_nu-(window._lastSaveTS||0);
+  if(_msSedertSave<15000) return;
   if(document.getElementById('view-planning').classList.contains('active'))loadData();
   else if(document.getElementById('view-dashboard').classList.contains('active'))renderDashboard();
   else if(document.getElementById('view-voorraad')&&document.getElementById('view-voorraad').classList.contains('active'))vrHerlaad();
