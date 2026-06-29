@@ -2028,7 +2028,7 @@ function renderPlanning(force){
 }
 
 // Helper: vermijd herhaalde vergelijking in hot loops
-function isVoltooid(b){ return isVoltooid(b); }
+function isVoltooid(b){ return b.voltooid===true||b.voltooid==='true'; }
 
 function updateStats(){
   const t=today();
