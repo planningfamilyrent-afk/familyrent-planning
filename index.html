@@ -1391,9 +1391,10 @@ async function loadData(){
   const cached=loadC();
   if(cached&&cached.length>0){
     boekingen=cached.map(normB).filter(b=>b&&b.id&&b.naam&&b.levdatum);
-    renderPlanning();setSS('sy','Vernieuwen...');
+    renderPlanning(true);setSS('sy','Vernieuwen...');
   } else {
-    document.getElementById('plan-list').innerHTML='<div class="loading"><i class="ti ti-loader"></i>Boekingen laden...</div>';
+    const pl=$id('plan-list');
+    if(pl) pl.innerHTML='<div class="loading"><i class="ti ti-loader"></i>Boekingen laden...</div>';
   }
   const data=await api({action:'getAll'});
   if(data&&Array.isArray(data)){
@@ -1441,7 +1442,8 @@ async function loadData(){
   } else if(!data){
     // Verbinding mislukt — toon duidelijke foutmelding
     if(boekingen.length===0){
-      document.getElementById('plan-list').innerHTML=
+      const pl=$id('plan-list');
+      if(pl) pl.innerHTML=
         '<div class="empty"><i class="ti ti-wifi-off" style="font-size:36px;color:#A32D2D"></i>'+
         '<strong style="display:block;margin:8px 0 4px;color:#A32D2D">Verbinding mislukt</strong>'+
         '<span style="font-size:12px;color:var(--tx2)">De tool kan de Google Sheet niet bereiken.<br>'+
@@ -1451,11 +1453,11 @@ async function loadData(){
     setSS('er','Verbindingsfout');
     return;
   }
-  renderPlanning();
-  if(document.getElementById('view-dashboard').classList.contains('active')) renderDashboard();
-  if(document.getElementById('view-tijdlijn').classList.contains('active')) renderTijdlijn();
-  if(document.getElementById('view-rit').classList.contains('active')) renderRit();
-  if(document.getElementById('view-mijn').classList.contains('active')) renderBBGrid();
+  renderPlanning(true);
+  if($id('view-dashboard').classList.contains('active')) renderDashboard();
+  if($id('view-tijdlijn').classList.contains('active')) renderTijdlijn();
+  if($id('view-rit').classList.contains('active')) renderRit();
+  if($id('view-mijn').classList.contains('active')) renderBBGrid();
 }
 
 function dist(a,b){const R=6371,dLat=(b.lat-a.lat)*Math.PI/180,dLng=(b.lng-a.lng)*Math.PI/180,x=Math.sin(dLat/2)**2+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLng/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x))}
@@ -1906,14 +1908,17 @@ async function saveBoeking(){
   }
 }
 
-function renderPlanning(){
+function renderPlanning(force){
   try{
   updateStats();
-  // Sla HTML render over als planning tab niet actief is (wordt getriggerd bij schermwissel)
   const container=$id('plan-list');
   if(!container) return;
-  const viewEl=$id('view-planning');
-  if(viewEl && !viewEl.classList.contains('active')){return;}
+  // Sla HTML render over als planning tab niet actief is — MAAR niet bij force=true
+  // (force wordt gebruikt door loadData zodat boekingen altijd geladen worden)
+  if(!force){
+    const viewEl=$id('view-planning');
+    if(viewEl && !viewEl.classList.contains('active')) return;
+  }
   const q=($id('srch').value||'').toLowerCase();
   const t=today(),mon=getMon(t);
   const sunDt=new Date(mon+'T00:00:00');sunDt.setDate(sunDt.getDate()+6);const sun=sunDt.toISOString().split('T')[0];
