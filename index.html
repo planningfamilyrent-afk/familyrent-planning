@@ -335,8 +335,9 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 .pin-btn:active{background:var(--bg3)}
 .pin-err{font-size:13px;color:#A32D2D;display:none}
 .rpt-wrap{max-width:860px}
-.rpt-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
-@media(max-width:580px){.rpt-stats{grid-template-columns:repeat(2,1fr)}}
+.rpt-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px}
+@media(max-width:700px){.rpt-stats{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:480px){.rpt-stats{grid-template-columns:repeat(2,1fr)}}
 .rpt-stat{background:var(--bg2);border-radius:var(--rm);padding:10px 12px;border:.5px solid var(--bl)}
 .rpt-lbl{font-size:11px;color:var(--tx2);margin-bottom:3px}
 .rpt-val{font-size:22px;font-weight:600;color:var(--navy)}
@@ -692,7 +693,8 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
   .bname{font-size:13px}
   .bcard-actions .bsm,.bcard-actions .bsm-bl{font-size:10px;padding:3px 8px}
   .modal{padding:14px}
-  /* RITPLANNING KAART */
+}
+/* RITPLANNING KAART */
 .rit-layout{display:grid;grid-template-columns:1fr 380px;gap:12px;align-items:start}
 .rit-kaart-wrap{position:sticky;top:12px;background:var(--bg1);border:.5px solid var(--bl);border-radius:var(--rl);overflow:hidden}
 .rit-kaart-hdr{padding:10px 14px;border-bottom:.5px solid var(--bl);display:flex;align-items:center;justify-content:space-between}
@@ -707,8 +709,6 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 .rit-marker-depot{background:#0C1135;color:#fff;border:2px solid var(--sky);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.4)}
 @media(max-width:700px){.rit-layout{grid-template-columns:1fr}.rit-kaart-wrap{position:static}}
 .rit-card{padding:12px}
-  .rpt-stats{grid-template-columns:repeat(2,1fr)}
-}
 </style>
 </head>
 <body>
@@ -4487,7 +4487,17 @@ function printPlanning(){
 /* OMZETRAPPORT MET PINCODE */
 function renderRapport(){
   const pinWrap=document.getElementById('rpt-pin-wrap'),content=document.getElementById('rpt-content');
-  if(pinUnlocked){pinWrap.innerHTML='';content.style.display='block';buildReport();return;}
+  if(pinUnlocked){
+    pinWrap.innerHTML='';
+    content.style.display='block';
+    try{
+      buildReport();
+    }catch(e){
+      content.innerHTML='<div style="padding:20px;color:#A32D2D;font-size:13px"><strong>Fout bij laden rapport:</strong><br>'+esc(e.message)+'<br><br><button class="fb" onclick="renderRapport()">↻ Opnieuw proberen</button></div>';
+      console.error('buildReport crash:',e);
+    }
+    return;
+  }
   content.style.display='none';
   let pinInput='';
   pinWrap.innerHTML=`<div class="pin-wrap">
@@ -4518,7 +4528,7 @@ function buildReport(){
   const actief=boekingen.filter(b=>!(b.voltooid===true||b.voltooid==='true'));
   const total=boekingen.length;
   const totalOmzet=boekingen.reduce((s,b)=>s+(parseFloat(b.prijs)||0),0);
-  const openBet=boekingen.filter(b=>!b.betaling||b.betaling==='').length;
+  const openBet=actief.filter(b=>!b.betaling||b.betaling==='').length; // enkel actieve boekingen
   const voltooide=boekingen.filter(b=>b.voltooid===true||b.voltooid==='true').length;
 
   // Maandomzet
@@ -4592,7 +4602,7 @@ function buildReport(){
   var rptHtml='';
   rptHtml+='<div class="rpt-wrap">';
   rptHtml+='<div class="rpt-logout" onclick="pinUnlocked=false;renderRapport()"><i class="ti ti-lock"></i> Rapport vergrendelen</div>';
-  rptHtml+='<div class="rpt-stats" style="grid-template-columns:repeat(5,1fr)">';
+  rptHtml+='<div class="rpt-stats">';
   rptHtml+='<div class="rpt-stat"><div class="rpt-lbl">Totale omzet</div><div class="rpt-val">€ '+fmtRound(totalOmzet)+'</div></div>';
   rptHtml+='<div class="rpt-stat"><div class="rpt-lbl">Totaal boekingen</div><div class="rpt-val">'+total+'</div></div>';
   rptHtml+='<div class="rpt-stat"><div class="rpt-lbl">Gem. per boeking</div><div class="rpt-val">€ '+(total>0?Math.round(totalOmzet/total):0)+'</div></div>';
