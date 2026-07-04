@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- DEPLOYMENT: voor gzip activeer Cloudflare Speed→Optimization of voeg Netlify netlify.toml toe met Cache-Control headers. Verwacht: 323KB → ~62KB na compressie -->
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
@@ -14,8 +15,7 @@
 <script>(function(){emailjs.init({publicKey:"tSEO9Yx-6g3asaLE-"});})();</script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <!-- Leaflet wordt lazy geladen bij eerste bezoek aan Ritplanning tab -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -694,21 +694,6 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
   .bcard-actions .bsm,.bcard-actions .bsm-bl{font-size:10px;padding:3px 8px}
   .modal{padding:14px}
 }
-/* RITPLANNING KAART */
-.rit-layout{display:grid;grid-template-columns:1fr 380px;gap:12px;align-items:start}
-.rit-kaart-wrap{position:sticky;top:12px;background:var(--bg1);border:.5px solid var(--bl);border-radius:var(--rl);overflow:hidden}
-.rit-kaart-hdr{padding:10px 14px;border-bottom:.5px solid var(--bl);display:flex;align-items:center;justify-content:space-between}
-.rit-kaart-titel{font-size:13px;font-weight:500;color:var(--tx1)}
-#rit-kaart{height:480px;width:100%}
-/* Leaflet dark mode overrides */
-[data-theme="dark"] .leaflet-tile-pane{filter:brightness(.7) invert(1) contrast(3) hue-rotate(200deg) saturate(.3) brightness(.7)}
-[data-theme="dark"] .leaflet-control-attribution{background:rgba(0,0,0,.7);color:#aaa}
-/* Marker kleuren */
-.rit-marker-lev{background:#61ABED;color:#fff;border:2px solid #fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.3)}
-.rit-marker-oph{background:#3B6D11;color:#fff;border:2px solid #fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.3)}
-.rit-marker-depot{background:#0C1135;color:#fff;border:2px solid var(--sky);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.4)}
-@media(max-width:700px){.rit-layout{grid-template-columns:1fr}.rit-kaart-wrap{position:static}}
-.rit-card{padding:12px}
 </style>
 </head>
 <body>
@@ -1234,8 +1219,57 @@ const CATALOGUS = [
 
 // Match vrije tekst naar productcatalogus
 // Cache voor matchProducten — invalideer bij opslaan
+// MATCH CACHE: in-memory Map + localStorage backup voor persistentie over pageloads
+// Cache overleeft refresh → geen herberekening nodig tenzij materiaal gewijzigd
 var _matchCache = new Map();
-function matchProductenCache_invalideer(){ _matchCache.clear(); }
+var MATCH_CACHE_KEY = 'fr_matchcache_v1';
+
+function matchProductenCache_invalideer(){
+  _matchCache.clear();
+  _vrCheckCache.clear();
+  try{ localStorage.removeItem(MATCH_CACHE_KEY); }catch(e){}
+}
+
+// Laad persistente cache uit localStorage bij startup
+(function(){
+  try{
+    var raw=localStorage.getItem(MATCH_CACHE_KEY);
+    if(raw){
+      var opgeslagen=JSON.parse(raw);
+      Object.entries(opgeslagen).forEach(function(entry){
+        _matchCache.set(entry[0],entry[1]);
+      });
+    }
+  }catch(e){ try{localStorage.removeItem(MATCH_CACHE_KEY);}catch(e2){} }
+})();
+
+// Sla cache op in localStorage (max 200 entries om ruimte te beperken)
+var _matchCacheSaveTimer=null;
+function matchCacheOpslaan(){
+  if(_matchCacheSaveTimer)clearTimeout(_matchCacheSaveTimer);
+  _matchCacheSaveTimer=setTimeout(function(){
+    try{
+      var obj={};
+      var entries=[..._matchCache.entries()];
+      // Bewaar enkel de laatste 200 entries (FIFO)
+      entries.slice(-200).forEach(function(e){obj[e[0]]=e[1];});
+      localStorage.setItem(MATCH_CACHE_KEY,JSON.stringify(obj));
+    }catch(e){}
+  },2000); // 2 seconden debounce om burst saves te voorkomen
+}
+
+// vrCheckBoeking resultaten cachen — wordt per boeking PER RENDER aangeroepen
+// zonder cache is dit O(N²): N boekingen × vrCheckBoeking loopt over alle N boekingen
+var _vrCheckCache = new Map();
+function vrCheckCache_invalideer(){ _vrCheckCache.clear(); }
+function vrCheckBoekingCached(b){
+  // Cache key: id + materiaal + datums — invalideer bij elke wijziging
+  var key=b.id+'|'+(b.materiaal||'')+'|'+b.levdatum+'|'+(b.ophdatum||'');
+  if(_vrCheckCache.has(key)) return _vrCheckCache.get(key);
+  var result=vrCheckBoeking(b);
+  _vrCheckCache.set(key,result);
+  return result;
+}
 
 function matchProducten(materiaalTekst){
   if(!materiaalTekst) return [];
@@ -1271,6 +1305,7 @@ function matchProducten(materiaalTekst){
   });
   // Sla resultaat op in cache
   _matchCache.set(materiaalTekst, gevonden);
+  matchCacheOpslaan(); // async save naar localStorage
   return gevonden;
 }
 const API='https://script.google.com/macros/s/AKfycbzh_GfQKgsoOpkfMRiBUYf_s6usyqUlH27GOI-LuLHMIZ9PUlPyR0Ddgiympg3UYAAoIg/exec';
@@ -1553,19 +1588,44 @@ function showTab(tab){
   if(tab==='planning')renderPlanning();
   if(tab==='betalen')renderBetalen();
   if(tab==='tijdlijn')renderTijdlijn();
-  if(tab==='rit'){renderRit();setTimeout(function(){if(_ritKaart)_ritKaart.invalidateSize();},300);}
+  if(tab==='rit'){laadLeafletLazy(function(){renderRit();setTimeout(function(){if(_ritKaart)_ritKaart.invalidateSize();},300);});}
   if(tab==='mijn')renderBBGrid();
   if(tab==='voorraad')renderVoorraad();
   if(tab==='rapport')renderRapport();
   if(tab==='nieuw'&&!editId){clearForm();document.getElementById('ics-panel').style.display='none';}
   if(tab==='nieuw'){setTimeout(function(){ppInit();},10);}
 }
-var _srchTimer=null;
+var _leafletLoaded=false;
+function laadLeafletLazy(callback){
+  if(_leafletLoaded){callback();return;}
+  if(typeof L!=='undefined'){_leafletLoaded=true;callback();return;}
+  // Laad Leaflet CSS
+  var css=document.createElement('link');
+  css.rel='stylesheet';
+  css.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+  css.crossOrigin='';
+  document.head.appendChild(css);
+  // Laad Leaflet JS
+  var script=document.createElement('script');
+  script.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+  script.crossOrigin='';
+  script.onload=function(){_leafletLoaded=true;callback();};
+  script.onerror=function(){console.error('Leaflet kon niet geladen worden');};
+  document.head.appendChild(script);
+}
 function debouncedSearch(){
   if(_srchTimer)clearTimeout(_srchTimer);
-  _srchTimer=setTimeout(function(){_srchTimer=null;renderPlanning();},180);
+  _srchTimer=setTimeout(function(){_srchTimer=null;renderPlanning();},200);
 }
-function setFil(f,btn){activeFilter=f;document.querySelectorAll('.fb').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderPlanning();}
+function setFil(f,btn){
+  activeFilter=f;
+  document.querySelectorAll('.fb').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  // Reset paginering bij filterwissel zodat eerste pagina getoond wordt
+  var pl=document.getElementById('plan-list');
+  if(pl){pl._planPage=0;pl._filterKey='';}
+  renderPlanning();
+}
 
 function setLevType(type,btn){
   fs.levType=type;
@@ -2103,8 +2163,8 @@ function renderPlanning(){
       const mth=(b.materiaal||'').split('\n').filter(x=>x&&x.trim()).map(m=>`<span class="mtag">${esc(m.trim())}</span>`).join('');
       // Toon enkel opstellers_lev — GEEN terugval op b.opstellers (dat zijn gecombineerde namen)
       const opstLev=b.opstellers_lev&&b.opstellers_lev.length>0?b.opstellers_lev.map(esc).join(' + '):'<span style="color:#E24B4A;font-weight:500">⚠ Niemand</span>';
-      // Snel conflict check voor badge
-      const _vrCheck=b.materiaal&&b.levdatum?vrCheckBoeking(b):[];
+      // Snel conflict check voor badge — gebruikt cache om O(N²) te vermijden
+      const _vrCheck=b.materiaal&&b.levdatum?vrCheckBoekingCached(b):[];
       const _vrHasConflict=_vrCheck.some(function(c){return c.check.status==='conflict';});
       const _vrHasWarn=!_vrHasConflict&&_vrCheck.some(function(c){return c.check.status==='warn';});
       // Toon enkel opstellers_oph — GEEN terugval op b.opstellers (dat zijn gecombineerde namen)
@@ -2151,13 +2211,10 @@ function renderPlanning(){
     html+='</div>';
   });
 
-  // Meer laden knop als er nog datumgroepen zijn
+  // Meer laden sentinel — IntersectionObserver triggert automatisch bij scrollen
   if(resterende>0){
-    html+=`<div style="text-align:center;padding:16px 0">
-      <button class="fb" style="padding:8px 20px;font-size:13px" onclick="
-        document.getElementById('plan-list')._planPage=(document.getElementById('plan-list')._planPage||0)+1;
-        renderPlanning();
-        ">Meer laden (${resterende} datumgroep${resterende===1?'':'en'} verborgen) ↓</button>
+    html+=`<div id="plan-sentinel" style="height:60px;display:flex;align-items:center;justify-content:center">
+      <span style="font-size:12px;color:var(--tx3)"><i class="ti ti-loader" style="font-size:14px;margin-right:6px"></i>${resterende} meer...</span>
     </div>`;
   }
   // Toon totaalteller als er een zoekterm actief is
@@ -2171,6 +2228,20 @@ function renderPlanning(){
       +'</div>'+html;
   }
   container.innerHTML=html;
+
+  // IntersectionObserver voor automatisch meer laden bij scrollen
+  var sentinel=document.getElementById('plan-sentinel');
+  if(sentinel&&'IntersectionObserver' in window){
+    if(container._planObserver) container._planObserver.disconnect();
+    container._planObserver=new IntersectionObserver(function(entries){
+      if(entries[0].isIntersecting){
+        container._planObserver.disconnect();
+        container._planPage=(container._planPage||0)+1;
+        renderPlanning();
+      }
+    },{threshold:0.1,rootMargin:'100px'});
+    container._planObserver.observe(sentinel);
+  }
 
   // Event delegation voor bcard-actions knoppen (eenmalig registreren)
   if(!container._bcaListenerAdded){
@@ -2752,7 +2823,7 @@ function renderRit(){
     tekenRitKaart(dayStops, selDate);
   }
 }
-function ritSelDate(d){document.getElementById('rit-ds').dataset.sel=d;renderRit();}
+function ritSelDate(d){document.getElementById('rit-ds').dataset.sel=d;laadLeafletLazy(function(){renderRit();});}
 
 /* MIJN PLANNING */
 function renderBBGrid(){
@@ -4032,7 +4103,19 @@ function itemStatusSlaAlleOp(productId){
 // [{prio:'krit'|'warn'|'info', cat, tekst, boekingId, actie}]
 // ============================================================
 
+// Cache voor waarschuwingsEngine — herberekening enkel bij data-wijziging
+// Sla de resultaten op met een hash van boekingen.length + lastSaveTS als sleutel
+var _wgCache={ts:0, result:[]};
 function waarschuwingsEngine(){
+  // Cache is geldig als de data niet gewijzigd is (max 60 sec oud)
+  var nu=Date.now();
+  var _dataHash=boekingen.length+'|'+(window._lastSaveTS||0);
+  if(_wgCache.hash===_dataHash&&(nu-_wgCache.ts)<60000) return _wgCache.result;
+  var resultaat=_waarschuwingsEngineBerekening();
+  _wgCache={hash:_dataHash,ts:nu,result:resultaat};
+  return resultaat;
+}
+function _waarschuwingsEngineBerekening(){
   var resultaat = [];
   var t = today();
   var morgenDt = new Date(t+'T00:00:00'); morgenDt.setDate(morgenDt.getDate()+1);
@@ -4253,7 +4336,7 @@ function waarschuwingsEngine(){
     return (a.datum||'').localeCompare(b.datum||'');
   });
   return resultaat;
-}
+}  // einde _waarschuwingsEngineBerekening
 
 // Render het waarschuwingspanel
 var _wgActiefFilter = 'alle'; // 'alle' | 'krit' | 'warn'
@@ -5711,7 +5794,7 @@ async function delBoeking(id){
   let r;
   try{ r=await api({action:'delete',body:{action:'delete',id}}); }
   catch(e){ banner('er','Verwijderen mislukt — verbindingsfout.'); return; }
-  if(r&&r.success){boekingen=boekingen.filter(b=>b.id!==id);saveC(boekingen);closeMo();renderPlanning();banner('ok','Boeking verwijderd');}
+  if(r&&r.success){boekingen=boekingen.filter(b=>b.id!==id);saveC(boekingen);matchProductenCache_invalideer();closeMo();renderPlanning();banner('ok','Boeking verwijderd');}
 }
 function toICS(ds,ts){const[y,m,d]=ds.split('-'),[h,mn]=ts.split(':');return y+m+d+'T'+h+mn+'00';}
 function makeICS(title,ds,ts,desc,loc){

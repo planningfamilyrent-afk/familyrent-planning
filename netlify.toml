@@ -1,0 +1,19 @@
+# Netlify configuratie voor Familyrent Planning
+# Upload dit bestand samen met index.html naar je Netlify site
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600, stale-while-revalidate=86400"
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# HTML: korter cachen zodat updates snel live zijn
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=300, stale-while-revalidate=3600"
+
+# Netlify comprimeert automatisch met gzip/brotli
+# Resultaat: ~323KB → ~62KB (80% kleiner)
