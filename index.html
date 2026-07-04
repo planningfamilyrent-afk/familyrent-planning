@@ -3179,7 +3179,7 @@ function ritSelDate(d){document.getElementById('rit-ds').dataset.sel=d;laadLeafl
 /* MIJN PLANNING */
 function renderBBGrid(){
   document.getElementById('bb-sel').style.display='block';document.getElementById('bb-det').classList.remove('active');
-  const grid=document.getElementById('bb-grid'),t=today(),names=new Set(BB);
+  const t=today(),names=new Set(BB);
   boekingen.forEach(b=>{if(b.opstellers)b.opstellers.forEach(n=>names.add(n));});
 
   // MIJN DAG — toon boekingen van vandaag bovenaan als snelle sectie
@@ -3219,13 +3219,23 @@ function renderBBGrid(){
     mijnDagHtml+='<div style="font-size:11px;font-weight:600;color:var(--tx3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px">Alle medewerkers</div>';
   }
 
-  grid.innerHTML=[...names].map(nm=>{const my=boekingen.filter(b=>b.opstellers&&b.opstellers.includes(nm)),up=my.filter(b=>b.levdatum>=t||b.ophdatum>=t).length;const werkVandaag=my.filter(b=>(b.levdatum===t||b.ophdatum===t)&&!b.voltooid).length;return`<div class="bb-card" onclick="showBBDetail('${nm}')"><div class="bb-av">${ini(nm)}</div><div class="bb-nm">${esc(nm)}</div><div class="bb-ct">${werkVandaag>0?'<span style="color:#27500A;font-weight:600">●</span> '+werkVandaag+' vandaag':up>0?up+' komend':'geen jobs'}</div></div>`;}).join('');
+  // Bouw grid HTML rechtstreeks als string — geen outerHTML manipulatie
+  var gridHtml=[...names].map(function(nm){
+    var my=boekingen.filter(function(b){return b.opstellers&&b.opstellers.includes(nm);});
+    var up=my.filter(function(b){return b.levdatum>=t||b.ophdatum>=t;}).length;
+    var werkVandaag=my.filter(function(b){return (b.levdatum===t||b.ophdatum===t)&&!b.voltooid;}).length;
+    var ctHtml=werkVandaag>0?'<span style="color:#27500A;font-weight:600">●</span> '+werkVandaag+' vandaag':up>0?up+' komend':'geen jobs';
+    return '<div class="bb-card" onclick="showBBDetail(\''+nm+'\')">'
+      +'<div class="bb-av">'+ini(nm)+'</div>'
+      +'<div class="bb-nm">'+esc(nm)+'</div>'
+      +'<div class="bb-ct">'+ctHtml+'</div>'
+      +'</div>';
+  }).join('');
 
   // Voeg mijn dag sectie toe vóór de grid
   var bbSel=document.getElementById('bb-sel');
-  bbSel.innerHTML='<p style="font-size:13px;color:var(--tx2);margin-bottom:12px">Klik op jouw naam voor jouw planning.</p>';
-  if(mijnDagHtml)bbSel.innerHTML=mijnDagHtml+'<div class="bb-grid" id="bb-grid">'+grid.outerHTML.replace('<div class="bb-grid" id="bb-grid">','').replace('</div>','')+'</div>';
-  else bbSel.innerHTML+='<div class="bb-grid" id="bb-grid">'+grid.innerHTML+'</div>';
+  var intro='<p style="font-size:13px;color:var(--tx2);margin-bottom:12px">Klik op jouw naam voor jouw planning.</p>';
+  bbSel.innerHTML=(mijnDagHtml||intro)+'<div class="bb-grid" id="bb-grid">'+gridHtml+'</div>';
 }
 function showBBDetail(name){
   document.getElementById('bb-sel').style.display='none';document.getElementById('bb-det').classList.add('active');
