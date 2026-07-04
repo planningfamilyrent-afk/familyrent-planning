@@ -12,7 +12,21 @@
 <meta name="apple-mobile-web-app-title" content="FR Planning">
 <meta name="theme-color" content="#0C1135">
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-<script>(function(){emailjs.init({publicKey:"tSEO9Yx-6g3asaLE-"});})();</script>
+<script>
+// ─────────────────────────────────────────────────────────────
+// CONFIGURATIE — pas hier aan, nergens anders
+// EmailJS: https://dashboard.emailjs.com/admin
+// Apps Script: deploy als Web App, toegang = Iedereen
+// ─────────────────────────────────────────────────────────────
+window.FR_CONFIG={
+  emailjs_public_key:'tSEO9Yx-6g3asaLE-',
+  emailjs_service:'service_3y294mh',
+  emailjs_template_intern:'template_rdfunwf',
+  emailjs_template_klant:'template_6zmn5tp',
+  apps_script_url:'https://script.google.com/macros/s/AKfycbzh_GfQKgsoOpkfMRiBUYf_s6usyqUlH27GOI-LuLHMIZ9PUlPyR0Ddgiympg3UYAAoIg/exec'
+};
+(function(){emailjs.init({publicKey:window.FR_CONFIG.emailjs_public_key});})();
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
   <!-- Leaflet wordt lazy geladen bij eerste bezoek aan Ritplanning tab -->
@@ -786,7 +800,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
     <div class="hdr-icon"><i class="ti ti-calendar" aria-hidden="true"></i></div>
     <div>
       <div class="hdr-title">Familyrent Planning</div>
-      <div class="hdr-sub"><span class="sdot" id="sdot"></span><span id="sstat">Verbinden...</span></div>
+      <div class="hdr-sub"><span class="sdot" id="sdot"></span><span id="sstat">Verbinden...</span><span id="queue-badge" style="display:none;background:#EF9F27;color:#fff;font-size:10px;font-weight:700;border-radius:10px;padding:1px 6px;margin-left:6px;align-items:center;gap:3px" title="Offline wachtrij — wordt verstuurd bij reconnect"><i class="ti ti-clock"></i></span></div>
     </div>
   </div>
   <button class="btn-new no-print" onclick="toggleDark()" id="dark-toggle" title="Donkere/lichte modus" style="background:rgba(255,255,255,.15);padding:8px 10px"><i class="ti ti-moon" aria-hidden="true"></i></button>
@@ -831,7 +845,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
     <button class="fb" onclick="setFil('lev',this)">Leveringen</button>
     <button class="fb" onclick="setFil('oph',this)">Ophalingen</button>
     <button class="fb" onclick="setFil('archief',this)"><i class="ti ti-archive" style="font-size:11px"></i> Archief</button>
-    <input class="fsrch" id="srch" placeholder="Zoek naam, adres, tel, email, materiaal, #BB..." oninput="debouncedSearch()" autocomplete="off">
+    <input class="fsrch" id="srch" placeholder="Zoek naam, adres, tel, email, materiaal, #BB, !onbetaald..." oninput="debouncedSearch()" autocomplete="off">
   </div>
   <div id="plan-list"><div class="loading"><i class="ti ti-loader"></i>Boekingen laden...</div></div>
 </div>
@@ -1398,7 +1412,70 @@ function matchProducten(materiaalTekst){
   matchCacheOpslaan(); // async save naar localStorage
   return gevonden;
 }
-const API='https://script.google.com/macros/s/AKfycbzh_GfQKgsoOpkfMRiBUYf_s6usyqUlH27GOI-LuLHMIZ9PUlPyR0Ddgiympg3UYAAoIg/exec';
+const API=window.FR_CONFIG.apps_script_url;
+
+// ═══════════════════════════════════════════════════════════
+// OFFLINE SAVE-WACHTRIJ
+// Gemiste saves worden bewaard en opnieuw geprobeerd bij reconnect
+// ═══════════════════════════════════════════════════════════
+var QUEUE_KEY='fr_save_queue_v1';
+var _queueBezig=false;
+
+function queueLaad(){
+  try{var r=localStorage.getItem(QUEUE_KEY);return r?JSON.parse(r):[];}catch(e){return[];}
+}
+function queueSla(q){
+  try{localStorage.setItem(QUEUE_KEY,JSON.stringify(q));}catch(e){}
+}
+function queueVoegToe(actie,body){
+  var q=queueLaad();
+  // Vervang bestaande entry voor dezelfde boeking (dedupliceer op id)
+  if(body&&body.boeking&&body.boeking.id){
+    q=q.filter(function(e){return !(e.actie===actie&&e.body&&e.body.boeking&&e.body.boeking.id===body.boeking.id);});
+  }
+  q.push({actie:actie,body:body,ts:Date.now()});
+  queueSla(q);
+}
+async function queueVerwerk(){
+  if(_queueBezig) return;
+  var q=queueLaad();
+  if(q.length===0) return;
+  _queueBezig=true;
+  var succesvol=[];
+  for(var i=0;i<q.length;i++){
+    try{
+      var e=q[i];
+      var url=API+'?action='+e.actie;
+      var opts=e.body?{method:'POST',body:JSON.stringify(e.body)}:{method:'GET'};
+      var res=await fetch(url,opts);
+      var data=await res.json();
+      if(data&&(data.success||e.actie==='delete')) succesvol.push(i);
+    }catch(err){break;} // stop bij eerste fout (geen verbinding)
+  }
+  // Verwijder geslaagde entries
+  var resterend=q.filter(function(_,i){return succesvol.indexOf(i)<0;});
+  queueSla(resterend);
+  _queueBezig=false;
+  if(succesvol.length>0&&resterend.length===0){
+    banner('ok','✓ '+succesvol.length+' opgeslagen wijziging'+(succesvol.length!==1?'en':'')+' gesynchroniseerd');
+    wgHerlaad();
+  } else if(resterend.length>0){
+    setSS('er','Verbindingsfout · '+resterend.length+' wijziging'+(resterend.length!==1?'en':'')+' wachten');
+  }
+}
+// Luister naar reconnect
+window.addEventListener('online',function(){
+  var q=queueLaad();
+  if(q.length>0){banner('ok','Verbinding hersteld — '+q.length+' saves verwerken...');queueVerwerk();}
+});
+// Toon indicator als er items in de wachtrij staan
+function queueBadgeUpdate(){
+  var q=queueLaad();
+  var badge=document.getElementById('queue-badge');
+  if(badge){badge.style.display=q.length>0?'flex':'none';badge.textContent=q.length;}
+}
+// Probeer wachtrij elke 30s als online
+setInterval(function(){if(navigator.onLine){var q=queueLaad();if(q.length>0)queueVerwerk();}},30000);
 const CK='fr_v4';
 // PIN wordt niet in plain text bewaard — hash wordt vergeleken bij runtime
 // Om de PIN te wijzigen: vervang de hash hieronder door: btoa('jouwNieuwePin')
@@ -1447,11 +1524,20 @@ async function api(p){
     var res=await fetch(url,opts);
     var data=await res.json();
     setSS('ok','Gesynchroniseerd');
+    queueBadgeUpdate();
     return data;
   }catch(e){
     setSS('er','Verbindingsfout');
-    if(!p.body) banner('er','Verbinding mislukt. Herlaad de pagina.');
-    else banner('er','Opslaan mislukt. Controleer verbinding.');
+    // Bij write-operaties: voeg toe aan offline wachtrij
+    if(p.body){
+      queueVoegToe(p.action,p.body);
+      queueBadgeUpdate();
+      banner('er','Geen verbinding — wijziging bewaard, wordt verzonden bij reconnect.');
+      // Geef een fake-success terug zodat de UI wel bijgewerkt wordt
+      return {success:true,offline:true};
+    } else {
+      banner('er','Verbinding mislukt. Herlaad de pagina.');
+    }
     return null;
   }
 }
@@ -1511,7 +1597,11 @@ async function loadData(){
   const cached=loadC();
   if(cached&&cached.length>0){
     boekingen=cached.map(normB).filter(b=>b&&b.id&&b.naam&&b.levdatum);
-    renderPlanning();setSS('sy','Vernieuwen...');
+    // Lazy: render enkel actieve tab vanuit cache
+    if(document.getElementById('view-planning').classList.contains('active')) renderPlanning();
+    if(document.getElementById('view-dashboard').classList.contains('active')) renderDashboard();
+    updateStats();
+    setSS('sy','Vernieuwen...');
   } else {
     document.getElementById('plan-list').innerHTML='<div class="loading"><i class="ti ti-loader"></i>Boekingen laden...</div>';
   }
@@ -1566,12 +1656,17 @@ async function loadData(){
     setSS('er','Verbindingsfout');
     return;
   }
-  renderPlanning();
+  // Lazy render: enkel de actieve tab opnieuw opbouwen
+  // updateStats altijd — die zijn lichtgewicht en staan op elke tab
+  updateStats();
+  if(document.getElementById('view-planning').classList.contains('active')) renderPlanning();
   if(document.getElementById('view-kalender').classList.contains('active')) renderKalender();
   if(document.getElementById('view-dashboard').classList.contains('active')) renderDashboard();
   if(document.getElementById('view-tijdlijn').classList.contains('active')) renderTijdlijn();
   if(document.getElementById('view-rit').classList.contains('active')) renderRit();
   if(document.getElementById('view-mijn').classList.contains('active')) renderBBGrid();
+  // Queue-badge altijd bijwerken
+  queueBadgeUpdate();
 }
 
 function dist(a,b){const R=6371,dLat=(b.lat-a.lat)*Math.PI/180,dLng=(b.lng-a.lng)*Math.PI/180,x=Math.sin(dLat/2)**2+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLng/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x))}
@@ -2052,13 +2147,37 @@ async function saveBoeking(){
   const adres=document.getElementById('f-adres').value.trim();
   const levdatum=document.getElementById('f-levdatum').value;
   const ophdatum=document.getElementById('f-ophdatum').value;
+  const tel=document.getElementById('f-tel').value.trim();
+  const email=document.getElementById('f-email')?document.getElementById('f-email').value.trim():'';
   let mat=document.getElementById('f-mat').value.trim();
   const errEl=document.getElementById('ferr');
+
   if(!naam){errEl.textContent='Naam klant is verplicht.';errEl.style.display='block';document.getElementById('f-naam').focus();return;}
   if(!adres){errEl.textContent='Adres is verplicht.';errEl.style.display='block';document.getElementById('f-adres').focus();return;}
   if(!levdatum){errEl.textContent='Leverdatum is verplicht.';errEl.style.display='block';document.getElementById('f-levdatum').focus();return;}
   if(!ophdatum){errEl.textContent='Ophaaldatum is verplicht.';errEl.style.display='block';document.getElementById('f-ophdatum').focus();return;}
   if(ophdatum<levdatum){errEl.textContent='Ophaaldatum mag niet vóór de leverdatum liggen.';errEl.style.display='block';return;}
+
+  // Telefoonnummer formaat (Belgisch: 04xx xxx xxx, +32..., of 0x xx xx xx)
+  if(tel&&!/^(\+32|0032|0)[1-9]\d{7,8}$/.test(tel.replace(/[\s\-\.]/g,''))){
+    errEl.textContent='Telefoonnummer lijkt niet geldig (bv. 0497 03 52 23 of +32497035223).';
+    errEl.style.display='block';
+    document.getElementById('f-tel').focus();
+    return;
+  }
+
+  // Email formaat als ingevuld
+  if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    errEl.textContent='E-mailadres lijkt niet geldig (bv. naam@voorbeeld.be).';
+    errEl.style.display='block';
+    document.getElementById('f-email').focus();
+    return;
+  }
+
+  // Datum in het verleden — waarschuwing maar geen blokkade (kan historische boeking zijn)
+  if(!editId&&levdatum<today()){
+    if(!confirm('De leverdatum ('+fmtDate(levdatum)+') ligt in het verleden.\nWil je toch opslaan?'))return;
+  }
   // Fallback bij bewerken: als f-mat leeg is door timing, gebruik de opgeslagen boeking
   if(!mat && editId){
     const _bestaand=boekingen.find(x=>x.id===editId);
@@ -2176,19 +2295,22 @@ function renderPlanning(){
   const t=today(),mon=getMon(t);
   const sunDt=new Date(mon+'T00:00:00');sunDt.setDate(sunDt.getDate()+6);const sun=sunDt.toISOString().split('T')[0];
 
-  // Uitgebreide zoekparser: #bo → BB-filter, @date → datumfilter, anders vrije tekst
-  var zoekBB=null, zoekDatum=null, zoekTerm='';
+  // Uitgebreide zoekparser
+  // #bo → BB-filter | 2025-06-14 → datum | !onbetaald → onbetaalde boekingen | rest → vrije tekst
+  var zoekBB=null, zoekDatum=null, zoekTerm='', zoekOnbetaald=false;
   if(q){
     var _parts=q.split(/\s+/);
     _parts.forEach(function(part){
       if(part.startsWith('#'))zoekBB=part.slice(1).toLowerCase();
       else if(/^\d{4}-\d{2}-\d{2}$/.test(part))zoekDatum=part;
+      else if(part==='!onbetaald'||part==='!open'||part==='!betalen')zoekOnbetaald=true;
       else zoekTerm=(zoekTerm?zoekTerm+' ':'')+part.toLowerCase();
     });
   }
 
   function boekingMatchZoek(b){
-    if(!zoekTerm&&!zoekBB&&!zoekDatum) return true;
+    if(!zoekTerm&&!zoekBB&&!zoekDatum&&!zoekOnbetaald) return true;
+    if(zoekOnbetaald&&(b.betaling&&b.betaling.trim())) return false;
     if(zoekBB){
       var bbNamen=[...(b.opstellers_lev||[]),...(b.opstellers_oph||[])].map(n=>n.toLowerCase());
       if(!bbNamen.some(n=>n.includes(zoekBB))) return false;
@@ -2205,6 +2327,8 @@ function renderPlanning(){
         b.materiaal||'',
         b.opmerking||'',
         String(b.id||''),
+        b.betaling||'',
+        STATUSSEN[b.status||1]||'',
       ].join(' ').toLowerCase();
       if(!zoekTerm.split(/\s+/).every(function(w){return hay.includes(w);})) return false;
     }
@@ -2317,12 +2441,13 @@ function renderPlanning(){
     </div>`;
   }
   // Toon totaalteller als er een zoekterm actief is
-  if(zoekTerm||zoekBB||zoekDatum){
+  if(zoekTerm||zoekBB||zoekDatum||zoekOnbetaald){
     html='<div style="font-size:12px;color:var(--tx2);padding:0 0 8px;display:flex;align-items:center;gap:6px">'
       +'<i class="ti ti-filter" style="color:var(--sky)"></i> '
       +fil.length+' boeking'+(fil.length!==1?'en':'')+' gevonden'
       +(zoekBB?` · BB: <strong>#${zoekBB}</strong>`:'')
       +(zoekDatum?` · Datum: <strong>${fmtShort(zoekDatum)}</strong>`:'')
+      +(zoekOnbetaald?' · <strong style="color:#A32D2D">Onbetaald</strong>':'')
       +'<button onclick="document.getElementById(\'srch\').value=\'\';debouncedSearch()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--tx3);font-size:11px;padding:2px 6px;border-radius:4px;border:.5px solid var(--bm)">✕ Wis filter</button>'
       +'</div>'+html;
   }
