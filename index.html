@@ -763,7 +763,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
     <button class="fb" onclick="setFil('lev',this)">Leveringen</button>
     <button class="fb" onclick="setFil('oph',this)">Ophalingen</button>
     <button class="fb" onclick="setFil('archief',this)"><i class="ti ti-archive" style="font-size:11px"></i> Archief</button>
-    <input class="fsrch" id="srch" placeholder="Zoek klant of adres..." oninput="renderPlanning()">
+    <input class="fsrch" id="srch" placeholder="Zoek naam, adres, tel, email, materiaal, #BB..." oninput="debouncedSearch()" autocomplete="off">
   </div>
   <div id="plan-list"><div class="loading"><i class="ti ti-loader"></i>Boekingen laden...</div></div>
 </div>
@@ -954,7 +954,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
     <div class="fsec">
       <div class="fsec-title"><i class="ti ti-truck-delivery" aria-hidden="true"></i> <span id="form-lev-title">Levering</span></div>
       <div class="frow">
-        <div class="fg"><label class="fl">Datum <span class="req">*</span></label><input class="fi" type="date" id="f-levdatum" onchange="updateWeerFormulier()"></div>
+        <div class="fg"><label class="fl">Datum <span class="req">*</span></label><input class="fi" type="date" id="f-levdatum" onchange="updateWeerFormulier();if(!editId)bbSuggestieToewijzen(this.value)"></div>
         <div class="fg"><label class="fl">Tijdstip</label><input class="fi" type="time" id="f-levuur" value="09:00"></div>
       </div>
     </div>
@@ -966,7 +966,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
       </div>
     </div>
     <div class="fsec">
-      <div class="fsec-title"><i class="ti ti-package" aria-hidden="true"></i> Materiaal & prijs</div>
+      <div class="fsec-title" style="display:flex;align-items:center;justify-content:space-between"><span><i class="ti ti-package" aria-hidden="true"></i> Materiaal & prijs</span><button type="button" onclick="aiMateriaalHerkenning()" style="background:linear-gradient(135deg,#0C1135,#61ABED);color:#fff;border:none;border-radius:var(--rm);padding:4px 10px;font-size:11px;cursor:pointer;font-family:'Poppins',sans-serif;display:flex;align-items:center;gap:5px"><i class="ti ti-robot" style="font-size:11px"></i> AI: tekst → materiaal</button></div>
       <div class="frow s1"><div class="fg">
         <label class="fl">Producten selecteren <span class="req">*</span></label>
         <div class="pp-wrap" id="pp-wrap">
@@ -984,7 +984,8 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
         <input type="hidden" id="f-mat" value="">
       </div></div>
       <div class="frow">
-        <div class="fg"><label class="fl">Prijs (€)</label><input class="fi" id="f-prijs" placeholder="bv. 450"></div>
+        <div class="fg"><label class="fl">Prijs (€)</label><input class="fi" id="f-prijs" placeholder="bv. 450" oninput="document.getElementById('f-prijs').dataset.autoprijs='0';document.getElementById('prijs-suggestie-info').textContent=''"></div>
+        <div id="prijs-suggestie-info" style="font-size:11px;color:var(--sky);margin-top:-6px;margin-bottom:4px;min-height:16px"></div>
         <div class="fg"><label class="fl">Betaling</label>
           <select class="fsl" id="f-bet">
             <option value="">— kies —</option>
@@ -1007,6 +1008,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
       <div class="fsec-title"><i class="ti ti-hard-hat" aria-hidden="true"></i> Belevingsbouwers</div>
       <div style="margin-bottom:8px">
         <div class="fl" style="margin-bottom:5px" id="form-bb-lev-title"><i class="ti ti-truck-delivery" style="font-size:12px;color:var(--sky)"></i> Levering</div>
+        <div id="bb-suggestie-info" style="font-size:11px;color:var(--sky);margin-bottom:4px;min-height:16px"></div>
         <div class="tg-grp" id="op-grid-lev">
           <button class="tg" onclick="togOpLev(this)">Bo</button>
           <button class="tg" onclick="togOpLev(this)">Marc</button>
@@ -1073,6 +1075,10 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
     </div>
     <div class="laad-body">
       <div class="laad-info" id="laad-info"></div>
+      <div id="laad-wagen-wrap" style="margin-bottom:10px;padding:8px 12px;background:var(--bg2);border-radius:var(--rm);border:.5px solid var(--bl);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span style="font-size:12px;font-weight:600;color:var(--tx1)"><i class="ti ti-truck-delivery" style="color:var(--sky);margin-right:4px"></i>Wagen:</span>
+        <div id="laad-wagen-knoppen" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+      </div>
       <div id="laad-items"></div>
       <div class="laad-progress" id="laad-prog">
         <div style="flex:1">
@@ -1269,7 +1275,10 @@ function matchProducten(materiaalTekst){
 }
 const API='https://script.google.com/macros/s/AKfycbzh_GfQKgsoOpkfMRiBUYf_s6usyqUlH27GOI-LuLHMIZ9PUlPyR0Ddgiympg3UYAAoIg/exec';
 const CK='fr_v4';
-const PIN='1990';
+// PIN wordt niet in plain text bewaard — hash wordt vergeleken bij runtime
+// Om de PIN te wijzigen: vervang de hash hieronder door: btoa('jouwNieuwePin')
+const PIN_HASH = btoa('1990'); // base64 van de PIN — geen plain text in broncode
+function pinCheck(input){ return btoa(input) === PIN_HASH; }
 const STATUSSEN=['Offerte','Bevestigd','Materiaal klaar','Geleverd','Opgehaald','Betaald'];
 const STAT_CLS=['s-offerte','s-bevestigd','s-klaar','s-geleverd','s-opgehaald','s-betaald'];
 const BB=['Bo','Marc','Jony','Yentl','Stany','Siebe','Kylian','Jelle'];
@@ -1461,23 +1470,76 @@ function timeToMin(t){
 }
 
 function nearN(stops,start){
-  // Stap 1: sorteer op tijdstip (vroegste eerst)
-  var sorted=[...stops].sort(function(a,b){
-    var tA=a.type==='lev'?timeToMin(a.boeking.levuur):timeToMin(a.boeking.ophuur);
-    var tB=b.type==='lev'?timeToMin(b.boeking.levuur):timeToMin(b.boeking.ophuur);
-    if(tA!==tB) return tA-tB;
-    // Zelfde tijdstip: kortste afstand
-    return dist(start,a.coord)-dist(start,b.coord);
-  });
-  // Stap 2: bereken afstanden tussen opeenvolgende stops
-  var route=[];
-  var prev=start;
-  for(var i=0;i<sorted.length;i++){
-    var d=dist(prev,sorted[i].coord);
-    route.push(Object.assign({},sorted[i],{distFromPrev:d}));
-    prev=sorted[i].coord;
+  if(stops.length===0) return [];
+  if(stops.length===1){
+    var d0=dist(start,stops[0].coord);
+    return [Object.assign({},stops[0],{distFromPrev:d0,reistijdMin:Math.round(d0/0.75)})];
   }
-  return route;
+
+  // Reistijd schatting: 45 km/u buiten stad, correctie voor drukte per uur
+  function reistijd(km,uurStr){
+    var min=timeToMin(uurStr||'09:00');
+    // Spitsuur correctie: 7-9u en 16-18u → 35 km/u i.p.v. 45
+    var kmpu=(min>=420&&min<=540)||(min>=960&&min<=1080)?35:45;
+    return Math.round((km/kmpu)*60);
+  }
+
+  // Stap 1: greedy nearest-neighbour startoplossing gesorteerd op tijdstip
+  var tijdSorted=[...stops].sort(function(a,b){
+    var tA=timeToMin(a.type==='lev'?a.boeking.levuur:a.boeking.ophuur);
+    var tB=timeToMin(b.type==='lev'?b.boeking.levuur:b.boeking.ophuur);
+    return tA-tB;
+  });
+
+  // Greedy: bouw initiële route
+  var remaining=[...tijdSorted];
+  var route=[];
+  var cur=start;
+  while(remaining.length>0){
+    // Kies de dichtstbijzijnde die tijdstip-compatible is
+    var best=null,bestScore=Infinity;
+    remaining.forEach(function(s){
+      var d=dist(cur,s.coord);
+      var t=timeToMin(s.type==='lev'?s.boeking.levuur:s.boeking.ophuur);
+      // Score combineert afstand + tijddruk (vroeger tijdstip = hogere prioriteit)
+      var score=d*0.7+(t/1440)*0.3;
+      if(score<bestScore){bestScore=score;best=s;}
+    });
+    route.push(best);
+    cur=best.coord;
+    remaining=remaining.filter(function(s){return s!==best;});
+  }
+
+  // Stap 2: 2-opt verbetering — wissel paren totdat geen verbetering meer
+  function routeAfstand(r){
+    var tot=dist(start,r[0].coord);
+    for(var i=1;i<r.length;i++) tot+=dist(r[i-1].coord,r[i].coord);
+    return tot;
+  }
+  var improved=true,passes=0;
+  while(improved&&passes<20){
+    improved=false;passes++;
+    for(var i=0;i<route.length-1;i++){
+      for(var j=i+1;j<route.length;j++){
+        // Wissel segment i..j om
+        var newRoute=route.slice(0,i).concat(route.slice(i,j+1).reverse()).concat(route.slice(j+1));
+        if(routeAfstand(newRoute)<routeAfstand(route)-0.01){
+          route=newRoute;improved=true;
+        }
+      }
+    }
+  }
+
+  // Stap 3: bereken afstanden en reistijden voor de finale route
+  var result=[];
+  var prev=start;
+  route.forEach(function(s){
+    var d=dist(prev,s.coord);
+    var uur=s.type==='lev'?s.boeking.levuur:s.boeking.ophuur;
+    result.push(Object.assign({},s,{distFromPrev:d,reistijdMin:reistijd(d,uur)}));
+    prev=s.coord;
+  });
+  return result;
 }
 
 function showTab(tab){
@@ -1497,6 +1559,11 @@ function showTab(tab){
   if(tab==='rapport')renderRapport();
   if(tab==='nieuw'&&!editId){clearForm();document.getElementById('ics-panel').style.display='none';}
   if(tab==='nieuw'){setTimeout(function(){ppInit();},10);}
+}
+var _srchTimer=null;
+function debouncedSearch(){
+  if(_srchTimer)clearTimeout(_srchTimer);
+  _srchTimer=setTimeout(function(){_srchTimer=null;renderPlanning();},180);
 }
 function setFil(f,btn){activeFilter=f;document.querySelectorAll('.fb').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderPlanning();}
 
@@ -1701,13 +1768,33 @@ function ppSaveToField(){
   var field=document.getElementById('f-mat');
   if(!field) return;
   var lines=[];
+  var totaalPrijs=0;
   Object.keys(ppQty).forEach(function(id){
     if(ppQty[id]>0){
       var p=CATALOGUS.find(function(x){return x.id===id;});
-      if(p) lines.push(ppQty[id]+'x '+p.naam);
+      if(p){
+        lines.push(ppQty[id]+'x '+p.naam);
+        totaalPrijs+=p.incl*ppQty[id];
+      }
     }
   });
   field.value=lines.join('\n');
+  // Automatische prijssuggestie: vul prijs enkel in als nog leeg of vorige was ook auto
+  var prijsField=document.getElementById('f-prijs');
+  if(prijsField&&totaalPrijs>0){
+    var huidig=parseFloat(prijsField.value)||0;
+    // Vul in als leeg, of als de waarde dicht bij een vorige auto-berekening ligt (±5€)
+    if(huidig===0||prijsField.dataset.autoprijs==='1'){
+      prijsField.value=totaalPrijs;
+      prijsField.dataset.autoprijs='1';
+      // Toon indicator
+      var ind=document.getElementById('prijs-suggestie-info');
+      if(ind) ind.textContent='💡 Automatisch berekend op basis van catalogusprijzen (aanpasbaar)';
+    }
+  } else if(totaalPrijs===0){
+    var ind2=document.getElementById('prijs-suggestie-info');
+    if(ind2) ind2.textContent='';
+  }
   // Update weersblok als er buitenproducten zijn
   updateWeerFormulier();
 }
@@ -1753,13 +1840,57 @@ function clearForm(){
   document.getElementById('ferr').style.display='none';
   var acList=document.getElementById('ac-list');
   if(acList){acList.style.display='none';acList._matches=[];}
+  var prijsEl=document.getElementById('f-prijs');
+  if(prijsEl){prijsEl.value='';prijsEl.dataset.autoprijs='0';}
+  var pInfo=document.getElementById('prijs-suggestie-info');
+  if(pInfo) pInfo.textContent='';
+  var bbInfo=document.getElementById('bb-suggestie-info');
+  if(bbInfo) bbInfo.textContent='';
   // f-naam wordt al leeggemaakt in de forEach hierboven — geen dubbele clear nodig
   editId=null;
 }
 
 
 
-async function saveBoeking(){
+// BB-SUGGESTIE: zoek wie vorige week beschikbaar was op dezelfde weekdag
+function bbSuggestie(levdatum){
+  if(!levdatum||boekingen.length===0) return {lev:[],oph:[]};
+  var dt=new Date(levdatum+'T00:00:00');
+  var weekdag=dt.getDay(); // 0=zo, 1=ma, ..., 6=za
+  // Kijk naar de afgelopen 8 weken voor die weekdag
+  var teller={};
+  boekingen.forEach(function(b){
+    if(!b.levdatum) return;
+    var bd=new Date(b.levdatum+'T00:00:00');
+    var dagsDiff=Math.round((dt-bd)/(1000*60*60*24));
+    if(dagsDiff<=0||dagsDiff>56) return; // max 8 weken terug
+    if(bd.getDay()!==weekdag) return; // zelfde weekdag
+    // Toon wie er toen leverde
+    (b.opstellers_lev||[]).forEach(function(nm){teller[nm]=(teller[nm]||0)+1;});
+  });
+  // Sorteer op frequentie
+  var gesorteerd=Object.entries(teller).sort(function(a,b){return b[1]-a[1];}).slice(0,3).map(function(x){return x[0];});
+  return {lev:gesorteerd, oph:gesorteerd};
+}
+
+// Pas BB-suggestie toe op de grid knoppen
+function bbSuggestieToewijzen(levdatum){
+  var sug=bbSuggestie(levdatum);
+  if(sug.lev.length===0) return;
+  // Deselect alles eerst
+  document.querySelectorAll('#op-grid-lev .tg').forEach(function(b){b.classList.remove('sel');});
+  document.querySelectorAll('#op-grid-oph .tg').forEach(function(b){b.classList.remove('sel');});
+  // Selecteer gesuggereerde namen
+  document.querySelectorAll('#op-grid-lev .tg').forEach(function(b){
+    if(sug.lev.includes(b.textContent.trim())) b.classList.add('sel');
+  });
+  document.querySelectorAll('#op-grid-oph .tg').forEach(function(b){
+    if(sug.oph.includes(b.textContent.trim())) b.classList.add('sel');
+  });
+  // Toon indicator
+  var ind=document.getElementById('bb-suggestie-info');
+  if(ind) ind.textContent=sug.lev.length>0?'💡 Suggestie op basis van vorige week ('+sug.lev.join(', ')+') — aanpasbaar':'';
+}
   const naam=document.getElementById('f-naam').value.trim();
   const adres=document.getElementById('f-adres').value.trim();
   const levdatum=document.getElementById('f-levdatum').value;
@@ -1884,13 +2015,49 @@ function renderPlanning(){
   try{
   updateStats();
   const container=document.getElementById('plan-list');
-  const q=(document.getElementById('srch').value||'').toLowerCase();
+  const q=(document.getElementById('srch').value||'').trim();
   const t=today(),mon=getMon(t);
   const sunDt=new Date(mon+'T00:00:00');sunDt.setDate(sunDt.getDate()+6);const sun=sunDt.toISOString().split('T')[0];
+
+  // Uitgebreide zoekparser: #bo → BB-filter, @date → datumfilter, anders vrije tekst
+  var zoekBB=null, zoekDatum=null, zoekTerm='';
+  if(q){
+    var _parts=q.split(/\s+/);
+    _parts.forEach(function(part){
+      if(part.startsWith('#'))zoekBB=part.slice(1).toLowerCase();
+      else if(/^\d{4}-\d{2}-\d{2}$/.test(part))zoekDatum=part;
+      else zoekTerm=(zoekTerm?zoekTerm+' ':'')+part.toLowerCase();
+    });
+  }
+
+  function boekingMatchZoek(b){
+    if(!zoekTerm&&!zoekBB&&!zoekDatum) return true;
+    if(zoekBB){
+      var bbNamen=[...(b.opstellers_lev||[]),...(b.opstellers_oph||[])].map(n=>n.toLowerCase());
+      if(!bbNamen.some(n=>n.includes(zoekBB))) return false;
+    }
+    if(zoekDatum){
+      if(b.levdatum!==zoekDatum&&b.ophdatum!==zoekDatum) return false;
+    }
+    if(zoekTerm){
+      var hay=[
+        b.naam||'',
+        b.adres||'',
+        b.tel||'',
+        b.email||'',
+        b.materiaal||'',
+        b.opmerking||'',
+        String(b.id||''),
+      ].join(' ').toLowerCase();
+      if(!zoekTerm.split(/\s+/).every(function(w){return hay.includes(w);})) return false;
+    }
+    return true;
+  }
+
   let fil=boekingen.filter(b=>{
-    if(activeFilter==='archief') return (b.voltooid===true||b.voltooid==='true')&&(!q||(b.naam||'').toLowerCase().includes(q)||(b.adres||'').toLowerCase().includes(q));
+    if(activeFilter==='archief') return (b.voltooid===true||b.voltooid==='true')&&boekingMatchZoek(b);
     if(b.voltooid===true||b.voltooid==='true') return false;
-    if(q&&!(b.naam||'').toLowerCase().includes(q)&&!(b.adres||'').toLowerCase().includes(q))return false;
+    if(!boekingMatchZoek(b)) return false;
     if(activeFilter==='vandaag')return b.levdatum===t||b.ophdatum===t;
     if(activeFilter==='week')return(b.levdatum>=mon&&b.levdatum<=sun)||(b.ophdatum>=mon&&b.ophdatum<=sun);
     return true;
@@ -1915,8 +2082,20 @@ function renderPlanning(){
     if(b.ophdatum!==b.levdatum)add(b.ophdatum,'oph');
     else if(byDate[b.levdatum]){const ex=byDate[b.levdatum].find(x=>x.id===b.id&&x.eventType==='lev');if(ex)ex.hasOph=true;}
   });
+
+  // Paginering: render max PAGE_SIZE datumgroepen tegelijk voor performance
+  const PAGE_SIZE = 20;
+  var _planPage = container._planPage||0;
+  // Reset pagina bij nieuwe filter/zoekterm
+  var _filterKey=(activeFilter||'')+'|'+(document.getElementById('srch').value||'');
+  if(container._filterKey!==_filterKey){container._planPage=0;_planPage=0;container._filterKey=_filterKey;}
+  const alleData = Object.keys(byDate).sort();
+  const totaalGroepen = alleData.length;
+  const zichtbaar = alleData.slice(0, PAGE_SIZE * (_planPage+1));
+  const resterende = totaalGroepen - zichtbaar.length;
+
   let html='';
-  Object.keys(byDate).sort().forEach(date=>{
+  zichtbaar.forEach(date=>{
     const items=byDate[date],isPast=date<t,isToday=date===t;
     html+=`<div class="dg"><div class="dh" style="${isPast?'opacity:.6':''}"><i class="ti ti-calendar" aria-hidden="true"></i> ${fmtDate(date)} <span class="dc">${items.length}</span>${isToday?'<span class="dt">Vandaag</span>':''}</div>`;
     items.forEach(b=>{
@@ -1956,6 +2135,7 @@ function renderPlanning(){
             ${b.hasOph?`<span class="badge boph">Ophaling ${b.ophuur}</span>`:''}
             <span class="status-badge ${stCls}">${stLbl}</span>
             ${openTaken>0?`<span class="status-badge" style="background:#FCEBEB;color:#791F1F">${openTaken} taak${openTaken>1?'en':''}</span>`:''}
+            ${(function(){var bw=laadBoekingWagens();var wId=bw[b.id];if(!wId)return'';var wagens=laadWagens();var w=wagens.find(function(x){return x.id===wId;});if(!w)return'';return'<span class="status-badge" style="background:'+w.kleur+'22;color:'+w.kleur+';border:.5px solid '+w.kleur+'"><i class="ti ti-truck-delivery" style="font-size:9px"></i> '+esc(w.naam)+'</span>';})()}
           </div>
         </div>
         <div class="bcard-actions" data-id="${b.id}">
@@ -1970,6 +2150,26 @@ function renderPlanning(){
     });
     html+='</div>';
   });
+
+  // Meer laden knop als er nog datumgroepen zijn
+  if(resterende>0){
+    html+=`<div style="text-align:center;padding:16px 0">
+      <button class="fb" style="padding:8px 20px;font-size:13px" onclick="
+        document.getElementById('plan-list')._planPage=(document.getElementById('plan-list')._planPage||0)+1;
+        renderPlanning();
+        ">Meer laden (${resterende} datumgroep${resterende===1?'':'en'} verborgen) ↓</button>
+    </div>`;
+  }
+  // Toon totaalteller als er een zoekterm actief is
+  if(zoekTerm||zoekBB||zoekDatum){
+    html='<div style="font-size:12px;color:var(--tx2);padding:0 0 8px;display:flex;align-items:center;gap:6px">'
+      +'<i class="ti ti-filter" style="color:var(--sky)"></i> '
+      +fil.length+' boeking'+(fil.length!==1?'en':'')+' gevonden'
+      +(zoekBB?` · BB: <strong>#${zoekBB}</strong>`:'')
+      +(zoekDatum?` · Datum: <strong>${fmtShort(zoekDatum)}</strong>`:'')
+      +'<button onclick="document.getElementById(\'srch\').value=\'\';debouncedSearch()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--tx3);font-size:11px;padding:2px 6px;border-radius:4px;border:.5px solid var(--bm)">✕ Wis filter</button>'
+      +'</div>'+html;
+  }
   container.innerHTML=html;
 
   // Event delegation voor bcard-actions knoppen (eenmalig registreren)
@@ -2102,7 +2302,9 @@ function _buildDashboard(){
   if(uur>=12&&uur<17) greeting='Goedemiddag';
   else if(uur>=17) greeting='Goedenavond';
 
-  html+='<div class="db-datum"><i class="ti ti-calendar" style="color:var(--sky)"></i> <strong>'+greeting+'</strong> — '+datumStr+'</div>';
+  html+='<div class="db-datum" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px"><div><i class="ti ti-calendar" style="color:var(--sky)"></i> <strong>'+greeting+'</strong> — '+datumStr+'</div>'
+    +'<button id="ai-opmerking-btn" onclick="aiOpmerkingCheck()" style="background:linear-gradient(135deg,#0C1135,#61ABED);color:#fff;border:none;border-radius:var(--rm);padding:5px 12px;font-size:11px;cursor:pointer;font-family:\'Poppins\',sans-serif;display:flex;align-items:center;gap:5px"><i class="ti ti-robot" style="font-size:11px"></i> Scan opmerkingen</button>'
+    +'</div>';
 
   // Stat blokken
   // ── Laadstatus vandaag ─────────────────────────────────────
@@ -2172,7 +2374,61 @@ function _buildDashboard(){
   html+='<div class="db-stat db-tak" data-goto="planning" data-filter="alle"><div class="db-stat-icon"><i class="ti ti-checklist"></i></div><div class="db-stat-val">'+openTaken.length+'</div><div class="db-stat-lbl">Open taken</div><div class="db-stat-sub">over alle boekingen</div></div>';
   html+='</div>';
 
-  // ── Komende 7 dagen dagblokken sectie ────────────────────────
+  // ── DRUKKE WEEKENDEN PREDICTOR ────────────────────────
+  (function(){
+    // Bereken gemiddeld aantal boekingen per weekend in het verleden
+    var weekendTelling={};
+    boekingen.forEach(function(b){
+      if(!b.levdatum) return;
+      var bd=new Date(b.levdatum+'T00:00:00');
+      var dag=bd.getDay(); // 6=za, 0=zo
+      if(dag!==6&&dag!==0) return;
+      // Gebruik zaterdag als weekendsleutel
+      var za=new Date(b.levdatum+'T00:00:00');
+      if(dag===0) za.setDate(za.getDate()-1); // zondag → vorige zaterdag
+      var zaStr=za.toISOString().split('T')[0];
+      weekendTelling[zaStr]=(weekendTelling[zaStr]||0)+1;
+    });
+    var aantallen=Object.values(weekendTelling);
+    if(aantallen.length<3) return; // te weinig data voor voorspelling
+    var gem=aantallen.reduce(function(a,b){return a+b;},0)/aantallen.length;
+    var drempelDruk=gem*1.4, drempelLicht=gem*0.7;
+
+    // Komende 8 weekenden
+    var komend=[];
+    var nu=new Date(t+'T00:00:00');
+    for(var w=0;w<8;w++){
+      var za=new Date(nu);
+      var dag=za.getDay();
+      var diffZa=dag<=6?6-dag:0; // eerstvolgende zaterdag
+      if(dag===6) diffZa=7; // volgende zaterdag (niet vandaag als zaterdag)
+      za.setDate(za.getDate()+diffZa+w*7);
+      var zaStr=za.toISOString().split('T')[0];
+      var zo=new Date(za);zo.setDate(zo.getDate()+1);
+      var zoStr=zo.toISOString().split('T')[0];
+      var n=(weekendTelling[zaStr]||0);
+      // Voeg ook geplande boekingen van dat weekend toe
+      var gepland=boekingen.filter(function(b){return !b.voltooid&&(b.levdatum===zaStr||b.levdatum===zoStr||b.ophdatum===zaStr||b.ophdatum===zoStr);}).length;
+      komend.push({zaStr:zaStr,zoStr:zoStr,hist:n,gepland:gepland,druk:gepland>=drempelDruk||n>=drempelDruk,licht:gepland<drempelLicht&&n<drempelLicht});
+    }
+    var drukke=komend.filter(function(x){return x.druk;});
+    var rustige=komend.filter(function(x){return x.licht;});
+    if(drukke.length===0&&rustige.length===0) return;
+    html+='<div class="db-section">';
+    html+='<div class="db-sec-hdr"><div class="db-sec-hdr-left"><i class="ti ti-chart-bar" style="color:#EF9F27"></i> Weekendpredictor <span style="font-size:10px;font-weight:400;opacity:.7">(gem. '+Math.round(gem)+' boekingen/weekend)</span></div></div>';
+    html+='<div style="padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px">';
+    komend.forEach(function(x){
+      var kleur=x.druk?'#E24B4A':x.licht?'#3B6D11':'var(--tx2)';
+      var bg=x.druk?'rgba(226,75,74,.08)':x.licht?'rgba(59,109,17,.06)':'var(--bg2)';
+      var label=x.druk?'🔴 Druk':x.licht?'🟢 Rustig':'⚪ Normaal';
+      html+='<div style="padding:8px 12px;border-radius:var(--rm);border:.5px solid '+kleur+';background:'+bg+';font-size:11px;min-width:100px">'
+        +'<div style="font-weight:600;color:'+kleur+';margin-bottom:2px">'+fmtShort(x.zaStr)+' – '+fmtShort(x.zoStr)+'</div>'
+        +'<div style="color:var(--tx2)">'+label+'</div>'
+        +(x.gepland>0?'<div style="color:var(--tx3);margin-top:2px">'+x.gepland+' gepland</div>':'')
+        +'</div>';
+    });
+    html+='</div></div>';
+  })();
   if(week7lev.length+week7oph.length > 0){
     html+='<div class="db-section">';
     html+='<div class="db-sec-hdr"><div class="db-sec-hdr-left"><i class="ti ti-calendar-week"></i> Komende 7 dagen</div><span class="db-sec-cnt">'+(week7lev.length+week7oph.length)+' stops</span></div>';
@@ -2248,6 +2504,43 @@ function _buildDashboard(){
     });
     if(openTaken.length>5){
       html+='<div style="padding:8px 14px;font-size:11px;color:var(--tx3)">+'+( openTaken.length-5)+' meer taken — bekijk in Planning</div>';
+    }
+    html+='</div>';
+  }
+
+  // WAGENPLANNING widget — toont welke wagen vandaag naar waar gaat
+  var vandaagAlles=boekingen.filter(function(b){return !b.voltooid&&(b.levdatum===t||b.ophdatum===t);});
+  if(vandaagAlles.length>0){
+    var boeking_wagens=laadBoekingWagens();
+    var wagens=laadWagens();
+    var perWagen={};
+    vandaagAlles.forEach(function(b){
+      var wId=boeking_wagens[b.id]||'_geen';
+      if(!perWagen[wId])perWagen[wId]=[];
+      perWagen[wId].push(b);
+    });
+    html+='<div class="db-section">';
+    html+='<div class="db-sec-hdr"><div class="db-sec-hdr-left"><i class="ti ti-truck-delivery" style="color:var(--sky)"></i> Wagenplanning vandaag</div><span class="db-sec-cnt">'+vandaagAlles.length+' stops</span></div>';
+    wagens.forEach(function(w){
+      var stops=perWagen[w.id]||[];
+      if(stops.length===0) return;
+      html+='<div style="margin-bottom:8px;padding:8px 12px;border-radius:var(--rm);border:.5px solid '+w.kleur+';background:var(--bg2)">';
+      html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+w.kleur+'"></span><strong style="font-size:12px;color:var(--tx1)">'+esc(w.naam)+'</strong><span style="font-size:11px;color:var(--tx3);margin-left:auto">'+stops.length+' rit'+(stops.length!==1?'ten':'')+'</span></div>';
+      stops.forEach(function(b){
+        var isLev=b.levdatum===t;
+        html+='<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-top:.5px solid var(--bl);font-size:12px;color:var(--tx2)" onclick="openDetail('+b.id+')" style="cursor:pointer">'
+          +'<i class="ti ti-'+(isLev?'truck-delivery':'arrow-back-up')+'" style="font-size:11px;color:'+(isLev?'var(--sky)':'#3B6D11')+'"></i>'
+          +'<span style="flex:1">'+esc(b.naam)+'</span>'
+          +'<span style="color:var(--tx3)">'+esc(b.adres.split(',')[0])+'</span>'
+          +'<span style="font-family:monospace;font-size:11px">'+(isLev?b.levuur:b.ophuur)+'</span>'
+          +'</div>';
+      });
+      html+='</div>';
+    });
+    if(perWagen['_geen']&&perWagen['_geen'].length>0){
+      html+='<div style="padding:6px 10px;border-radius:var(--rm);border:.5px dashed var(--bm);font-size:12px;color:var(--tx3)">';
+      html+='<i class="ti ti-alert-triangle" style="color:#EF9F27;margin-right:4px"></i>'+perWagen['_geen'].length+' stop'+(perWagen['_geen'].length!==1?'s':'')+' zonder wagen toegewezen';
+      html+='</div>';
     }
     html+='</div>';
   }
@@ -2421,7 +2714,7 @@ function renderRit(){
       <div class="rit-stops"><div class="rit-line"></div>
       <div class="rit-stop"><div class="rit-dot st"></div><div class="rit-sc"><div class="rit-slbl ba">Vertrek</div><div class="rit-sname">${esc(vt)}</div><div class="rit-saddr">${isK?'Materiaal reeds geladen':'Eerst laden in magazijn'}</div></div></div>`;
     route.forEach(s=>{
-      const lk=Math.round(s.distFromPrev||0),lm=Math.round((s.distFromPrev||0)/50*60),isLev=s.type==='lev';
+      const lk=Math.round(s.distFromPrev||0),lm=s.reistijdMin||Math.round((s.distFromPrev||0)/45*60),isLev=s.type==='lev';
       html+=`<div class="rit-leg"><i class="ti ti-arrow-down" style="font-size:11px" aria-hidden="true"></i> ~${lk} km · ~${lm} min</div>
       <div class="rit-stop"><div class="rit-dot ${isLev?'lv':'op'}"></div><div class="rit-sc${isLev?' hl':''}">
         <div class="rit-slbl ${isLev?'lv':'op'}">${isLev?'Levering':'Ophaling'}</div>
@@ -4518,7 +4811,7 @@ function pinKey(k){
   const pi=window._pinInput||'';
   [0,1,2,3].forEach(i=>{const d=document.getElementById('pd'+i);if(d)d.className='pin-dot'+(i<pi.length?' filled':'');});
   if(pi.length===4){
-    if(pi===PIN){pinUnlocked=true;renderRapport();}
+    if(pinCheck(pi)){pinUnlocked=true;renderRapport();}
     else{const er=document.getElementById('pin-err');if(er)er.style.display='block';window._pinInput='';setTimeout(()=>{[0,1,2,3].forEach(i=>{const d=document.getElementById('pd'+i);if(d)d.className='pin-dot';});},600);}
   }
 }
@@ -4736,7 +5029,8 @@ function openDetail(id){
     <button class="bsm" onclick="editBoeking(${id});closeMo()"><i class="ti ti-edit"></i> Bewerken</button>
     <button class="bsm" style="background:#EAF3DE;color:#27500A;border-color:#97C459;font-weight:500" onclick="voltooiStap(${id})"><i class="ti ti-${stIdx>=3?'arrow-back-up':'truck-delivery'}" style="font-size:11px"></i> ${stIdx>=3?'Ophaling voltooid':'Levering voltooid'}</button>
     <button class="bsm" style="background:#EAF3DE;color:#173404;border-color:#3B6D11;font-weight:500" onclick="voltooiBoeking(${id})"><i class="ti ti-archive" style="font-size:11px"></i> Archiveren</button>
-    <button class="bsm" style="color:#791F1F;border-color:#F09595" onclick="delBoeking(${id})"><i class="ti ti-trash"></i> Verwijderen</button>`;
+    <button class="bsm" style="color:#791F1F;border-color:#F09595" onclick="delBoeking(${id})"><i class="ti ti-trash"></i> Verwijderen</button>
+    ${renderAIKnoppen(id)}`;
   document.getElementById('mo').classList.add('open');
   // Event delegation voor ik-btn knoppen
   var moBody=document.getElementById('mo-body');
@@ -4766,6 +5060,33 @@ function closeMo(){document.getElementById('mo').classList.remove('open');}
 // Key: fr_laad_{id}, Value: JSON array van geldane item indices
 // ============================================================
 var LAAD_KEY_PREFIX = 'fr_laad_';
+// WAGENPLANNING: beschikbare wagens (uitbreidbaar)
+var WAGEN_KEY = 'fr_wagens_v1';
+var WAGEN_DEFAULT = [
+  {id:'w1', naam:'Bestelwagen 1', kleur:'#0C1135'},
+  {id:'w2', naam:'Bestelwagen 2', kleur:'#61ABED'},
+  {id:'w3', naam:'Aanhangwagen',  kleur:'#3B6D11'},
+];
+function laadWagens(){
+  try{var r=localStorage.getItem(WAGEN_KEY);if(r)return JSON.parse(r);}catch(e){}
+  return WAGEN_DEFAULT;
+}
+function slaWagensOp(w){try{localStorage.setItem(WAGEN_KEY,JSON.stringify(w));}catch(e){}}
+// Wagen per boeking ophalen/opslaan
+var BOEKING_WAGEN_KEY = 'fr_boeking_wagen_v1';
+function laadBoekingWagens(){
+  try{var r=localStorage.getItem(BOEKING_WAGEN_KEY);if(r)return JSON.parse(r);}catch(e){}
+  return {};
+}
+function slaBoekingWagenOp(boekingId, wagenId){
+  var bw=laadBoekingWagens();
+  if(wagenId)bw[boekingId]=wagenId;
+  else delete bw[boekingId];
+  try{localStorage.setItem(BOEKING_WAGEN_KEY,JSON.stringify(bw));}catch(e){}
+}
+function getBoekingWagen(boekingId){
+  return laadBoekingWagens()[boekingId]||null;
+}
 
 function laadStatusLaden(boekingId){
   try{
@@ -5108,6 +5429,24 @@ function openLaadbriefje(id){
   });
   const items=allItems;
   // Sla boekingId op voor gebruik in toggleLaadItem
+  // Wagen selector
+  var wagens=laadWagens();
+  var huidigWagen=getBoekingWagen(id);
+  var wagenKnoppen=document.getElementById('laad-wagen-knoppen');
+  if(wagenKnoppen){
+    wagenKnoppen.innerHTML=wagens.map(function(w){
+      var isSel=w.id===huidigWagen;
+      return '<button onclick="slaBoekingWagenOp('+id+',\''+w.id+'\');renderLaadWagenKnoppen('+id+')" '
+        +'style="padding:5px 12px;font-size:12px;border-radius:var(--rm);border:.5px solid '+(isSel?w.kleur:' var(--bm)')+';'
+        +'background:'+(isSel?w.kleur:'var(--bg1)')+';color:'+(isSel?'#fff':'var(--tx1)')+';cursor:pointer;font-family:\'Poppins\',sans-serif;font-weight:'+(isSel?'600':'400')+'" '
+        +'class="wagen-btn" data-wagen="'+w.id+'">'
+        +'<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+w.kleur+';margin-right:5px;border:.5px solid rgba(0,0,0,.2)"></span>'
+        +esc(w.naam)+'</button>';
+    }).join('')
+    +'<button onclick="slaBoekingWagenOp('+id+',null);renderLaadWagenKnoppen('+id+')" '
+    +'style="padding:5px 12px;font-size:12px;border-radius:var(--rm);border:.5px solid var(--bm);background:var(--bg1);color:var(--tx3);cursor:pointer;font-family:\'Poppins\',sans-serif">'
+    +(huidigWagen?'✕ Wis':'— Geen')+'</button>';
+  }
   window._laadBoekingId = id;
   // Header info
   document.getElementById('laad-sub').textContent=b.naam+' — '+fmtDate(b.levdatum)+' om '+b.levuur;
@@ -5128,6 +5467,24 @@ function openLaadbriefje(id){
   window._laadItems=items;
   renderLaadItems();
   document.getElementById('laad-mo').classList.add('open');
+}
+
+function renderLaadWagenKnoppen(id){
+  var wagens=laadWagens();
+  var huidigWagen=getBoekingWagen(id);
+  var wagenKnoppen=document.getElementById('laad-wagen-knoppen');
+  if(!wagenKnoppen)return;
+  wagenKnoppen.innerHTML=wagens.map(function(w){
+    var isSel=w.id===huidigWagen;
+    return '<button onclick="slaBoekingWagenOp('+id+',\''+w.id+'\');renderLaadWagenKnoppen('+id+')" '
+      +'style="padding:5px 12px;font-size:12px;border-radius:var(--rm);border:.5px solid '+(isSel?w.kleur:'var(--bm)')+';'
+      +'background:'+(isSel?w.kleur:'var(--bg1)')+';color:'+(isSel?'#fff':'var(--tx1)')+';cursor:pointer;font-family:\'Poppins\',sans-serif;font-weight:'+(isSel?'600':'400')+'">'
+      +'<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+w.kleur+';margin-right:5px;border:.5px solid rgba(0,0,0,.2)"></span>'
+      +esc(w.naam)+'</button>';
+  }).join('')
+  +'<button onclick="slaBoekingWagenOp('+id+',null);renderLaadWagenKnoppen('+id+')" '
+  +'style="padding:5px 12px;font-size:12px;border-radius:var(--rm);border:.5px solid var(--bm);background:var(--bg1);color:var(--tx3);cursor:pointer;font-family:\'Poppins\',sans-serif">'
+  +(huidigWagen?'✕ Wis':'— Geen')+'</button>';
 }
 
 function renderLaadItems(){
@@ -5377,6 +5734,222 @@ document.querySelectorAll('#status-sel .status-opt').forEach((b,i)=>b.className=
 // Initialiseer thema
 initTheme();
 // Start op dashboard tab
+// ═══════════════════════════════════════════════════════════
+// CLAUDE AI FUNCTIES (8.2) — via Anthropic API
+// ═══════════════════════════════════════════════════════════
+
+async function claudeAPI(systeemPrompt, gebruikersBericht, maxTokens){
+  maxTokens=maxTokens||800;
+  try{
+    var resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:maxTokens,
+        system:systeemPrompt,
+        messages:[{role:'user',content:gebruikersBericht}]
+      })
+    });
+    var data=await resp.json();
+    if(data&&data.content&&data.content[0])return data.content[0].text||'';
+    return null;
+  }catch(e){console.error('Claude API fout:',e);return null;}
+}
+
+// 8.2a: Materiaalherkenning uit vrije tekst
+async function aiMateriaalHerkenning(){
+  var tekst=prompt('Plak de tekst van de klant (WhatsApp, email, ...):\n\nVoorbeeld: "ik wil een tent voor 50 personen, een springkasteel en een photobooth"');
+  if(!tekst) return;
+  var catalogusLijst=CATALOGUS.map(function(p){return '- '+p.naam+' (id:'+p.id+', incl:€'+p.incl+')'}).join('\n');
+  banner('ok','AI is aan het analyseren...');
+  var antwoord=await claudeAPI(
+    'Je bent een assistent voor een Belgisch verhuurbedrijf (Familyrent). '+
+    'Analyseer de klanttekst en geef ALLEEN een JSON-object terug (geen uitleg, geen markdown) met: '+
+    '{"items":[{"id":"catalogus_id","naam":"naam","aantal":1,"prijs_incl":100}], "totaal":100, "opmerking":"evt. toelichting"}. '+
+    'Gebruik ALLEEN items uit de catalogus. Als je twijfelt, kies het meest logische item.\n\nCATALOGUS:\n'+catalogusLijst,
+    'KLANTTEKST: '+tekst
+  );
+  if(!antwoord){banner('er','AI kon de tekst niet verwerken. Probeer opnieuw.');return;}
+  try{
+    var clean=antwoord.replace(/```json|```/g,'').trim();
+    var data=JSON.parse(clean);
+    if(!data.items||data.items.length===0){banner('er','Geen producten herkend in de tekst.');return;}
+    // Vul productpicker in
+    ppQty={};
+    data.items.forEach(function(item){if(item.id&&item.aantal>0)ppQty[item.id]=item.aantal;});
+    ppSaveToField();
+    // Ga naar productpicker tab in het formulier
+    showTab('nieuw');
+    setTimeout(function(){ppInit();},50);
+    banner('ok','✓ AI herkende '+data.items.length+' product(en) — totaal €'+data.totaal+(data.opmerking?' · '+data.opmerking:''));
+  }catch(e){
+    banner('er','AI gaf een onverwacht antwoord. Voer het materiaal handmatig in.');
+    console.error('Parse fout:',e,antwoord);
+  }
+}
+
+// 8.2b: Slimme opmerkingen check — scant alle boekingen van vandaag
+async function aiOpmerkingCheck(){
+  var t=today();
+  var vandaag=boekingen.filter(function(b){return !b.voltooid&&(b.levdatum===t||b.ophdatum===t)&&b.opmerking&&b.opmerking.trim();});
+  if(vandaag.length===0){banner('ok','Geen boekingen met opmerkingen voor vandaag.');return;}
+  var opmLijst=vandaag.map(function(b){return '- '+b.naam+' ('+b.adres+'): "'+b.opmerking+'"';}).join('\n');
+  var aiBtn=document.getElementById('ai-opmerking-btn');
+  if(aiBtn)aiBtn.disabled=true;
+  banner('ok','AI scant opmerkingen...');
+  var antwoord=await claudeAPI(
+    'Je bent dispatcher voor een Belgisch verhuurbedrijf. Analyseer de opmerkingen van de boekingen van vandaag. '+
+    'Geef ALLEEN een JSON-object terug (geen uitleg): '+
+    '{"kritiek":[{"klant":"naam","punt":"korte beschrijving"}],"aandacht":[{"klant":"naam","punt":"..."}],"info":[{"klant":"naam","punt":"..."}]}. '+
+    'Kritiek = toegangscodes, verboden terreinen, speciale vereisten, agressieve dieren. '+
+    'Aandacht = timing, parkeer, extra wensen. Info = rest.',
+    'BOEKINGEN VANDAAG:\n'+opmLijst
+  );
+  if(aiBtn)aiBtn.disabled=false;
+  if(!antwoord){banner('er','Opmerkingen scan mislukt.');return;}
+  try{
+    var clean=antwoord.replace(/```json|```/g,'').trim();
+    var data=JSON.parse(clean);
+    // Toon resultaat als modal overlay
+    var mo=document.getElementById('ai-mo');
+    if(!mo){
+      mo=document.createElement('div');
+      mo.id='ai-mo';
+      mo.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px';
+      mo.onclick=function(e){if(e.target===mo)mo.remove();};
+      document.body.appendChild(mo);
+    }
+    var secties=[
+      {key:'kritiek',label:'🔴 Kritiek — direct handelen',kleur:'#A32D2D',bg:'#FCEBEB'},
+      {key:'aandacht',label:'🟠 Let op',kleur:'#854F0B',bg:'#FAEEDA'},
+      {key:'info',label:'ℹ️ Info',kleur:'var(--tx1)',bg:'var(--bg2)'},
+    ];
+    var html='<div style="background:var(--bg1);border-radius:var(--rl);padding:20px;max-width:520px;width:100%;max-height:80vh;overflow-y:auto">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">';
+    html+='<strong style="font-size:14px;color:var(--tx1)"><i class="ti ti-robot" style="color:var(--sky);margin-right:6px"></i>AI Opmerkingen Analyse</strong>';
+    html+='<button onclick="document.getElementById(\'ai-mo\').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--tx2)">✕</button></div>';
+    secties.forEach(function(s){
+      var items=data[s.key]||[];
+      if(items.length===0) return;
+      html+='<div style="margin-bottom:12px;background:'+s.bg+';border-radius:var(--rm);padding:10px 14px">';
+      html+='<div style="font-size:12px;font-weight:600;color:'+s.kleur+';margin-bottom:8px">'+s.label+'</div>';
+      items.forEach(function(item){
+        html+='<div style="font-size:12px;padding:4px 0;border-top:.5px solid rgba(0,0,0,.06);color:'+s.kleur+'">'
+          +'<strong>'+esc(item.klant)+':</strong> '+esc(item.punt)+'</div>';
+      });
+      html+='</div>';
+    });
+    html+='</div>';
+    mo.innerHTML=html;
+  }catch(e){banner('er','Kon AI-resultaat niet verwerken.');console.error(e,antwoord);}
+}
+
+// 8.2c: Alternatieve data bij voorraadconflict
+async function aiAlternatiefVoorConflict(boekingId){
+  var b=boekingen.find(function(x){return x.id===boekingId;});
+  if(!b) return;
+  var conflicten=vrCheckBoeking(b).filter(function(c){return c.check.status==='conflict';});
+  if(conflicten.length===0){banner('ok','Geen conflicten voor deze boeking.');return;}
+  banner('ok','AI zoekt alternatieve data...');
+  // Check de komende 60 dagen voor beschikbaarheid
+  var conflictIds=conflicten.map(function(c){return c.product.id;});
+  var beschikbaar=[];
+  var startDt=new Date(b.levdatum+'T00:00:00');
+  for(var i=1;i<=60;i++){
+    var testDt=new Date(startDt);testDt.setDate(testDt.getDate()+i);
+    var testStr=testDt.toISOString().split('T')[0];
+    var testOph=new Date(testDt);
+    var origDuur=Math.ceil((new Date(b.ophdatum)-new Date(b.levdatum))/(1000*60*60*24));
+    testOph.setDate(testOph.getDate()+origDuur);
+    var testOphStr=testOph.toISOString().split('T')[0];
+    var ok=conflictIds.every(function(pid){return vrBerekenVerhuurd(pid,testStr,testOphStr,b.id)===0;});
+    if(ok) beschikbaar.push({lev:testStr,oph:testOphStr});
+    if(beschikbaar.length>=5) break;
+  }
+  if(beschikbaar.length===0){banner('er','Geen beschikbare data gevonden in de komende 60 dagen.');return;}
+  // Laat AI een vriendelijk bericht opstellen
+  var datumLijst=beschikbaar.map(function(d){return fmtDate(d.lev)+' t/m '+fmtDate(d.oph);}).join(', ');
+  var antwoord=await claudeAPI(
+    'Je bent een vriendelijke medewerker van Familyrent, een Belgisch verhuurbedrijf. '+
+    'Schrijf een KORTE Nederlandse WhatsApp-bericht (max 60 woorden) aan de klant. '+
+    'Vertel dat de gewenste datum helaas bezet is en stel de alternatieven voor. Warm en direct.',
+    'Klant: '+b.naam+'\nOriginele datum: '+fmtDate(b.levdatum)+'\nConflict: '+conflicten.map(function(c){return c.product.naam;}).join(', ')+'\nAlternatieven: '+datumLijst
+  );
+  var mo=document.getElementById('ai-mo');
+  if(!mo){mo=document.createElement('div');mo.id='ai-mo';mo.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px';mo.onclick=function(e){if(e.target===mo)mo.remove();};document.body.appendChild(mo);}
+  mo.innerHTML='<div style="background:var(--bg1);border-radius:var(--rl);padding:20px;max-width:480px;width:100%">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><strong style="font-size:14px;color:var(--tx1)"><i class="ti ti-calendar-search" style="color:var(--sky);margin-right:6px"></i>Alternatieve data</strong><button onclick="document.getElementById(\'ai-mo\').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--tx2)">✕</button></div>'
+    +'<div style="font-size:12px;color:var(--tx2);margin-bottom:12px">Beschikbaar voor '+esc(conflicten.map(function(c){return c.product.naam;}).join(', '))+':</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">'+beschikbaar.map(function(d){return '<span style="padding:5px 10px;border-radius:var(--rm);background:var(--bg2);border:.5px solid var(--sky);font-size:12px;color:var(--sky);font-weight:500">'+fmtShort(d.lev)+'</span>';}).join('')+'</div>'
+    +(antwoord?'<div style="background:#EAF3DE;border-radius:var(--rm);padding:10px 14px;font-size:12px;color:#173404;margin-bottom:12px"><div style="font-weight:600;margin-bottom:6px"><i class="ti ti-message" style="margin-right:4px"></i>Voorstel WhatsApp-bericht:</div>'+esc(antwoord)+'</div>':'')
+    +'<div style="display:flex;gap:8px">'+(b.tel?'<a href="https://wa.me/'+String(b.tel).replace(/\D/g,'')+'" target="_blank" class="bprim" style="font-size:12px;padding:7px 14px;text-decoration:none"><i class="ti ti-brand-whatsapp"></i> Stuur via WhatsApp</a>':'')
+    +'<button onclick="document.getElementById(\'ai-mo\').remove()" class="fb" style="font-size:12px;padding:7px 14px">Sluiten</button></div>'
+    +'</div>';
+}
+
+// 8.2d: Herinneringsmail genereren
+async function aiHerinneringsmail(boekingId){
+  var b=boekingen.find(function(x){return x.id===boekingId;});
+  if(!b){banner('er','Boeking niet gevonden.');return;}
+  if(!b.email){banner('er','Geen e-mailadres voor deze klant.');return;}
+  banner('ok','AI schrijft herinneringsmail...');
+  var antwoord=await claudeAPI(
+    'Je bent een vriendelijke medewerker van Familyrent, een Belgisch verhuurbedrijf voor partytenten, springkastelen en feestmateriaal. '+
+    'Schrijf een professionele maar warme herinneringsmail in het Nederlands. '+
+    'Gebruik "je/jij". Geen begroeting nodig (die staat al in het emailsysteem). '+
+    'Max 120 woorden. Vermeld: datum, uur, adres en kort het materiaal. '+
+    'Sluit af met een opgewekt zinnetje.',
+    JSON.stringify({naam:b.naam,datum:fmtDate(b.levdatum),uur:b.levuur,adres:b.adres,materiaal:b.materiaal,opmerking:b.opmerking||''}),
+    600
+  );
+  if(!antwoord){banner('er','Mailen mislukt — AI kon geen tekst genereren.');return;}
+  var mo=document.getElementById('ai-mo');
+  if(!mo){mo=document.createElement('div');mo.id='ai-mo';mo.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px';mo.onclick=function(e){if(e.target===mo)mo.remove();};document.body.appendChild(mo);}
+  var mailHtml=antwoord.replace(/\n/g,'<br>');
+  mo.innerHTML='<div style="background:var(--bg1);border-radius:var(--rl);padding:20px;max-width:520px;width:100%;max-height:80vh;overflow-y:auto">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><strong style="font-size:14px;color:var(--tx1)"><i class="ti ti-mail" style="color:var(--sky);margin-right:6px"></i>Herinneringsmail — '+esc(b.naam)+'</strong><button onclick="document.getElementById(\'ai-mo\').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--tx2)">✕</button></div>'
+    +'<div style="background:var(--bg2);border-radius:var(--rm);padding:12px 16px;font-size:13px;color:var(--tx1);line-height:1.6;margin-bottom:14px;border:.5px solid var(--bl)">'+mailHtml+'</div>'
+    +'<div style="font-size:11px;color:var(--tx3);margin-bottom:12px">Naar: '+esc(b.email)+'</div>'
+    +'<div style="display:flex;gap:8px">'
+    +'<button onclick="aiVerstuurHerinneringsmail(\''+boekingId+'\')" class="bprim" style="font-size:12px;padding:7px 14px"><i class="ti ti-send"></i> Verstuur via EmailJS</button>'
+    +'<button onclick="navigator.clipboard&&navigator.clipboard.writeText(document.querySelector(\'#ai-mo .ai-mail-tekst\').innerText)" class="fb" style="font-size:12px;padding:7px 14px">Kopieer</button>'
+    +'<button onclick="document.getElementById(\'ai-mo\').remove()" class="fb" style="font-size:12px;padding:7px 14px">Annuleer</button></div>'
+    +'<div class="ai-mail-tekst" style="display:none">'+esc(antwoord)+'</div>'
+    +'</div>';
+  // Sla gegenereerde tekst op voor versturen
+  window._aiMailTekst=antwoord;
+  window._aiMailBoeking=b;
+}
+
+async function aiVerstuurHerinneringsmail(boekingId){
+  var b=window._aiMailBoeking||boekingen.find(function(x){return x.id==boekingId;});
+  if(!b||!b.email||!window._aiMailTekst){banner('er','Geen mailtekst beschikbaar.');return;}
+  try{
+    await emailjs.send('service_3y294mh','template_6zmn5tp',{
+      to_name:b.naam,
+      to_email:b.email,
+      subject:'Herinnering: uw boeking op '+fmtDate(b.levdatum),
+      message:window._aiMailTekst,
+      levdatum:fmtDate(b.levdatum),
+      levuur:b.levuur,
+      adres:b.adres
+    });
+    banner('ok','✓ Herinneringsmail verstuurd naar '+b.email);
+    document.getElementById('ai-mo').remove();
+  }catch(e){banner('er','Versturen mislukt: '+e.text||e.message);}
+}
+
+// AI-toolbar: toon in detail modal
+function renderAIKnoppen(id){
+  return '<div style="margin-top:12px;padding-top:12px;border-top:.5px solid var(--bl)">'
+    +'<div style="font-size:11px;font-weight:600;color:var(--sky);margin-bottom:8px;display:flex;align-items:center;gap:5px"><i class="ti ti-robot"></i> AI Assistent</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:6px">'
+    +'<button class="fb" style="font-size:11px;padding:5px 10px" onclick="aiAlternatiefVoorConflict('+id+')"><i class="ti ti-calendar-search" style="font-size:11px"></i> Alternatieve data</button>'
+    +'<button class="fb" style="font-size:11px;padding:5px 10px" onclick="aiHerinneringsmail('+id+')"><i class="ti ti-mail" style="font-size:11px"></i> Herinneringsmail</button>'
+    +'</div></div>';
+}
+
 showTab('dashboard');
 loadData();
 setInterval(()=>{
