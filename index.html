@@ -1951,6 +1951,8 @@ function bbSuggestieToewijzen(levdatum){
   var ind=document.getElementById('bb-suggestie-info');
   if(ind) ind.textContent=sug.lev.length>0?'💡 Suggestie op basis van vorige week ('+sug.lev.join(', ')+') — aanpasbaar':'';
 }
+
+async function saveBoeking(){
   const naam=document.getElementById('f-naam').value.trim();
   const adres=document.getElementById('f-adres').value.trim();
   const levdatum=document.getElementById('f-levdatum').value;
