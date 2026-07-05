@@ -2558,6 +2558,7 @@ function _buildDashboard(){
   var wrap=document.getElementById('db-wrap');
   if(!wrap) return;
   var t=today();
+  var mon=getMon(t); // maandaanvang van huidige week (maandag)
   var morgenDt=new Date(t+'T00:00:00'); morgenDt.setDate(morgenDt.getDate()+1);
   var morgen=morgenDt.toISOString().split('T')[0];
   var actief=boekingen.filter(function(b){return !(b.voltooid===true||b.voltooid==='true');});
