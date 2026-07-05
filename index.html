@@ -846,6 +846,15 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
     <button class="fb" onclick="setFil('oph',this)">Ophalingen</button>
     <button class="fb" onclick="setFil('archief',this)"><i class="ti ti-archive" style="font-size:11px"></i> Archief</button>
     <input class="fsrch" id="srch" placeholder="Zoek naam, adres, tel, email, materiaal, #BB, !onbetaald..." oninput="debouncedSearch()" autocomplete="off">
+    <button class="fb" onclick="_bulkModus?bulkAnnuleer():bulkModeAan()" id="bulk-toggle-btn" title="Bulkacties" style="flex-shrink:0"><i class="ti ti-checkbox" style="font-size:12px"></i></button>
+  </div>
+  <div id="bulk-bar" style="display:none;background:var(--navy);color:#fff;padding:8px 14px;border-radius:var(--rm);margin-bottom:8px;align-items:center;gap:8px;flex-wrap:wrap">
+    <span id="bulk-teller" style="font-size:12px;font-weight:600">0 geselecteerd</span>
+    <button onclick="bulkSelecteerAlles()" class="bsm" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3);font-size:11px;min-height:36px"><i class="ti ti-select-all" style="font-size:11px"></i> Alles</button>
+    <button onclick="bulkArchiveer()" class="bsm" style="background:#EAF3DE;color:#173404;border-color:#3B6D11;font-size:11px;min-height:36px"><i class="ti ti-archive" style="font-size:11px"></i> Archiveer</button>
+    <button onclick="bulkBBToewijzen()" class="bsm" style="background:#E6F1FB;color:#0C447C;border-color:#61ABED;font-size:11px;min-height:36px"><i class="ti ti-hard-hat" style="font-size:11px"></i> BB</button>
+    <button onclick="bulkStatusWijzig()" class="bsm" style="background:#FAEEDA;color:#854F0B;border-color:#EF9F27;font-size:11px;min-height:36px"><i class="ti ti-refresh" style="font-size:11px"></i> Status</button>
+    <button onclick="bulkAnnuleer()" style="background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;font-size:11px;margin-left:auto;padding:4px">✕</button>
   </div>
   <div id="plan-list"><div class="loading"><i class="ti ti-loader"></i>Boekingen laden...</div></div>
 </div>
@@ -2397,9 +2406,10 @@ function renderPlanning(){
       const hasTaken=b.taken&&b.taken.length>0;
       const openTaken=hasTaken?b.taken.filter(t=>!t.gedaan).length:0;
       const hasOpm=b.opmerking&&b.opmerking.trim();
-      html+=`<div class="bcard-wrap">
+      html+=`<div class="bcard-wrap" id="bcard-wrap-${b.id}" style="${_bulkModus&&_bulkSelectie.has(b.id)?'outline:2px solid var(--sky)':''}">
         <div class="bcard-swipe-bg"><i class="ti ti-archive" style="font-size:14px"></i> Archiveer</div>
-        <div class="bcard" onclick="openDetail(${b.id})">
+        ${_bulkModus?`<div onclick="bulkToggle(${b.id})" style="position:absolute;top:12px;left:12px;z-index:10;width:22px;height:22px;border-radius:5px;border:2px solid var(--sky);background:${_bulkSelectie.has(b.id)?'var(--sky)':'var(--bg1)'};display:flex;align-items:center;justify-content:center;cursor:pointer"><i class="ti ti-check" style="font-size:12px;color:${_bulkSelectie.has(b.id)?'#fff':'transparent'}"></i></div>`:''}
+        <div class="bcard" onclick="${_bulkModus?`bulkToggle(${b.id})`:` openDetail(${b.id})`}" style="${_bulkModus?'padding-left:44px;cursor:default':''}">
         <div class="bcard-top">
           <div class="bcard-main">
             <div class="bname">${esc(b.naam||'')}</div>
@@ -2708,7 +2718,74 @@ function _buildDashboard(){
   html+='<div class="db-stat db-tak" data-goto="planning" data-filter="alle"><div class="db-stat-icon"><i class="ti ti-checklist"></i></div><div class="db-stat-val">'+openTaken.length+'</div><div class="db-stat-lbl">Open taken</div><div class="db-stat-sub">over alle boekingen</div></div>';
   html+='</div>';
 
-  // ── DRUKKE WEEKENDEN PREDICTOR ────────────────────────
+  // ── KPI SECTIE ─────────────────────────────────────────
+  (function(){
+    // Omzet huidige week
+    var omzetWeek=week7lev.reduce(function(s,b){return s+(parseFloat(b.prijs)||0);},0)
+      +week7oph.reduce(function(s,b){return s+(parseFloat(b.prijs)||0);},0);
+    // Omzet vorige week (vergelijking)
+    var vwStart=new Date(mon+'T00:00:00');vwStart.setDate(vwStart.getDate()-7);
+    var vwEind=new Date(mon+'T00:00:00');vwEind.setDate(vwEind.getDate()-1);
+    var vwStartS=vwStart.toISOString().split('T')[0];
+    var vwEindS=vwEind.toISOString().split('T')[0];
+    var omzetVorigeWeek=boekingen.filter(function(b){return b.levdatum>=vwStartS&&b.levdatum<=vwEindS;})
+      .reduce(function(s,b){return s+(parseFloat(b.prijs)||0);},0);
+    var omzetTrend=omzetVorigeWeek>0?Math.round((omzetWeek-omzetVorigeWeek)/omzetVorigeWeek*100):null;
+
+    // Conversieratio offerte → bevestigd (actieve boekingen)
+    var nOfferte=actief.filter(function(b){return b.status===0;}).length;
+    var nBevestigd=actief.filter(function(b){return b.status>=1;}).length;
+    var convRatio=actief.length>0?Math.round(nBevestigd/actief.length*100):100;
+
+    // BB bezettingsgraad vandaag
+    var bbVandaag=new Set();
+    vandaagLev.concat(vandaagOph).forEach(function(b){
+      (b.opstellers_lev||[]).forEach(function(nm){bbVandaag.add(nm);});
+      (b.opstellers_oph||[]).forEach(function(nm){bbVandaag.add(nm);});
+    });
+    var bezetting=BB.length>0?Math.round(bbVandaag.size/BB.length*100):0;
+
+    if(omzetWeek>0||convRatio<100||bezetting>0){
+      html+='<div class="db-section">';
+      html+='<div class="db-sec-hdr"><div class="db-sec-hdr-left"><i class="ti ti-chart-bar"></i> KPI\'s deze week</div></div>';
+      html+='<div style="padding:12px 14px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px">';
+      // Omzet + 4-weken sparkline
+      var sparkWeken=[];
+      for(var sw=3;sw>=0;sw--){
+        var wsS=new Date(mon+'T00:00:00');wsS.setDate(wsS.getDate()-sw*7);
+        var wsE=new Date(wsS);wsE.setDate(wsE.getDate()+6);
+        var wsSS=wsS.toISOString().split('T')[0],wsES=wsE.toISOString().split('T')[0];
+        sparkWeken.push(boekingen.filter(function(b){return b.levdatum>=wsSS&&b.levdatum<=wsES;}).reduce(function(s,b){return s+(parseFloat(b.prijs)||0);},0));
+      }
+      var sparkMax=Math.max(1,...sparkWeken);
+      var sparkSvg='<svg width="52" height="22" viewBox="0 0 52 22" style="display:block">';
+      sparkWeken.forEach(function(v,i){var h=Math.max(2,Math.round(v/sparkMax*18));sparkSvg+='<rect x="'+(i*14+1)+'" y="'+(20-h)+'" width="11" height="'+h+'" fill="'+(i===3?'var(--sky)':'rgba(97,171,237,.3)')+'" rx="1.5"/>';});
+      sparkSvg+='</svg>';
+      var trendHtml=omzetTrend!==null?'<div style="font-size:10px;color:'+(omzetTrend>=0?'#3B6D11':'#A32D2D')+'">'+(omzetTrend>=0?'↑':'↓')+Math.abs(omzetTrend)+'%</div>':'';
+      html+='<div style="background:var(--bg2);border-radius:var(--rm);padding:10px 12px;border:.5px solid var(--bl)">'
+        +'<div style="font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Omzet week</div>'
+        +'<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:4px">'
+        +'<div><div style="font-size:20px;font-weight:700;color:var(--tx1)">€'+Math.round(omzetWeek)+'</div>'+trendHtml+'</div>'
+        +sparkSvg+'</div></div>';
+      // Conversieratio met balk
+      var convKleur=convRatio>=80?'#3B6D11':convRatio>=50?'#854F0B':'#A32D2D';
+      html+='<div style="background:var(--bg2);border-radius:var(--rm);padding:10px 12px;border:.5px solid var(--bl)">'
+        +'<div style="font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Conversie</div>'
+        +'<div style="font-size:20px;font-weight:700;color:'+convKleur+'">'+convRatio+'%</div>'
+        +'<div style="font-size:10px;color:var(--tx3);margin-bottom:4px">'+nOfferte+' offerte'+(nOfferte!==1?'s':'')+' open</div>'
+        +'<div style="height:4px;background:var(--bg1);border-radius:2px;overflow:hidden"><div style="height:100%;width:'+convRatio+'%;background:'+convKleur+';border-radius:2px"></div></div>'
+        +'</div>';
+      // BB bezetting met naam-chips
+      var bezKleur=bezetting>=70?'#3B6D11':bezetting>=40?'#854F0B':'var(--tx2)';
+      var bbChips=[...bbVandaag].slice(0,4).map(function(nm){return'<span style="font-size:9px;background:var(--sky);color:#fff;border-radius:10px;padding:1px 5px;font-weight:600">'+ini(nm)+'</span>';}).join(' ');
+      html+='<div style="background:var(--bg2);border-radius:var(--rm);padding:10px 12px;border:.5px solid var(--bl)">'
+        +'<div style="font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">BB vandaag</div>'
+        +'<div style="font-size:20px;font-weight:700;color:'+bezKleur+'">'+bbVandaag.size+'/'+BB.length+'</div>'
+        +(bbChips?'<div style="margin-top:3px;display:flex;gap:3px;flex-wrap:wrap">'+bbChips+'</div>':'<div style="font-size:10px;color:var(--tx3)">geen ingezet</div>')
+        +'</div>';
+      html+='</div></div>';
+    }
+  })();
   (function(){
     // Bereken gemiddeld aantal boekingen per weekend in het verleden
     var weekendTelling={};
@@ -2854,7 +2931,7 @@ function _buildDashboard(){
       perWagen[wId].push(b);
     });
     html+='<div class="db-section">';
-    html+='<div class="db-sec-hdr"><div class="db-sec-hdr-left"><i class="ti ti-truck-delivery" style="color:var(--sky)"></i> Wagenplanning vandaag</div><span class="db-sec-cnt">'+vandaagAlles.length+' stops</span></div>';
+    html+='<div class="db-sec-hdr"><div class="db-sec-hdr-left"><i class="ti ti-truck-delivery" style="color:var(--sky)"></i> Wagenplanning vandaag</div><span class="db-sec-cnt" style="display:flex;align-items:center;gap:8px">'+vandaagAlles.length+' stops<button onclick="wagenBeheer()" style="background:rgba(255,255,255,.15);border:none;color:#fff;font-size:10px;padding:2px 8px;border-radius:10px;cursor:pointer;font-family:Poppins,sans-serif"><i class="ti ti-settings" style="font-size:10px"></i> Wagens</button></span></div>';
     wagens.forEach(function(w){
       var stops=perWagen[w.id]||[];
       if(stops.length===0) return;
@@ -3302,6 +3379,11 @@ function renderRit(){
 function ritSelDate(d){document.getElementById('rit-ds').dataset.sel=d;laadLeafletLazy(function(){renderRit();});}
 
 /* MIJN PLANNING */
+// Onthoud welke BB deze gebruiker is (voor "Mijn dag" directe toegang)
+var MIJN_BB_KEY='fr_mijn_bb_v1';
+function mijnBBOpslaan(naam){ try{localStorage.setItem(MIJN_BB_KEY,naam);}catch(e){} }
+function mijnBBLaad(){ try{return localStorage.getItem(MIJN_BB_KEY)||null;}catch(e){return null;} }
+
 function renderBBGrid(){
   document.getElementById('bb-sel').style.display='block';document.getElementById('bb-det').classList.remove('active');
   const t=today(),names=new Set(BB);
@@ -3350,17 +3432,34 @@ function renderBBGrid(){
     var up=my.filter(function(b){return b.levdatum>=t||b.ophdatum>=t;}).length;
     var werkVandaag=my.filter(function(b){return (b.levdatum===t||b.ophdatum===t)&&!b.voltooid;}).length;
     var ctHtml=werkVandaag>0?'<span style="color:#27500A;font-weight:600">●</span> '+werkVandaag+' vandaag':up>0?up+' komend':'geen jobs';
-    return '<div class="bb-card" onclick="showBBDetail(\''+nm+'\')">'
+    var isMijn=nm===mijnBBLaad();
+    return '<div class="bb-card'+(isMijn?' bb-card-mijn':'')+'" onclick="mijnBBOpslaan(\''+nm+'\');showBBDetail(\''+nm+'\')"'
+      +(isMijn?' style="border-color:var(--sky);background:#E6F1FB"':'')+'>'
       +'<div class="bb-av">'+ini(nm)+'</div>'
-      +'<div class="bb-nm">'+esc(nm)+'</div>'
+      +'<div class="bb-nm">'+esc(nm)+(isMijn?' <span style="font-size:9px;color:var(--sky);font-weight:600">IK</span>':'')+'</div>'
       +'<div class="bb-ct">'+ctHtml+'</div>'
       +'</div>';
   }).join('');
 
   // Voeg mijn dag sectie toe vóór de grid
   var bbSel=document.getElementById('bb-sel');
-  var intro='<p style="font-size:13px;color:var(--tx2);margin-bottom:12px">Klik op jouw naam voor jouw planning.</p>';
-  bbSel.innerHTML=(mijnDagHtml||intro)+'<div class="bb-grid" id="bb-grid">'+gridHtml+'</div>';
+  // Als er een onthouden BB is: toon direct hun dagplanning bovenaan
+  var onthouden=mijnBBLaad();
+  var intro='';
+  if(onthouden&&BB.concat([...names]).includes(onthouden)){
+    intro='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'
+      +'<div style="font-size:13px;color:var(--tx2)">Jouw naam: <strong style="color:var(--tx1)">'+esc(onthouden)+'</strong></div>'
+      +'<button onclick="localStorage.removeItem(\''+MIJN_BB_KEY+'\');renderBBGrid()" style="font-size:11px;color:var(--tx3);background:none;border:.5px solid var(--bm);border-radius:var(--rm);padding:3px 8px;cursor:pointer">Wijzig</button>'
+      +'</div>';
+  } else {
+    intro='<p style="font-size:13px;color:var(--tx2);margin-bottom:12px">Klik op jouw naam voor jouw planning. Je naam wordt onthouden.</p>';
+  }
+  bbSel.innerHTML=(mijnDagHtml||'')+intro+'<div class="bb-grid" id="bb-grid">'+gridHtml+'</div>';
+
+  // Als er een onthouden BB is en geen vandaag-sectie: scroll direct naar hun planningsdetail
+  if(onthouden&&!mijnDagHtml){
+    setTimeout(function(){showBBDetail(onthouden);},50);
+  }
 }
 function showBBDetail(name){
   document.getElementById('bb-sel').style.display='none';document.getElementById('bb-det').classList.add('active');
@@ -5676,15 +5775,67 @@ var LAAD_KEY_PREFIX = 'fr_laad_';
 // WAGENPLANNING: beschikbare wagens (uitbreidbaar)
 var WAGEN_KEY = 'fr_wagens_v1';
 var WAGEN_DEFAULT = [
-  {id:'w1', naam:'Bestelwagen 1', kleur:'#0C1135'},
-  {id:'w2', naam:'Bestelwagen 2', kleur:'#61ABED'},
-  {id:'w3', naam:'Aanhangwagen',  kleur:'#3B6D11'},
+  {id:'w1', naam:'Bestelwagen 1', kleur:'#0C1135', cap:'Groot (tent 4x8 + springkasteel)'},
+  {id:'w2', naam:'Bestelwagen 2', kleur:'#61ABED', cap:'Middel (tent 4x4 + materiaal)'},
+  {id:'w3', naam:'Aanhangwagen',  kleur:'#3B6D11', cap:'Extra (stoelen, tafels, bardekens)'},
 ];
 function laadWagens(){
   try{var r=localStorage.getItem(WAGEN_KEY);if(r)return JSON.parse(r);}catch(e){}
   return WAGEN_DEFAULT;
 }
 function slaWagensOp(w){try{localStorage.setItem(WAGEN_KEY,JSON.stringify(w));}catch(e){}}
+
+// Wagen beheer UI — open als modal overlay
+function wagenBeheer(){
+  var wagens=laadWagens();
+  var mo=document.getElementById('ai-mo');
+  if(!mo){mo=document.createElement('div');mo.id='ai-mo';mo.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px';mo.onclick=function(e){if(e.target===mo)mo.remove();};document.body.appendChild(mo);}
+  function renderWagenModal(){
+    var w2=laadWagens();
+    mo.innerHTML='<div style="background:var(--bg1);border-radius:var(--rl);padding:20px;max-width:480px;width:100%;max-height:80vh;overflow-y:auto">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">'
+      +'<strong style="font-size:14px;color:var(--tx1)"><i class="ti ti-truck-delivery" style="color:var(--sky);margin-right:6px"></i>Wagens beheren</strong>'
+      +'<button onclick="document.getElementById(\'ai-mo\').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--tx2)">✕</button></div>'
+      +w2.map(function(w,i){
+        return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:.5px solid var(--bl)">'
+          +'<span style="width:12px;height:12px;border-radius:50%;background:'+w.kleur+';flex-shrink:0;display:inline-block"></span>'
+          +'<div style="flex:1">'
+          +'<input value="'+esc(w.naam)+'" data-wi="'+i+'" data-field="naam" onchange="wagenVeldUpdate(this)" style="font-size:13px;font-weight:600;color:var(--tx1);background:none;border:none;border-bottom:1px solid var(--bm);width:100%;padding:2px 0;font-family:Poppins,sans-serif">'
+          +'<input value="'+esc(w.cap||'')+'" data-wi="'+i+'" data-field="cap" onchange="wagenVeldUpdate(this)" placeholder="Laadcapaciteit..." style="font-size:11px;color:var(--tx2);background:none;border:none;width:100%;padding:2px 0;font-family:Poppins,sans-serif;margin-top:2px">'
+          +'</div>'
+          +'<input type="color" value="'+w.kleur+'" data-wi="'+i+'" data-field="kleur" onchange="wagenVeldUpdate(this)" style="width:28px;height:28px;border:none;border-radius:50%;cursor:pointer;padding:0">'
+          +'<button onclick="wagenVerwijder('+i+')" style="background:none;border:none;color:#A32D2D;cursor:pointer;font-size:16px">✕</button>'
+          +'</div>';
+      }).join('')
+      +'<button onclick="wagenToevoegen()" class="fb" style="margin-top:12px;width:100%;justify-content:center"><i class="ti ti-plus"></i> Wagen toevoegen</button>'
+      +'</div>';
+  }
+  renderWagenModal();
+  window._wagenModalRefresh=renderWagenModal;
+}
+function wagenVeldUpdate(inp){
+  var w=laadWagens();
+  var i=parseInt(inp.dataset.wi);
+  var field=inp.dataset.field;
+  if(w[i])w[i][field]=inp.value;
+  slaWagensOp(w);
+  renderDashboard();
+}
+function wagenVerwijder(i){
+  var w=laadWagens();
+  w.splice(i,1);
+  slaWagensOp(w);
+  if(window._wagenModalRefresh)window._wagenModalRefresh();
+  renderDashboard();
+}
+function wagenToevoegen(){
+  var w=laadWagens();
+  var kleurOpties=['#E24B4A','#F5A623','#7ED321','#4A90E2','#9013FE','#50E3C2'];
+  var kleur=kleurOpties[w.length%kleurOpties.length];
+  w.push({id:'w'+(Date.now()),naam:'Wagen '+(w.length+1),kleur:kleur,cap:''});
+  slaWagensOp(w);
+  if(window._wagenModalRefresh)window._wagenModalRefresh();
+}
 // Wagen per boeking ophalen/opslaan
 var BOEKING_WAGEN_KEY = 'fr_boeking_wagen_v1';
 function laadBoekingWagens(){
@@ -6042,7 +6193,7 @@ function openLaadbriefje(id){
   });
   const items=allItems;
   // Sla boekingId op voor gebruik in toggleLaadItem
-  // Wagen selector
+  // Wagen selector — toon ook capaciteit
   var wagens=laadWagens();
   var huidigWagen=getBoekingWagen(id);
   var wagenKnoppen=document.getElementById('laad-wagen-knoppen');
@@ -6050,11 +6201,12 @@ function openLaadbriefje(id){
     wagenKnoppen.innerHTML=wagens.map(function(w){
       var isSel=w.id===huidigWagen;
       return '<button onclick="slaBoekingWagenOp('+id+',\''+w.id+'\');renderLaadWagenKnoppen('+id+')" '
-        +'style="padding:5px 12px;font-size:12px;border-radius:var(--rm);border:.5px solid '+(isSel?w.kleur:' var(--bm)')+';'
-        +'background:'+(isSel?w.kleur:'var(--bg1)')+';color:'+(isSel?'#fff':'var(--tx1)')+';cursor:pointer;font-family:\'Poppins\',sans-serif;font-weight:'+(isSel?'600':'400')+'" '
-        +'class="wagen-btn" data-wagen="'+w.id+'">'
-        +'<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+w.kleur+';margin-right:5px;border:.5px solid rgba(0,0,0,.2)"></span>'
-        +esc(w.naam)+'</button>';
+        +'style="padding:5px 12px;font-size:12px;border-radius:var(--rm);border:.5px solid '+(isSel?w.kleur:'var(--bm)')+';'
+        +'background:'+(isSel?w.kleur:'var(--bg1)')+';color:'+(isSel?'#fff':'var(--tx1)')+';cursor:pointer;font-family:\'Poppins\',sans-serif;font-weight:'+(isSel?'600':'400')+';display:flex;flex-direction:column;align-items:flex-start;gap:1px">'
+        +'<span><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:'+(isSel?'rgba(255,255,255,.7)':w.kleur)+';margin-right:5px;border:.5px solid rgba(0,0,0,.15)"></span>'
+        +esc(w.naam)+'</span>'
+        +(w.cap?'<span style="font-size:10px;opacity:.7;padding-left:12px">'+esc(w.cap)+'</span>':'')
+        +'</button>';
     }).join('')
     +'<button onclick="slaBoekingWagenOp('+id+',null);renderLaadWagenKnoppen('+id+')" '
     +'style="padding:5px 12px;font-size:12px;border-radius:var(--rm);border:.5px solid var(--bm);background:var(--bg1);color:var(--tx3);cursor:pointer;font-family:\'Poppins\',sans-serif">'
@@ -6348,7 +6500,149 @@ document.querySelectorAll('#status-sel .status-opt').forEach((b,i)=>b.className=
 initTheme();
 // Start op dashboard tab
 // ═══════════════════════════════════════════════════════════
-// CLAUDE AI FUNCTIES (8.2) — via Anthropic API
+// BULKACTIES — multi-select in planninglijst
+// ═══════════════════════════════════════════════════════════
+var _bulkSelectie=new Set(); // Set van boeking IDs
+
+function bulkSelecteerAlles(){
+  // Selecteer alle zichtbare (niet-gearchiveerde, actieve filter) boekingen
+  var zichtbaar=document.querySelectorAll('.bcard-wrap[id^="bcard-wrap-"]');
+  var alleGeselecteerd=zichtbaar.length>0&&[...zichtbaar].every(function(el){
+    var id=Number(el.id.replace('bcard-wrap-',''));
+    return _bulkSelectie.has(id);
+  });
+  if(alleGeselecteerd){
+    // Alles al geselecteerd → deselecteer
+    _bulkSelectie.clear();
+  } else {
+    zichtbaar.forEach(function(el){
+      var id=Number(el.id.replace('bcard-wrap-',''));
+      if(id)_bulkSelectie.add(id);
+    });
+  }
+  bulkTellerUpdate();
+  // Update visueel zonder volledige herrender
+  document.querySelectorAll('.bcard-wrap[id^="bcard-wrap-"]').forEach(function(el){
+    var id=Number(el.id.replace('bcard-wrap-',''));
+    el.style.outline=_bulkSelectie.has(id)?'2px solid var(--sky)':'none';
+    var cb=el.querySelector('input[type="checkbox"]');
+    if(cb)cb.checked=_bulkSelectie.has(id);
+  });
+}
+
+function bulkStatusWijzig(){
+  if(_bulkSelectie.size===0){banner('er','Selecteer eerst boekingen.');return;}
+  var mo=document.getElementById('ai-mo');
+  if(!mo){mo=document.createElement('div');mo.id='ai-mo';mo.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px';mo.onclick=function(e){if(e.target===mo)mo.remove();};document.body.appendChild(mo);}
+  mo.innerHTML='<div style="background:var(--bg1);border-radius:var(--rl);padding:20px;max-width:380px;width:100%">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><strong style="font-size:14px;color:var(--tx1)"><i class="ti ti-refresh" style="color:var(--sky);margin-right:6px"></i>Status wijzigen ('+_bulkSelectie.size+')</strong><button onclick="document.getElementById(\'ai-mo\').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--tx2)">✕</button></div>'
+    +'<div style="display:flex;flex-direction:column;gap:8px">'
+    +STATUSSEN.map(function(s,i){return '<button onclick="bulkStatusToepassen('+i+')" class="fb" style="padding:10px 14px;font-size:13px;text-align:left;border-radius:var(--rm)"><span class="status-badge '+STAT_CLS[i]+'" style="margin-right:8px">'+s+'</span></button>';}).join('')
+    +'</div></div>';
+}
+
+async function bulkStatusToepassen(statusIdx){
+  var ids=[..._bulkSelectie];
+  ids.forEach(function(id){
+    var b=boekingen.find(function(x){return x.id===id;});
+    if(b)b.status=statusIdx;
+  });
+  saveC(boekingen);window._lastSaveTS=Date.now();
+  var saves=ids.map(function(id){
+    var b=boekingen.find(function(x){return x.id===id;});
+    if(!b)return Promise.resolve();
+    return api({action:'save',body:{action:'save',boeking:b}}).catch(function(){queueVoegToe('save',{action:'save',boeking:b});});
+  });
+  await Promise.all(saves);
+  banner('ok','✓ Status '+STATUSSEN[statusIdx]+' toegepast op '+ids.length+' boeking'+(ids.length!==1?'en':''));
+  var mo=document.getElementById('ai-mo');if(mo)mo.remove();
+  bulkAnnuleer();
+}
+var _bulkModus=false;
+
+function bulkModeAan(){
+  _bulkModus=true;_bulkSelectie.clear();
+  var bar=document.getElementById('bulk-bar');
+  if(bar){bar.style.display='flex';}
+  bulkTellerUpdate();
+  renderPlanning(); // herrender met checkboxes
+}
+function bulkAnnuleer(){
+  _bulkModus=false;_bulkSelectie.clear();
+  var bar=document.getElementById('bulk-bar');
+  if(bar){bar.style.display='none';}
+  renderPlanning();
+}
+function bulkToggle(id){
+  id=Number(id);
+  if(_bulkSelectie.has(id))_bulkSelectie.delete(id);
+  else _bulkSelectie.add(id);
+  bulkTellerUpdate();
+  // Update visueel — enkel de kaart zelf
+  var cb=document.getElementById('bulk-cb-'+id);
+  if(cb)cb.checked=_bulkSelectie.has(id);
+  var kaart=document.getElementById('bcard-wrap-'+id);
+  if(kaart)kaart.style.outline=_bulkSelectie.has(id)?'2px solid var(--sky)':'none';
+}
+function bulkTellerUpdate(){
+  var t=document.getElementById('bulk-teller');
+  if(t)t.textContent=_bulkSelectie.size+' geselecteerd';
+}
+async function bulkArchiveer(){
+  if(_bulkSelectie.size===0){banner('er','Selecteer eerst boekingen.');return;}
+  if(!confirm('Archiveer '+_bulkSelectie.size+' boeking'+((_bulkSelectie.size!==1)?'en':'')+' (markeer als voltooid)?'))return;
+  var ids=[..._bulkSelectie];
+  for(var i=0;i<ids.length;i++){
+    var b=boekingen.find(function(x){return x.id===ids[i];});
+    if(b){b.voltooid=true;b.status=5;}
+  }
+  saveC(boekingen);window._lastSaveTS=Date.now();matchProductenCache_invalideer();
+  // Sla op in batch (parallel)
+  var saves=ids.map(function(id){
+    var b=boekingen.find(function(x){return x.id===id;});
+    if(!b)return Promise.resolve();
+    return api({action:'save',body:{action:'save',boeking:b}}).catch(function(){queueVoegToe('save',{action:'save',boeking:b});});
+  });
+  await Promise.all(saves);
+  banner('ok','✓ '+ids.length+' boeking'+(ids.length!==1?'en':'')+' gearchiveerd');
+  bulkAnnuleer();
+}
+function bulkBBToewijzen(){
+  if(_bulkSelectie.size===0){banner('er','Selecteer eerst boekingen.');return;}
+  var mo=document.getElementById('ai-mo');
+  if(!mo){mo=document.createElement('div');mo.id='ai-mo';mo.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px';mo.onclick=function(e){if(e.target===mo)mo.remove();};document.body.appendChild(mo);}
+  mo.innerHTML='<div style="background:var(--bg1);border-radius:var(--rl);padding:20px;max-width:420px;width:100%">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><strong style="font-size:14px;color:var(--tx1)"><i class="ti ti-hard-hat" style="color:var(--sky);margin-right:6px"></i>BB toewijzen aan '+_bulkSelectie.size+' boeking'+(_bulkSelectie.size!==1?'en':'')+'</strong><button onclick="document.getElementById(\'ai-mo\').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--tx2)">✕</button></div>'
+    +'<div style="font-size:12px;color:var(--tx2);margin-bottom:12px">Levering:</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px" id="bulk-bb-lev">'+BB.map(function(nm){return'<button class="tg" style="min-height:40px" onclick="this.classList.toggle(\'sel\')">'+ini(nm)+' '+esc(nm)+'</button>';}).join('')+'</div>'
+    +'<div style="font-size:12px;color:var(--tx2);margin-bottom:12px">Ophaling:</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px" id="bulk-bb-oph">'+BB.map(function(nm){return'<button class="tg" style="min-height:40px" onclick="this.classList.toggle(\'sel\')">'+ini(nm)+' '+esc(nm)+'</button>';}).join('')+'</div>'
+    +'<div style="display:flex;gap:8px"><button onclick="bulkBBOpslaan()" class="bprim" style="font-size:12px;padding:8px 16px"><i class="ti ti-check"></i> Toepassen</button><button onclick="document.getElementById(\'ai-mo\').remove()" class="fb" style="font-size:12px;padding:8px 16px">Annuleer</button></div>'
+    +'</div>';
+}
+async function bulkBBOpslaan(){
+  var levBBs=Array.from(document.querySelectorAll('#bulk-bb-lev .tg.sel')).map(function(b){return b.textContent.split(' ').slice(1).join(' ').trim();});
+  var ophBBs=Array.from(document.querySelectorAll('#bulk-bb-oph .tg.sel')).map(function(b){return b.textContent.split(' ').slice(1).join(' ').trim();});
+  if(levBBs.length===0&&ophBBs.length===0){banner('er','Selecteer minstens één BB.');return;}
+  var ids=[..._bulkSelectie];
+  ids.forEach(function(id){
+    var b=boekingen.find(function(x){return x.id===id;});
+    if(!b)return;
+    if(levBBs.length>0)b.opstellers_lev=levBBs;
+    if(ophBBs.length>0)b.opstellers_oph=ophBBs;
+    b.opstellers=[...new Set([...b.opstellers_lev,...b.opstellers_oph])];
+  });
+  saveC(boekingen);window._lastSaveTS=Date.now();matchProductenCache_invalideer();
+  var saves=ids.map(function(id){
+    var b=boekingen.find(function(x){return x.id===id;});
+    if(!b)return Promise.resolve();
+    return api({action:'save',body:{action:'save',boeking:b}}).catch(function(){queueVoegToe('save',{action:'save',boeking:b});});
+  });
+  await Promise.all(saves);
+  banner('ok','✓ BB\'s toegewezen aan '+ids.length+' boeking'+(ids.length!==1?'en':''));
+  document.getElementById('ai-mo').remove();
+  bulkAnnuleer();
+}
 // ═══════════════════════════════════════════════════════════
 
 async function claudeAPI(systeemPrompt, gebruikersBericht, maxTokens){
