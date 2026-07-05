@@ -4537,22 +4537,93 @@ function vrRenderDetail(productId, prod, vr){
     }
   }
 
+  // ── ONDERHOUDSBEHEER OP BASIS VAN GEBRUIKSFREQUENTIE ──
+  // Drempelwaarden: na X verhuurkeer of Y maanden → onderhoud aanbevelen
+  var ONDERHOUD_DREMPEL_KEER = 20;  // elke 20 verhuringen
+  var ONDERHOUD_DREMPEL_MAANDEN = 6; // elke 6 maanden
+  var itemsData2 = itemsLaad();
+  var itemLijst2 = itemsData2[productId]||[];
+  var onderhoudsWaarschuwing = null;
+
+  // Bereken laatste onderhoudsdatum (laagste score item dat 'onderhoud' was)
+  var onderhoudNb = {};  // item nr → bool was in onderhoud
+  itemLijst2.forEach(function(i){ if(i.status==='onderhoud'||i.notitie&&i.notitie.toLowerCase().includes('onderhoud')) onderhoudNb[i.nr]=true; });
+
+  // Keer verhuurd per item (gebruik keerVerhuurd / stock als schatting)
+  var gemKeerPerItem = vr.stock>0 ? Math.round(keerVerhuurd / vr.stock) : keerVerhuurd;
+  var maandenSindsEerste = eersteVerhuur ? Math.round((new Date()-new Date(eersteVerhuur+'T00:00:00'))/(1000*60*60*24*30)) : 0;
+
+  if(gemKeerPerItem >= ONDERHOUD_DREMPEL_KEER){
+    onderhoudsWaarschuwing = {
+      type: 'frequentie',
+      bericht: 'Dit materiaal is al '+gemKeerPerItem+'× verhuurd per stuk. Overweeg een preventieve controle.',
+      urgentie: gemKeerPerItem >= ONDERHOUD_DREMPEL_KEER * 1.5 ? 'hoog' : 'normaal'
+    };
+  } else if(maandenSindsEerste >= ONDERHOUD_DREMPEL_MAANDEN && keerVerhuurd > 5){
+    onderhoudsWaarschuwing = {
+      type: 'tijd',
+      bericht: 'Meer dan '+ONDERHOUD_DREMPEL_MAANDEN+' maanden in gebruik ('+maandenSindsEerste+' mnd). Periodieke controle aanbevolen.',
+      urgentie: 'normaal'
+    };
+  }
+
+  if(onderhoudsWaarschuwing){
+    var urgKleur=onderhoudsWaarschuwing.urgentie==='hoog'?'#E24B4A':'#854F0B';
+    var urgBg=onderhoudsWaarschuwing.urgentie==='hoog'?'#FCEBEB':'#FAEEDA';
+    html += '<div style="background:'+urgBg+';border:.5px solid '+urgKleur+';border-radius:var(--rm);padding:10px 12px;margin-bottom:10px;display:flex;gap:10px;align-items:flex-start">';
+    html += '<i class="ti ti-tool" style="color:'+urgKleur+';margin-top:1px;flex-shrink:0"></i>';
+    html += '<div style="flex:1"><div style="font-size:12px;font-weight:600;color:'+urgKleur+';margin-bottom:3px">Onderhoud aanbevolen</div>';
+    html += '<div style="font-size:11px;color:'+urgKleur+'">'+esc(onderhoudsWaarschuwing.bericht)+'</div></div>';
+    html += '<button onclick="vrOpenEdit(\''+productId+'\')" style="background:'+urgKleur+';color:#fff;border:none;border-radius:var(--rm);padding:5px 10px;font-size:11px;cursor:pointer;font-family:Poppins,sans-serif;white-space:nowrap;flex-shrink:0">Items plannen</button>';
+    html += '</div>';
+  }
+
   body.innerHTML = html;
 }
-
-// ── Planning tab (reserveringen komende 30 dagen) ──────────
-function vrRenderPlanning(productId, prod, vr){
   var body = document.getElementById('vr-planning-body');
   if(!body) return;
+  dagen = dagen || 30;
 
   var t = today();
-  var d30=new Date(t+'T00:00:00'); d30.setDate(d30.getDate()+30);
-  var d30s=d30.toISOString().split('T')[0];
+  var dEnd=new Date(t+'T00:00:00'); dEnd.setDate(dEnd.getDate()+dagen);
+  var dEndS=dEnd.toISOString().split('T')[0];
 
-  // Alle boekingen die dit product gebruiken in de komende 30 dagen
+  // Selector 30/60/90
+  var selectorHtml='<div style="display:flex;gap:6px;margin-bottom:12px">'
+    +[30,60,90].map(function(d){
+      return '<button onclick="vrRenderPlanning(\''+productId+'\',null,null,'+d+')" '
+        +'style="padding:4px 12px;font-size:11px;border-radius:20px;border:.5px solid '+(d===dagen?'var(--sky)':'var(--bm)')+';'
+        +'background:'+(d===dagen?'var(--sky)':'transparent')+';color:'+(d===dagen?'#fff':'var(--tx2)')+';cursor:pointer;font-family:Poppins,sans-serif">'+d+' dagen</button>';
+    }).join('')+'</div>';
+
+  // Heatmap: gebruik per week
+  var heatHtml='<div style="margin-bottom:14px">';
+  heatHtml+='<div style="font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Bezettingsgraad per week</div>';
+  heatHtml+='<div style="display:flex;flex-wrap:wrap;gap:4px">';
+  var nWeken=Math.ceil(dagen/7);
+  for(var w=0;w<nWeken;w++){
+    var wStart=new Date(t+'T00:00:00');wStart.setDate(wStart.getDate()+w*7);
+    var wEind=new Date(wStart);wEind.setDate(wEind.getDate()+6);
+    var wS=wStart.toISOString().split('T')[0];
+    var wE=wEind.toISOString().split('T')[0];
+    var maxVerhuurd=vrBerekenVerhuurd(productId,wS,wE,null,null,null);
+    var stock=vr.stock||1;
+    var pct=Math.min(100,Math.round(maxVerhuurd/stock*100));
+    var kleur=pct>=100?'#E24B4A':pct>=70?'#EF9F27':pct>=30?'#61ABED':'#97C459';
+    var opacity=Math.max(0.15,pct/100);
+    heatHtml+='<div title="Week '+(w+1)+' ('+fmtShort(wS)+'): '+pct+'% bezet ('+maxVerhuurd+'/'+stock+')" '
+      +'style="width:28px;height:28px;border-radius:4px;background:'+kleur+';opacity:'+opacity+';cursor:help;position:relative" '
+      +'onclick="this.title=this.title"></div>';
+  }
+  heatHtml+='</div>';
+  heatHtml+='<div style="display:flex;gap:10px;margin-top:5px;font-size:10px;color:var(--tx3)">'
+    +'<span>🟢 Vrij</span><span>🔵 Bezet</span><span>🟠 Bijna vol</span><span>🔴 Vol/Conflict</span></div>';
+  heatHtml+='</div>';
+
+  // Boekingen in periode
   var actief = boekingen.filter(function(b){
     return !(b.voltooid===true||b.voltooid==='true') &&
-           b.levdatum && b.levdatum>=t && b.levdatum<=d30s;
+           b.levdatum && b.levdatum>=t && b.levdatum<=dEndS;
   });
 
   var reserveringen = [];
@@ -4564,34 +4635,32 @@ function vrRenderPlanning(productId, prod, vr){
     reserveringen.push({b:b, match:match, check:check});
   });
 
+  var lijstHtml='';
   if(reserveringen.length === 0){
-    body.innerHTML = '<div style="text-align:center;padding:24px;color:var(--tx3)"><i class="ti ti-calendar-off" style="font-size:24px;display:block;margin-bottom:8px"></i>Geen reserveringen komende 30 dagen</div>';
-    return;
+    lijstHtml='<div style="text-align:center;padding:20px;color:var(--tx3)"><i class="ti ti-calendar-off" style="font-size:24px;display:block;margin-bottom:8px"></i>Geen reserveringen de komende '+dagen+' dagen</div>';
+  } else {
+    lijstHtml='<div style="margin-bottom:8px;font-size:12px;color:var(--tx2)">'+reserveringen.length+' reservering'+(reserveringen.length!==1?'en':'')+' komende '+dagen+' dagen</div>';
+    reserveringen.sort(function(a,b){ return a.b.levdatum.localeCompare(b.b.levdatum); });
+    reserveringen.forEach(function(res){
+      var b=res.b, match=res.match, check=res.check;
+      var statusKleur = check.status==='conflict'?'#E24B4A':check.status==='warn'?'#EF9F27':'#97C459';
+      lijstHtml += '<div class="md-reserv-item" onclick="vrSluitModal();openDetail('+b.id+')" style="cursor:pointer">';
+      lijstHtml += '<div class="md-reserv-dot" style="background:'+statusKleur+'"></div>';
+      lijstHtml += '<div style="flex:1;min-width:0">';
+      lijstHtml += '<div style="display:flex;align-items:center;gap:6px">';
+      lijstHtml += '<span class="md-reserv-datum">'+fmtShort(b.levdatum)+'</span>';
+      lijstHtml += '<span class="md-reserv-naam">'+esc(b.naam)+'</span>';
+      lijstHtml += '</div>';
+      lijstHtml += '<div style="font-size:11px;color:var(--tx3);margin-top:1px">'+match.aantal+'× · '+fmtShort(b.levdatum)+' → '+fmtShort(b.ophdatum||b.levdatum)+(b.opstellers_lev&&b.opstellers_lev.length?' · '+b.opstellers_lev.join(', '):'')+'</div>';
+      lijstHtml += '</div>';
+      if(check.status!=='ok'){
+        lijstHtml += '<span style="font-size:10px;padding:2px 6px;border-radius:20px;background:'+(check.status==='conflict'?'#FCEBEB':'#FAEEDA')+';color:'+(check.status==='conflict'?'#A32D2D':'#854F0B')+';flex-shrink:0">'+(check.status==='conflict'?'Conflict':'Beperkt')+'</span>';
+      }
+      lijstHtml += '</div>';
+    });
   }
 
-  var html = '<div style="margin-bottom:8px;font-size:12px;color:var(--tx2)">'+reserveringen.length+' reservering'+(reserveringen.length!==1?'en':'')+' komende 30 dagen</div>';
-
-  reserveringen.sort(function(a,b){ return a.b.levdatum.localeCompare(b.b.levdatum); });
-
-  reserveringen.forEach(function(res){
-    var b=res.b, match=res.match, check=res.check;
-    var statusKleur = check.status==='conflict'?'#E24B4A':check.status==='warn'?'#EF9F27':'#97C459';
-    html += '<div class="md-reserv-item" data-md-bid="'+b.id+'" style="cursor:pointer">';
-    html += '<div class="md-reserv-dot" style="background:'+statusKleur+'"></div>';
-    html += '<div style="flex:1;min-width:0">';
-    html += '<div style="display:flex;align-items:center;gap:6px">';
-    html += '<span class="md-reserv-datum">'+fmtShort(b.levdatum)+'</span>';
-    html += '<span class="md-reserv-naam">'+esc(b.naam)+'</span>';
-    html += '</div>';
-    html += '<div style="font-size:11px;color:var(--tx3);margin-top:1px">'+match.aantal+'× · '+fmtShort(b.levdatum)+' → '+fmtShort(b.ophdatum||b.levdatum)+(b.opstellers_lev&&b.opstellers_lev.length?' · '+b.opstellers_lev.join(', '):'')+'</div>';
-    html += '</div>';
-    if(check.status!=='ok'){
-      html += '<span style="font-size:10px;padding:2px 6px;border-radius:20px;background:'+(check.status==='conflict'?'#FCEBEB':'#FAEEDA')+';color:'+(check.status==='conflict'?'#A32D2D':'#854F0B')+';flex-shrink:0">'+(check.status==='conflict'?'Conflict':'Beperkt')+'</span>';
-    }
-    html += '</div>';
-  });
-
-  body.innerHTML = html;
+  body.innerHTML = selectorHtml + heatHtml + lijstHtml;
 }
 
 function vrSlaOp(){
@@ -4956,6 +5025,45 @@ function _waarschuwingsEngineBerekening(){
       urgentie: urgPrio(b.levdatum, prio),
       boekingId: b.id
     });
+  });
+
+  // ── ONDERHOUD OP BASIS VAN GEBRUIKSFREQUENTIE ─────────
+  var voorraad=vrLaad();
+  var DREMPEL_KEER=20, DREMPEL_MAANDEN=6;
+  voorraad.forEach(function(vr){
+    if(!vr.id||!vr.stock) return;
+    var prod=CATALOGUS.find(function(p){return p.id===vr.id;});
+    if(!prod) return;
+    var keer=0;
+    var eersteVerhuur=null;
+    boekingen.forEach(function(b){
+      if(!b.materiaal||!b.levdatum) return;
+      var m=matchProducten(b.materiaal).find(function(m){return m.product&&m.product.id===vr.id;});
+      if(!m) return;
+      keer++;
+      if(!eersteVerhuur||b.levdatum<eersteVerhuur)eersteVerhuur=b.levdatum;
+    });
+    var gemKeer=vr.stock>0?Math.round(keer/vr.stock):keer;
+    var maanden=eersteVerhuur?Math.round((new Date()-new Date(eersteVerhuur+'T00:00:00'))/(1000*60*60*24*30)):0;
+    if(gemKeer>=DREMPEL_KEER){
+      resultaat.push({
+        prio:gemKeer>=DREMPEL_KEER*1.5?'krit':'warn',
+        cat:'Onderhoud',
+        icoon:'ti-tool',
+        tekst:prod.naam+' — '+gemKeer+'× verhuurd per stuk. Preventieve controle aanbevolen.',
+        datum:today(),
+        urgentie:gemKeer>=DREMPEL_KEER*1.5?2:5
+      });
+    } else if(maanden>=DREMPEL_MAANDEN&&keer>5){
+      resultaat.push({
+        prio:'warn',
+        cat:'Onderhoud',
+        icoon:'ti-calendar-clock',
+        tekst:prod.naam+' — '+maanden+' maanden in gebruik. Periodieke controle aanbevolen.',
+        datum:today(),
+        urgentie:6
+      });
+    }
   });
 
   // Sorteer op urgentie (numeriek), dan datum
@@ -6827,6 +6935,65 @@ async function aiHerinneringsmail(boekingId){
   // Sla gegenereerde tekst op voor versturen
   window._aiMailTekst=antwoord;
   window._aiMailBoeking=b;
+}
+
+// ─────────────────────────────────────────────
+// AUTOMATISCHE KLANTBEVESTIGINGSMAIL
+// Wordt aangeroepen direct na het opslaan van een nieuwe boeking
+// ─────────────────────────────────────────────
+async function stuurBevestigingsmail(b){
+  if(!b||!b.email) return false;
+  try{
+    // Genereer AI-tekst voor gepersonaliseerde bevestiging
+    var mailTekst=null;
+    try{
+      mailTekst=await claudeAPI(
+        'Je bent een vriendelijke medewerker van Familyrent, een Belgisch verhuurbedrijf. '+
+        'Schrijf een KORTE, warme bevestigingsmail in het Nederlands (max 80 woorden). '+
+        'Gebruik "je/jij". Bevestig de boeking met datum, uur, adres en materiaal. '+
+        'Sluit af met een vrolijk zinnetje. Geen aanhef (die staat al in het systeem).',
+        JSON.stringify({
+          naam:b.naam,
+          datum:fmtDate(b.levdatum),
+          uur:b.levuur,
+          adres:b.adres,
+          materiaal:(b.materiaal||'').split('\n').slice(0,3).join(', '),
+          opmerking:b.opmerking||''
+        }),
+        400
+      );
+    }catch(e){}
+
+    // Fallback als AI niet beschikbaar is
+    if(!mailTekst){
+      mailTekst='Bedankt voor uw boeking! We bevestigen hierbij uw levering op '
+        +fmtDate(b.levdatum)+' om '+b.levuur+' op '+b.adres+'.\n\n'
+        +(b.materiaal?'Materiaal: '+(b.materiaal||'').split('\n').slice(0,3).join(', ')+'.\n\n':'')
+        +'Bij vragen kan je ons altijd bereiken op info@familyrent.be of 0497 03 52 23.\n\n'
+        +'Tot dan! 🎉\nHet Familyrent-team';
+    }
+
+    await emailjs.send(
+      window.FR_CONFIG.emailjs_service,
+      window.FR_CONFIG.emailjs_template_klant,
+      {
+        to_name: b.naam,
+        to_email: b.email,
+        subject: 'Bevestiging boeking Familyrent — '+fmtDate(b.levdatum),
+        message: mailTekst,
+        levdatum: fmtDate(b.levdatum),
+        levuur: b.levuur,
+        adres: b.adres,
+        materiaal: (b.materiaal||'').split('\n').slice(0,5).join('\n'),
+        from_name: 'Familyrent',
+        reply_to: 'info@familyrent.be'
+      }
+    );
+    return true;
+  }catch(e){
+    console.error('Bevestigingsmail mislukt:',e);
+    return false;
+  }
 }
 
 async function aiVerstuurHerinneringsmail(boekingId){
