@@ -1668,6 +1668,8 @@ async function loadData(){
   // Lazy render: enkel de actieve tab opnieuw opbouwen
   // updateStats altijd — die zijn lichtgewicht en staan op elke tab
   updateStats();
+  // Reset bulkmodus bij datasync — selectie is toch stale
+  if(_bulkModus) bulkAnnuleer();
   if(document.getElementById('view-planning').classList.contains('active')) renderPlanning();
   if(document.getElementById('view-kalender').classList.contains('active')) renderKalender();
   if(document.getElementById('view-dashboard').classList.contains('active')) renderDashboard();
@@ -1876,9 +1878,18 @@ function setStatus(idx,btn){
 function togOp(btn){if(btn.classList.contains('and-tog'))return;btn.classList.toggle('sel');}
 function togOpLev(btn){if(btn.classList.contains('and-tog-lev'))return;btn.classList.toggle('sel');}
 function togOpOph(btn){if(btn.classList.contains('and-tog-oph'))return;btn.classList.toggle('sel');}
-function togAndere(btn){const f=document.getElementById('af'),show=f.style.display==='block';f.style.display=show?'none':'block';btn.classList.toggle('sel',!show);if(!show)document.getElementById('f-and').focus();}
-function togAndereLev(btn){const f=document.getElementById('af-lev'),show=f.style.display==='block';f.style.display=show?'none':'block';btn.classList.toggle('sel',!show);if(!show)document.getElementById('f-and-lev').focus();}
-function togAndereOph(btn){const f=document.getElementById('af-oph'),show=f.style.display==='block';f.style.display=show?'none':'block';btn.classList.toggle('sel',!show);if(!show)document.getElementById('f-and-oph').focus();}
+// Gecombineerde togAndere — sfx = '' | '-lev' | '-oph'
+function _togAndere(sfx,btn){
+  var f=document.getElementById('af'+(sfx||''));
+  if(!f)return;
+  var show=f.style.display==='block';
+  f.style.display=show?'none':'block';
+  btn.classList.toggle('sel',!show);
+  if(!show){var inp=document.getElementById('f-and'+(sfx||''));if(inp)inp.focus();}
+}
+function togAndere(btn){_togAndere('',btn);}
+function togAndereLev(btn){_togAndere('-lev',btn);}
+function togAndereOph(btn){_togAndere('-oph',btn);}
 function getOps(){
   const lev=Array.from(document.querySelectorAll('#op-grid-lev .tg.sel:not(.and-tog-lev)')).map(b=>b.textContent.trim());
   const andLev=document.getElementById('f-and-lev')?document.getElementById('f-and-lev').value.trim():'';
@@ -2077,7 +2088,7 @@ function ppLoadFromField(tekst){
 }
 
 function clearForm(){
-  ['f-naam','f-tel','f-email','f-adres','f-mat','f-prijs','f-opm','f-and'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['f-naam','f-tel','f-email','f-adres','f-mat','f-opm','f-and'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('f-levdatum').value=today();
   document.getElementById('f-ophdatum').value=today();
   document.getElementById('f-levuur').value='09:00';
@@ -2097,10 +2108,11 @@ function clearForm(){
   Array.from(w.querySelectorAll('.taak-input-row')).forEach(r=>r.remove());
   const afEl=document.getElementById('af');if(afEl)afEl.style.display='none';
   document.getElementById('ferr').style.display='none';
+  // f-prijs: ook autoprijs flag resetten (staat niet in de forEach hierboven)
+  const _prijsEl=document.getElementById('f-prijs');
+  if(_prijsEl){_prijsEl.value='';_prijsEl.dataset.autoprijs='0';}
   var acList=document.getElementById('ac-list');
   if(acList){acList.style.display='none';acList._matches=[];}
-  var prijsEl=document.getElementById('f-prijs');
-  if(prijsEl){prijsEl.value='';prijsEl.dataset.autoprijs='0';}
   var pInfo=document.getElementById('prijs-suggestie-info');
   if(pInfo) pInfo.textContent='';
   var bbInfo=document.getElementById('bb-suggestie-info');
@@ -2789,11 +2801,8 @@ function _buildDashboard(){
   })();
   (function(){
     // Bereken gemiddeld aantal boekingen per weekend in het verleden
+    // mon is al gedefinieerd in de bovenste scope van _buildDashboard
     var weekendTelling={};
-    boekingen.forEach(function(b){
-      if(!b.levdatum) return;
-      var bd=new Date(b.levdatum+'T00:00:00');
-      var dag=bd.getDay(); // 6=za, 0=zo
       if(dag!==6&&dag!==0) return;
       // Gebruik zaterdag als weekendsleutel
       var za=new Date(b.levdatum+'T00:00:00');
@@ -4810,7 +4819,7 @@ var _wgCache={ts:0, result:[]};
 function waarschuwingsEngine(){
   // Cache is geldig als de data niet gewijzigd is (max 60 sec oud)
   var nu=Date.now();
-  var _dataHash=boekingen.length+'|'+(window._lastSaveTS||0);
+  var _dataHash=boekingen.length+'|'+(window._lastSaveTS||0)+'|'+boekingen.filter(function(b){return !b.voltooid;}).length;
   if(_wgCache.hash===_dataHash&&(nu-_wgCache.ts)<60000) return _wgCache.result;
   var resultaat=_waarschuwingsEngineBerekening();
   _wgCache={hash:_dataHash,ts:nu,result:resultaat};
