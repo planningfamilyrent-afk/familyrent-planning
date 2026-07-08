@@ -25,10 +25,24 @@ window.FR_CONFIG={
   emailjs_template_klant:'template_6zmn5tp',
   apps_script_url:'https://script.google.com/macros/s/AKfycbzh_GfQKgsoOpkfMRiBUYf_s6usyqUlH27GOI-LuLHMIZ9PUlPyR0Ddgiympg3UYAAoIg/exec'
 };
-(function(){emailjs.init({publicKey:window.FR_CONFIG.emailjs_public_key});})();
+// EmailJS init — in try-catch zodat een CDN-timeout de tool niet blokkeert
+try{
+  if(typeof emailjs!=='undefined'){
+    emailjs.init({publicKey:window.FR_CONFIG.emailjs_public_key});
+  } else {
+    // EmailJS nog niet geladen — probeer opnieuw na DOM ready
+    document.addEventListener('DOMContentLoaded',function(){
+      if(typeof emailjs!=='undefined') emailjs.init({publicKey:window.FR_CONFIG.emailjs_public_key});
+    });
+  }
+}catch(e){console.warn('EmailJS init mislukt:',e.message);}
 </script>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" media="print" onload="this.media='all'">
+<noscript>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+</noscript>
   <!-- Leaflet wordt lazy geladen bij eerste bezoek aan Ritplanning tab -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -479,7 +493,10 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 .da{display:flex;gap:7px;margin-top:14px;flex-wrap:wrap;padding-top:12px;border-top:.5px solid var(--bl)}
 
 /* LAADBRIEFJE */
-.laad-modal{max-width:480px}
+.handtekening-wrap{border:2px dashed var(--bm);border-radius:var(--rm);padding:8px;margin-top:10px;background:var(--bg2)}
+.handtekening-canvas{border-radius:4px;background:#fff;display:block;width:100%;touch-action:none;cursor:crosshair}
+.handtekening-acties{display:flex;gap:8px;margin-top:6px;align-items:center}
+.handtekening-lbl{font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:6px;display:flex;align-items:center;gap:6px}
 .laad-hdr{background:var(--navy);color:#fff;padding:14px 18px;border-radius:var(--rl) var(--rl) 0 0;display:flex;align-items:center;justify-content:space-between}
 .laad-title{font-size:15px;font-weight:600}
 .laad-sub{font-size:11px;color:rgba(255,255,255,.5);margin-top:2px}
@@ -1184,6 +1201,16 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
           <div class="laad-prog-bar"><div class="laad-prog-fill" id="laad-fill" style="width:0%"></div></div>
         </div>
         <div class="laad-prog-val" id="laad-prog-val">0 / 0</div>
+      </div>
+      <!-- DIGITALE HANDTEKENING -->
+      <div class="handtekening-wrap" id="handtekening-wrap">
+        <div class="handtekening-lbl"><i class="ti ti-signature" style="color:var(--sky)"></i> Handtekening bij levering/ophaling</div>
+        <canvas id="handtekening-canvas" class="handtekening-canvas" height="120"></canvas>
+        <div class="handtekening-acties">
+          <button onclick="handtekeningWis()" style="font-size:11px;padding:4px 10px;border-radius:var(--rm);border:.5px solid var(--bm);background:transparent;cursor:pointer;color:var(--tx2);font-family:Poppins,sans-serif"><i class="ti ti-eraser" style="font-size:11px"></i> Wis</button>
+          <button onclick="handtekeningOpslaan()" class="bprim" style="font-size:11px;padding:5px 14px"><i class="ti ti-check" style="font-size:11px"></i> Bevestig & sla op</button>
+          <span id="handtekening-status" style="font-size:11px;color:var(--tx3);margin-left:auto"></span>
+        </div>
       </div>
     </div>
   </div>
@@ -2053,13 +2080,34 @@ function ppSaveToField(){
   var prijsField=document.getElementById('f-prijs');
   if(prijsField&&totaalPrijs>0){
     var huidig=parseFloat(prijsField.value)||0;
-    // Vul in als leeg, of als de waarde dicht bij een vorige auto-berekening ligt (±5€)
     if(huidig===0||prijsField.dataset.autoprijs==='1'){
-      prijsField.value=totaalPrijs;
+      // Dynamische prijszetting: check bezettingsgraad voor de geselecteerde datum
+      var datumEl=document.getElementById('f-levdatum');
+      var datum=datumEl?datumEl.value:'';
+      var dynamischeFactor=1.0;
+      var dynamischeTekst='';
+      if(datum){
+        // Tel hoeveel boekingen er al zijn op die datum
+        var boekOpDatum=boekingen.filter(function(b){
+          return !b.voltooid&&(b.levdatum===datum||b.ophdatum===datum);
+        }).length;
+        var gemPerDag=boekingen.length>30?boekingen.length/30:1;
+        var bezPct=boekOpDatum/Math.max(gemPerDag,1);
+        if(bezPct>=1.5){dynamischeFactor=1.15;dynamischeTekst='🔴 Drukke dag (+15%)';}
+        else if(bezPct>=1.0){dynamischeFactor=1.10;dynamischeTekst='🟠 Bezette dag (+10%)';}
+        else if(bezPct<=0.3&&datum.endsWith('-06')||datum.endsWith('-07')||datum.endsWith('-08')){
+          // Rustig in zomermaanden → toch geen korting (vraag is seizoensgebonden)
+          dynamischeFactor=1.0;
+        }
+      }
+      var aangepastePrijs=Math.round(totaalPrijs*dynamischeFactor);
+      prijsField.value=aangepastePrijs;
       prijsField.dataset.autoprijs='1';
-      // Toon indicator
       var ind=document.getElementById('prijs-suggestie-info');
-      if(ind) ind.textContent='💡 Automatisch berekend op basis van catalogusprijzen (aanpasbaar)';
+      if(ind){
+        ind.textContent='💡 Catalogusprijs: €'+totaalPrijs+(dynamischeFactor>1?' → €'+aangepastePrijs+' ('+dynamischeTekst+') — aanpasbaar':'— aanpasbaar');
+        ind.style.color=dynamischeFactor>1.12?'#A32D2D':dynamischeFactor>1?'#854F0B':'var(--sky)';
+      }
     }
   } else if(totaalPrijs===0){
     var ind2=document.getElementById('prijs-suggestie-info');
@@ -5790,8 +5838,123 @@ function buildReport(){
   STATUSSEN.forEach(function(s,i){
     rptHtml+='<div class="rpt-stat" style="min-width:120px"><div class="rpt-lbl">'+s+'</div><div class="rpt-val" style="font-size:18px">'+statusCount[i]+'</div></div>';
   });
-  rptHtml+='</div></div></div>';
+  rptHtml+='</div></div>';
+
+  // ── TOP KLANTEN ──────────────────────────────────────────
+  var klantOmzet={};
+  boekingen.forEach(function(b){
+    if(!b.naam)return;
+    if(!klantOmzet[b.naam])klantOmzet[b.naam]={omzet:0,count:0,laatste:''};
+    klantOmzet[b.naam].omzet+=(parseFloat(b.prijs)||0);
+    klantOmzet[b.naam].count++;
+    if(b.levdatum>klantOmzet[b.naam].laatste)klantOmzet[b.naam].laatste=b.levdatum;
+  });
+  var topKlanten=Object.entries(klantOmzet).sort(function(a,b){return b[1].omzet-a[1].omzet;}).slice(0,10);
+  if(topKlanten.length>0){
+    var maxKlantOmzet=topKlanten[0][1].omzet||1;
+    rptHtml+='<div class="rpt-section"><div class="rpt-title">Top klanten <span style="font-weight:400;font-size:11px;color:var(--tx3)">(op omzet)</span></div>';
+    topKlanten.forEach(function(entry,i){
+      var k=entry[1];
+      var pct=Math.round(k.omzet/maxKlantOmzet*100);
+      rptHtml+='<div class="rpt-bar-wrap">'
+        +'<div class="rpt-bar-lbl">'
+        +'<span><strong style="font-size:11px;color:var(--tx3);margin-right:6px">'+(i+1)+'</strong>'+esc(entry[0])+'</span>'
+        +'<span>€ '+fmtRound(k.omzet)+' · '+k.count+'×'+(k.laatste?' · '+fmtShort(k.laatste):'')+'</span>'
+        +'</div>'
+        +'<div class="rpt-bar-bg"><div class="rpt-bar-fill" style="width:'+pct+'%;background:var(--sky)"></div></div>'
+        +'</div>';
+    });
+    rptHtml+='</div>';
+  }
+
+  // ── SEIZOENSANALYSE ────────────────────────────────────
+  var weekdagTelling=Array(7).fill(0);
+  var seizoenTelling={'lente':0,'zomer':0,'herfst':0,'winter':0};
+  boekingen.forEach(function(b){
+    if(!b.levdatum)return;
+    var dt=new Date(b.levdatum+'T00:00:00');
+    weekdagTelling[dt.getDay()]++;
+    var m=dt.getMonth();
+    if(m>=2&&m<=4)seizoenTelling.lente++;
+    else if(m>=5&&m<=7)seizoenTelling.zomer++;
+    else if(m>=8&&m<=10)seizoenTelling.herfst++;
+    else seizoenTelling.winter++;
+  });
+  var DAGN=['Zo','Ma','Di','Wo','Do','Vr','Za'];
+  var maxWd=Math.max(1,...weekdagTelling);
+  var maxSeiz=Math.max(1,...Object.values(seizoenTelling));
+  rptHtml+='<div class="rpt-section"><div class="rpt-title">Seizoensanalyse</div>';
+  rptHtml+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">';
+  // Weekdagen
+  rptHtml+='<div><div style="font-size:11px;color:var(--tx3);margin-bottom:8px;font-weight:600">Boekingen per weekdag</div>';
+  weekdagTelling.forEach(function(n,i){
+    var pct=Math.round(n/maxWd*100);
+    var isWeekend=i===0||i===6;
+    rptHtml+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">'
+      +'<span style="font-size:11px;width:20px;color:var(--tx2);flex-shrink:0">'+(isWeekend?'<strong>'+DAGN[i]+'</strong>':DAGN[i])+'</span>'
+      +'<div style="flex:1;background:var(--bg2);border-radius:2px;height:12px;overflow:hidden">'
+      +'<div style="height:100%;width:'+pct+'%;background:'+(isWeekend?'var(--sky)':'#97C459')+';border-radius:2px"></div></div>'
+      +'<span style="font-size:11px;color:var(--tx3);width:20px;text-align:right">'+n+'</span>'
+      +'</div>';
+  });
+  rptHtml+='</div>';
+  // Seizoenen
+  var SEIZ_ICON={lente:'🌸',zomer:'☀️',herfst:'🍂',winter:'❄️'};
+  rptHtml+='<div><div style="font-size:11px;color:var(--tx3);margin-bottom:8px;font-weight:600">Boekingen per seizoen</div>';
+  Object.entries(seizoenTelling).forEach(function(entry){
+    var pct=Math.round(entry[1]/maxSeiz*100);
+    rptHtml+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
+      +'<span style="font-size:14px;width:22px">'+SEIZ_ICON[entry[0]]+'</span>'
+      +'<div style="flex:1"><div style="font-size:11px;color:var(--tx2);margin-bottom:2px">'+entry[0].charAt(0).toUpperCase()+entry[0].slice(1)+' ('+entry[1]+')</div>'
+      +'<div style="background:var(--bg2);border-radius:2px;height:10px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:var(--sky);border-radius:2px"></div></div></div>'
+      +'</div>';
+  });
+  rptHtml+='</div>';
+  rptHtml+='</div></div>';
+
+  // ── EXPORT ────────────────────────────────────────────────
+  rptHtml+='<div class="rpt-section"><div class="rpt-title">Export</div>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
+    +'<button onclick="window.print()" class="fb" style="font-size:12px;padding:7px 16px"><i class="ti ti-printer" style="font-size:12px"></i> Print rapport</button>'
+    +'<button onclick="exportCSV()" class="fb" style="font-size:12px;padding:7px 16px"><i class="ti ti-file-spreadsheet" style="font-size:12px"></i> Export CSV</button>'
+    +'</div></div>';
+
+  // Sluit rpt-wrap
+  rptHtml+='</div>';
   content.innerHTML=rptHtml;
+}
+
+function exportCSV(){
+  var cols=['ID','Naam','Adres','Tel','Email','Leverdatum','Levuur','Ophaaldatum','Ophuur','Materiaal','Prijs','Betaling','Status','Opstellers','Opmerking','Voltooid'];
+  var rows=[cols.join(';')];
+  boekingen.forEach(function(b){
+    rows.push([
+      b.id,
+      '"'+(b.naam||'').replace(/"/g,'""')+'"',
+      '"'+(b.adres||'').replace(/"/g,'""')+'"',
+      b.tel||'',
+      b.email||'',
+      b.levdatum||'',
+      b.levuur||'',
+      b.ophdatum||'',
+      b.ophuur||'',
+      '"'+(b.materiaal||'').replace(/\n/g,' | ').replace(/"/g,'""')+'"',
+      b.prijs||'',
+      b.betaling||'',
+      (STATUSSEN[b.status]||''),
+      '"'+(b.opstellers||[]).join(', ')+'"',
+      '"'+(b.opmerking||'').replace(/"/g,'""')+'"',
+      b.voltooid?'Ja':'Nee'
+    ].join(';'));
+  });
+  var csv='\uFEFF'+rows.join('\r\n'); // BOM voor Excel compatibiliteit
+  var blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='familyrent-boekingen-'+today()+'.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  banner('ok','CSV geëxporteerd — openen in Excel');
 }
 
 /* DETAIL MODAL */
@@ -6266,6 +6429,212 @@ function detecteerExtraMateriaal(productnaam){
   return null;
 }
 
+// ═══════════════════════════════════════════════════════════
+// DIGITALE HANDTEKENING — Canvas tekenveld
+// ═══════════════════════════════════════════════════════════
+var _htk={drawing:false, ctx:null, canvas:null, boekingId:null};
+var HANDTEKENING_KEY='fr_handtekeningen_v1';
+
+// ═══════════════════════════════════════════════════════════
+// FACTUUR GENERATOR — Print-naar-PDF via browser
+// ═══════════════════════════════════════════════════════════
+var _factuurNr = null;
+function nextFactuurNr(){
+  var key='fr_factuur_nr_v1';
+  var n=0;
+  try{n=parseInt(localStorage.getItem(key)||'0');}catch(e){}
+  n++;
+  try{localStorage.setItem(key,String(n));}catch(e){}
+  return 'FAM-'+new Date().getFullYear()+'-'+String(n).padStart(4,'0');
+}
+
+function portalLink(boekingId){
+  var token=btoa(String(boekingId)).slice(0,8);
+  var base=location.href.split('/').slice(0,-1).join('/');
+  return base+'/portal.html?id='+boekingId+'&t='+token;
+}
+
+function kopieerPortalLink(boekingId){
+  var url=portalLink(boekingId);
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(url).then(function(){banner('ok','Portaallink gekopieerd — stuur naar klant');});
+  } else {
+    prompt('Kopieer deze link voor de klant:',url);
+  }
+}
+
+function genereerfactuur(boekingId){
+  var b=boekingen.find(function(x){return x.id===boekingId;});
+  if(!b){banner('er','Boeking niet gevonden.');return;}
+  var nr=nextFactuurNr();
+  var items=matchProducten(b.materiaal||'');
+  var excl=0, btw=0;
+  var lijstHtml='';
+  items.forEach(function(m){
+    if(!m.product)return;
+    var prijs=m.product.incl*m.aantal;
+    var exclItem=Math.round(m.product.excl*m.aantal*100)/100;
+    var btwItem=Math.round((prijs-exclItem)*100)/100;
+    excl+=exclItem; btw+=btwItem;
+    lijstHtml+='<tr><td>'+m.aantal+'×</td><td>'+esc(m.product.naam)+'</td>'
+      +'<td style="text-align:right">€ '+m.product.excl.toFixed(2)+'</td>'
+      +'<td style="text-align:right">€ '+exclItem.toFixed(2)+'</td></tr>';
+  });
+  // Als geen producten herkend: gebruik manuele prijs
+  var totaalIncl=parseFloat(b.prijs)||Math.round((excl+btw)*100)/100;
+  if(items.filter(function(m){return m.product;}).length===0){
+    excl=Math.round(totaalIncl/1.21*100)/100;
+    btw=totaalIncl-excl;
+    lijstHtml='<tr><td>1×</td><td>'+esc(b.materiaal||'Verhuur feestmateriaal')+'</td>'
+      +'<td style="text-align:right">—</td><td style="text-align:right">€ '+excl.toFixed(2)+'</td></tr>';
+  }
+  var htk=handtekeningLaad(boekingId);
+  var factuurHtml='<!DOCTYPE html><html lang="nl"><head><meta charset="UTF-8">'
+    +'<title>Factuur '+nr+'</title>'
+    +'<style>'
+    +'*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:12px;color:#222;padding:40px}'
+    +'.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px}'
+    +'.logo{font-size:22px;font-weight:700;color:#0C1135}' 
+    +'.logo-sub{font-size:11px;color:#666;margin-top:2px}'
+    +'.factuur-info{text-align:right}.factuur-nr{font-size:18px;font-weight:700;color:#0C1135}'
+    +'.sectie{margin-bottom:24px}.sectie-titel{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#888;margin-bottom:6px;border-bottom:1px solid #eee;padding-bottom:4px}'
+    +'table{width:100%;border-collapse:collapse}th{background:#0C1135;color:#fff;padding:8px 10px;text-align:left;font-size:11px}'
+    +'td{padding:7px 10px;border-bottom:1px solid #f0f0f0;font-size:12px}'
+    +'.totaal-blok{margin-left:auto;width:280px;margin-top:16px}'
+    +'.totaal-rij{display:flex;justify-content:space-between;padding:4px 0;font-size:12px}'
+    +'.totaal-rij.btw{color:#666}.totaal-rij.grand{border-top:2px solid #0C1135;margin-top:6px;padding-top:8px;font-weight:700;font-size:14px}'
+    +'.betaling-blok{margin-top:32px;padding:14px;background:#f8f9fe;border-radius:6px;font-size:11px;color:#444}'
+    +'.betaling-blok strong{display:block;margin-bottom:4px}'
+    +'.htk-blok{margin-top:24px;border:.5px solid #ddd;border-radius:6px;padding:12px;display:flex;align-items:flex-end;gap:20px}'
+    +'.voet{margin-top:40px;font-size:10px;color:#999;text-align:center;border-top:1px solid #eee;padding-top:12px}'
+    +'@media print{@page{margin:15mm}}'
+    +'</style></head><body>'
+    +'<div class="hdr">'
+    +'<div><div class="logo">🚛 Familyrent</div><div class="logo-sub">Verhuur van feestmateriaal<br>Callamerenstraat 24, 9120 Kallo<br>info@familyrent.be · 0497 03 52 23<br>BTW BE0000.000.000</div></div>'
+    +'<div class="factuur-info"><div class="factuur-nr">FACTUUR</div><div style="font-size:13px;font-weight:600">'+nr+'</div><div style="font-size:11px;color:#666;margin-top:4px">Datum: '+fmtDate(today())+'<br>Levering: '+fmtDate(b.levdatum)+'</div></div>'
+    +'</div>'
+    +'<div class="sectie"><div class="sectie-titel">Klant</div>'
+    +'<strong>'+esc(b.naam)+'</strong><br>'+esc(b.adres||'')+(b.tel?'<br>'+esc(b.tel):'')+(b.email?'<br>'+esc(b.email):'')
+    +'</div>'
+    +'<div class="sectie"><div class="sectie-titel">Prestaties</div>'
+    +'<table><thead><tr><th width="50">Aantal</th><th>Omschrijving</th><th width="100" style="text-align:right">Eenheidsprijs</th><th width="100" style="text-align:right">Totaal excl.</th></tr></thead>'
+    +'<tbody>'+lijstHtml+'</tbody></table>'
+    +'<div class="totaal-blok">'
+    +'<div class="totaal-rij"><span>Subtotaal excl. BTW</span><span>€ '+excl.toFixed(2)+'</span></div>'
+    +'<div class="totaal-rij btw"><span>BTW 21%</span><span>€ '+btw.toFixed(2)+'</span></div>'
+    +'<div class="totaal-rij grand"><span>TOTAAL INCL. BTW</span><span>€ '+totaalIncl.toFixed(2)+'</span></div>'
+    +'</div></div>'
+    +'<div class="betaling-blok"><strong>Betaalinstructies</strong>'
+    +'Gelieve te betalen binnen 14 dagen op rekening BE00 0000 0000 0000<br>'
+    +'met mededeling: '+nr+' — '+esc(b.naam)+'<br>'
+    +(b.betaling&&b.betaling!=='Nog te betalen'?'<span style="color:#27500A;font-weight:600">✓ Betaald via '+esc(b.betaling)+'</span>':'')
+    +'</div>'
+    +(htk?'<div class="htk-blok"><div><div style="font-size:10px;color:#888;margin-bottom:4px">Handtekening ontvangst</div><img src="'+htk+'" style="max-height:60px;border:.5px solid #ddd;border-radius:4px;background:#fff"></div><div style="flex:1;border-bottom:1px solid #ccc;margin-bottom:4px"></div></div>':'')
+    +'<div class="voet">Familyrent BV · Callamerenstraat 24, 9120 Kallo · BE0000.000.000 · info@familyrent.be</div>'
+    +'</body></html>';
+
+  var win=window.open('','_blank','width=800,height=900');
+  if(!win){banner('er','Popup geblokkeerd — sta popups toe voor deze site.');return;}
+  win.document.write(factuurHtml);
+  win.document.close();
+  setTimeout(function(){win.print();},600);
+}
+
+function handtekeningInit(){
+  var canvas=document.getElementById('handtekening-canvas');
+  if(!canvas)return;
+  _htk.canvas=canvas;
+  _htk.ctx=canvas.getContext('2d');
+  // Stel canvasbreedte in op werkelijke breedte
+  canvas.width=canvas.offsetWidth||340;
+  _htk.ctx.strokeStyle='#0C1135';
+  _htk.ctx.lineWidth=2.5;
+  _htk.ctx.lineCap='round';
+  _htk.ctx.lineJoin='round';
+
+  // Laad bestaande handtekening als die er is
+  if(_htk.boekingId){
+    var opgeslagen=handtekeningLaad(_htk.boekingId);
+    if(opgeslagen){
+      var img=new Image();
+      img.onload=function(){_htk.ctx.drawImage(img,0,0);};
+      img.src=opgeslagen;
+      document.getElementById('handtekening-status').textContent='✓ Eerder ondertekend';
+    }
+  }
+
+  function pos(e){
+    var r=canvas.getBoundingClientRect();
+    var x=(e.clientX||e.touches[0].clientX)-r.left;
+    var y=(e.clientY||e.touches[0].clientY)-r.top;
+    return {x:x*(canvas.width/r.width), y:y*(canvas.height/r.height)};
+  }
+  canvas.onmousedown=canvas.ontouchstart=function(e){
+    e.preventDefault();
+    _htk.drawing=true;
+    var p=pos(e);
+    _htk.ctx.beginPath();
+    _htk.ctx.moveTo(p.x,p.y);
+  };
+  canvas.onmousemove=canvas.ontouchmove=function(e){
+    if(!_htk.drawing)return;
+    e.preventDefault();
+    var p=pos(e);
+    _htk.ctx.lineTo(p.x,p.y);
+    _htk.ctx.stroke();
+  };
+  canvas.onmouseup=canvas.ontouchend=function(){_htk.drawing=false;};
+  canvas.onmouseleave=function(){_htk.drawing=false;};
+}
+
+function handtekeningWis(){
+  if(!_htk.ctx||!_htk.canvas)return;
+  _htk.ctx.clearRect(0,0,_htk.canvas.width,_htk.canvas.height);
+  document.getElementById('handtekening-status').textContent='';
+}
+
+function handtekeningOpslaan(){
+  if(!_htk.canvas||!_htk.boekingId)return;
+  // Check of canvas leeg is
+  var data=_htk.ctx.getImageData(0,0,_htk.canvas.width,_htk.canvas.height).data;
+  var leeg=!data.some(function(v,i){return i%4===3&&v>0;});
+  if(leeg){banner('er','Teken eerst een handtekening.');return;}
+  var dataUrl=_htk.canvas.toDataURL('image/png');
+  // Sla op in localStorage
+  try{
+    var alle=JSON.parse(localStorage.getItem(HANDTEKENING_KEY)||'{}');
+    alle[_htk.boekingId]={data:dataUrl,ts:Date.now(),datum:today()};
+    localStorage.setItem(HANDTEKENING_KEY,JSON.stringify(alle));
+  }catch(e){banner('er','Opslaan mislukt (opslag vol?).');return;}
+  // Markeer boeking als getekend
+  var b=boekingen.find(function(x){return x.id===_htk.boekingId;});
+  if(b){
+    b.handtekening=today();
+    saveC(boekingen);window._lastSaveTS=Date.now();
+    api({action:'save',body:{action:'save',boeking:b}}).catch(function(){queueVoegToe('save',{action:'save',boeking:b});});
+  }
+  document.getElementById('handtekening-status').textContent='✓ Ondertekend op '+fmtDate(today());
+  banner('ok','Handtekening opgeslagen — boeking bevestigd');
+}
+
+function handtekeningLaad(boekingId){
+  try{
+    var alle=JSON.parse(localStorage.getItem(HANDTEKENING_KEY)||'{}');
+    return alle[boekingId]?alle[boekingId].data:null;
+  }catch(e){return null;}
+}
+
+function handtekeningBekijk(boekingId){
+  var data=handtekeningLaad(boekingId);
+  if(!data){banner('er','Geen handtekening gevonden voor deze boeking.');return;}
+  var mo=document.getElementById('ai-mo');
+  if(!mo){mo=document.createElement('div');mo.id='ai-mo';mo.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px';mo.onclick=function(e){if(e.target===mo)mo.remove();};document.body.appendChild(mo);}
+  mo.innerHTML='<div style="background:var(--bg1);border-radius:var(--rl);padding:20px;max-width:400px;width:100%">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><strong style="font-size:14px;color:var(--tx1)"><i class="ti ti-signature" style="color:var(--sky);margin-right:6px"></i>Handtekening</strong><button onclick="document.getElementById(\'ai-mo\').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--tx2)">✕</button></div>'
+    +'<img src="'+data+'" style="width:100%;border:.5px solid var(--bl);border-radius:var(--rm);background:#fff">'
+    +'</div>';
+}
+
 function openLaadbriefje(id){
   const b=boekingen.find(x=>x.id===id);if(!b)return;
   // Laad persistente checkboxstatus
@@ -6333,6 +6702,9 @@ function openLaadbriefje(id){
     +(huidigWagen?'✕ Wis':'— Geen')+'</button>';
   }
   window._laadBoekingId = id;
+  _htk.boekingId = id;
+  // Init handtekening canvas na DOM render
+  setTimeout(handtekeningInit, 100);
   // Header info
   document.getElementById('laad-sub').textContent=b.naam+' — '+fmtDate(b.levdatum)+' om '+b.levuur;
   document.getElementById('laad-info').innerHTML=`
@@ -6985,6 +7357,7 @@ async function stuurBevestigingsmail(b){
         +'Tot dan! 🎉\nHet Familyrent-team';
     }
 
+    if(typeof emailjs==='undefined'){console.warn('EmailJS niet geladen — mail niet verstuurd');return false;}
     await emailjs.send(
       window.FR_CONFIG.emailjs_service,
       window.FR_CONFIG.emailjs_template_klant,
@@ -7011,6 +7384,7 @@ async function stuurBevestigingsmail(b){
 async function aiVerstuurHerinneringsmail(boekingId){
   var b=window._aiMailBoeking||boekingen.find(function(x){return x.id==boekingId;});
   if(!b||!b.email||!window._aiMailTekst){banner('er','Geen mailtekst beschikbaar.');return;}
+  if(typeof emailjs==='undefined'){banner('er','EmailJS niet geladen — herlaad de pagina.');return;}
   try{
     await emailjs.send('service_3y294mh','template_6zmn5tp',{
       to_name:b.naam,
@@ -7028,11 +7402,15 @@ async function aiVerstuurHerinneringsmail(boekingId){
 
 // AI-toolbar: toon in detail modal
 function renderAIKnoppen(id){
+  var htk=handtekeningLaad(id);
   return '<div style="margin-top:12px;padding-top:12px;border-top:.5px solid var(--bl)">'
     +'<div style="font-size:11px;font-weight:600;color:var(--sky);margin-bottom:8px;display:flex;align-items:center;gap:5px"><i class="ti ti-robot"></i> AI Assistent</div>'
     +'<div style="display:flex;flex-wrap:wrap;gap:6px">'
     +'<button class="fb" style="font-size:11px;padding:5px 10px" onclick="aiAlternatiefVoorConflict('+id+')"><i class="ti ti-calendar-search" style="font-size:11px"></i> Alternatieve data</button>'
     +'<button class="fb" style="font-size:11px;padding:5px 10px" onclick="aiHerinneringsmail('+id+')"><i class="ti ti-mail" style="font-size:11px"></i> Herinneringsmail</button>'
+    +(htk?'<button class="fb" style="font-size:11px;padding:5px 10px;border-color:#3B6D11;color:#3B6D11" onclick="handtekeningBekijk('+id+')"><i class="ti ti-signature" style="font-size:11px"></i> ✓ Handtekening</button>':'<button class="fb" style="font-size:11px;padding:5px 10px" onclick="openLaadbriefje('+id+')"><i class="ti ti-signature" style="font-size:11px"></i> Ondertekenen</button>')
+    +'<button class="fb" style="font-size:11px;padding:5px 10px" onclick="kopieerPortalLink('+id+')"><i class="ti ti-link" style="font-size:11px"></i> Portaallink klant</button>'
+    +'<button class="fb" style="font-size:11px;padding:5px 10px" onclick="genereerfactuur('+id+')"><i class="ti ti-file-invoice" style="font-size:11px"></i> Factuur PDF</button>'
     +'</div></div>';
 }
 
