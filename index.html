@@ -2851,6 +2851,10 @@ function _buildDashboard(){
     // Bereken gemiddeld aantal boekingen per weekend in het verleden
     // mon is al gedefinieerd in de bovenste scope van _buildDashboard
     var weekendTelling={};
+    boekingen.forEach(function(b){
+      if(!b.levdatum) return;
+      var bd=new Date(b.levdatum+'T00:00:00');
+      var dag=bd.getDay(); // 6=za, 0=zo
       if(dag!==6&&dag!==0) return;
       // Gebruik zaterdag als weekendsleutel
       var za=new Date(b.levdatum+'T00:00:00');
