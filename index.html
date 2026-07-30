@@ -172,38 +172,9 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 .opmerking-block{background:#FAEEDA;border-left:3px solid #EF9F27;border-radius:0 var(--rm) var(--rm) 0;padding:7px 10px;margin-top:7px;font-size:12px;color:#633806;display:flex;gap:6px;align-items:flex-start}
 
 /* TIJDLIJN */
-.tl-dag{margin-bottom:20px}
-.tl-dag-hdr{background:var(--navy);color:#fff;padding:7px 13px;border-radius:var(--rm);font-size:13px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:7px}
-.tl-bb-block{background:var(--bg1);border:.5px solid var(--bl);border-radius:var(--rl);margin-bottom:10px;overflow:hidden}
-.tl-bb-hdr{background:var(--bg2);padding:8px 14px;display:flex;align-items:center;gap:8px;border-bottom:.5px solid var(--bl)}
-.tl-bb-av{width:28px;height:28px;border-radius:50%;background:#E6F1FB;color:#0C447C;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
-.tl-bb-nm{font-size:13px;font-weight:600;color:var(--tx1)}
-.tl-bb-ct{font-size:11px;color:var(--tx2);margin-left:auto}
-.tl-events{padding:8px 14px;display:flex;flex-direction:column;gap:7px}
-.tl-event{display:flex;align-items:stretch;gap:10px;padding:9px 12px;border-radius:var(--rm);cursor:pointer;transition:opacity .15s;border:.5px solid transparent}
-.tl-event:hover{opacity:.85}
 
-.tl-event-lev{background:#E6F1FB;border-color:#B5D4F4}
-.tl-event-oph{background:#EAF3DE;border-color:#97C459}
-[data-theme="dark"] .tl-event-lev{background:#0C447C;border-color:#185FA5}
-[data-theme="dark"] .tl-event-oph{background:#173404;border-color:#3B6D11}
-@media(prefers-color-scheme:dark){
-  :root:not([data-theme="light"]) .tl-event-lev{background:#0C447C;border-color:#185FA5}
-  :root:not([data-theme="light"]) .tl-event-oph{background:#173404;border-color:#3B6D11}
-}
-.tl-event-time{font-size:15px;font-weight:700;min-width:42px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:0}
-.tl-event-time-val{line-height:1}
-.tl-event-lev .tl-event-time{color:#0C447C}
-.tl-event-oph .tl-event-time{color:#27500A}
-.tl-event-sep{width:1px;background:var(--bl);flex-shrink:0}
-.tl-event-info{flex:1;min-width:0}
-.tl-event-type{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
-.tl-event-lev .tl-event-type{color:#185FA5}
-.tl-event-oph .tl-event-type{color:#3B6D11}
-.tl-event-naam{font-size:13px;font-weight:600;color:var(--tx1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tl-event-adres{font-size:11px;color:var(--tx2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tl-event-mat{font-size:11px;color:var(--tx2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tl-event-opm{font-size:11px;color:#854F0B;margin-top:3px;display:flex;align-items:center;gap:3px}
+[data-theme="dark"] [data-theme="dark"] @media(prefers-color-scheme:dark){
+  :root:not([data-theme="light"])   :root:not([data-theme="light"]) }
 
 /* BUTTONS */
 .bsm{font-size:11px;padding:6px 12px;min-height:44px;min-width:44px;border-radius:var(--rm);border:.5px solid var(--bm);background:transparent;cursor:pointer;font-family:'Poppins',sans-serif;color:var(--tx2);display:inline-flex;align-items:center;gap:4px}
@@ -830,7 +801,6 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 <div class="tabs" id="tabs">
   <button class="tab active" onclick="showTab('dashboard')" id="tab-dashboard"><i class="ti ti-layout-dashboard" aria-hidden="true"></i> Dashboard</button>
   <button class="tab" onclick="showTab('planning')" id="tab-planning"><i class="ti ti-layout-list" aria-hidden="true"></i> Planning</button>
-  <button class="tab" onclick="showTab('tijdlijn')" id="tab-tijdlijn"><i class="ti ti-timeline" aria-hidden="true"></i> Tijdlijn</button>
   <button class="tab" onclick="showTab('kalender')" id="tab-kalender"><i class="ti ti-calendar-month" aria-hidden="true"></i> Kalender</button>
   <button class="tab" onclick="showTab('rit')" id="tab-rit"><i class="ti ti-route" aria-hidden="true"></i> Ritplanning</button>
   <button class="tab" onclick="showTab('mijn')" id="tab-mijn"><i class="ti ti-user" aria-hidden="true"></i> Mijn planning</button>
@@ -877,13 +847,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 </div>
 
 <!-- TIJDLIJN -->
-<div class="view" id="view-tijdlijn">
-  <div class="fbar" style="margin-bottom:14px">
-    <span style="font-size:12px;color:var(--tx2);margin-right:4px">Datum:</span>
-    <div id="tl-date-sel" style="display:flex;gap:6px;flex-wrap:wrap"></div>
-  </div>
-  <div id="tl-content"><div class="empty"><i class="ti ti-timeline"></i>Voeg boekingen toe om de tijdlijn te zien.</div></div>
-</div>
+
 
 <!-- KALENDER -->
 <div class="view" id="view-kalender">
@@ -1004,7 +968,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
     <div class="fsec">
       <div class="fsec-title"><i class="ti ti-user" aria-hidden="true"></i> Klantgegevens</div>
       <div class="frow">
-        <div class="fg"><label class="fl">Naam klant / bedrijf <span class="req">*</span></label><input class="fi" id="f-naam" placeholder="bv. Familie Janssen"></div>
+        <div class="fg"><label class="fl">Naam klant / bedrijf <span class="req">*</span></label><input class="fi" id="f-naam" placeholder="bv. Familie Janssen" oninput="acZoek(this.value)" onblur="setTimeout(acSluit,200)" autocomplete="off"></div>
         <div class="fg"><label class="fl">Telefoonnummer</label><input class="fi" id="f-tel" placeholder="bv. 0478 12 34 56"></div>
       </div>
       <div class="frow">
@@ -1401,7 +1365,6 @@ function matchCacheOpslaan(){
 // vrCheckBoeking resultaten cachen — wordt per boeking PER RENDER aangeroepen
 // zonder cache is dit O(N²): N boekingen × vrCheckBoeking loopt over alle N boekingen
 var _vrCheckCache = new Map();
-function vrCheckCache_invalideer(){ _vrCheckCache.clear(); }
 function vrCheckBoekingCached(b){
   // Cache key: id + materiaal + datums — invalideer bij elke wijziging
   var key=b.id+'|'+(b.materiaal||'')+'|'+b.levdatum+'|'+(b.ophdatum||'');
@@ -1529,7 +1492,6 @@ let boekingen=[],editId=null,activeFilter='vandaag',lastSavedId=null,pinUnlocked
 let fs={vertrek:null,matStatus:null,status:null};
 let takens=[];
 
-function fmtNr(n){return n.toLocaleString('nl-BE',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function fmtRound(n){return Math.round(Number(n)||0).toLocaleString('nl-BE');}
 const fmtDate=d=>{const dt=new Date(d+'T00:00:00');return NLD[dt.getDay()]+' '+dt.getDate()+' '+NLM[dt.getMonth()]};
 const fmtShort=d=>{const dt=new Date(d+'T00:00:00');return dt.getDate()+' '+NLM[dt.getMonth()].slice(0,3)};
@@ -1649,7 +1611,14 @@ async function loadData(){
     const _cacheMap={};
     _cacheVoorMerge.forEach(function(cb){if(cb&&cb.id)_cacheMap[Number(cb.id)]=cb;});
 
-    boekingen=data.map(normB).filter(b=>b&&b.id&&b.naam&&b.levdatum).map(function(b){
+    var _rauw=data.map(normB);
+    var _geldig=_rauw.filter(b=>b&&b.id&&b.naam&&b.levdatum);
+    var _ongeldigN=_rauw.filter(Boolean).length-_geldig.length;
+    if(_ongeldigN>0){
+      console.warn(_ongeldigN+' boeking(en) met ongeldige data overgeslagen — controleer de Google Sheet');
+      setTimeout(function(){banner('er','⚠️ '+_ongeldigN+' boeking(en) in de Sheet hebben een ongeldige datum of ontbrekende naam en worden niet getoond.');},1500);
+    }
+    boekingen=_geldig.map(function(b){
       const cached=_cacheMap[b.id];
       if(cached){
         if((!b.opstellers_lev||b.opstellers_lev.length===0)&&cached.opstellers_lev&&cached.opstellers_lev.length>0)
@@ -1700,7 +1669,6 @@ async function loadData(){
   if(document.getElementById('view-planning').classList.contains('active')) renderPlanning();
   if(document.getElementById('view-kalender').classList.contains('active')) renderKalender();
   if(document.getElementById('view-dashboard').classList.contains('active')) renderDashboard();
-  if(document.getElementById('view-tijdlijn').classList.contains('active')) renderTijdlijn();
   if(document.getElementById('view-rit').classList.contains('active')) renderRit();
   if(document.getElementById('view-mijn').classList.contains('active')) renderBBGrid();
   // Queue-badge altijd bijwerken
@@ -1811,7 +1779,6 @@ function showTab(tab){
   if(tab==='dashboard')renderDashboard();
   if(tab==='planning')renderPlanning();
   if(tab==='betalen')renderBetalen();
-  if(tab==='tijdlijn')renderTijdlijn();
   if(tab==='kalender')renderKalender();
   if(tab==='rit'){laadLeafletLazy(function(){renderRit();setTimeout(function(){if(_ritKaart)_ritKaart.invalidateSize();},300);});}
   if(tab==='mijn')renderBBGrid();
@@ -1902,7 +1869,6 @@ function setStatus(idx,btn){
     b.className='status-opt'+(i===idx?' active-s'+i:'');
   });
 }
-function togOp(btn){if(btn.classList.contains('and-tog'))return;btn.classList.toggle('sel');}
 function togOpLev(btn){if(btn.classList.contains('and-tog-lev'))return;btn.classList.toggle('sel');}
 function togOpOph(btn){if(btn.classList.contains('and-tog-oph'))return;btn.classList.toggle('sel');}
 // Gecombineerde togAndere — sfx = '' | '-lev' | '-oph'
@@ -2076,38 +2042,15 @@ function ppSaveToField(){
     }
   });
   field.value=lines.join('\n');
-  // Automatische prijssuggestie: vul prijs enkel in als nog leeg of vorige was ook auto
+  // Automatische prijssuggestie: eenvoudige som van catalogusprijzen
   var prijsField=document.getElementById('f-prijs');
   if(prijsField&&totaalPrijs>0){
     var huidig=parseFloat(prijsField.value)||0;
     if(huidig===0||prijsField.dataset.autoprijs==='1'){
-      // Dynamische prijszetting: check bezettingsgraad voor de geselecteerde datum
-      var datumEl=document.getElementById('f-levdatum');
-      var datum=datumEl?datumEl.value:'';
-      var dynamischeFactor=1.0;
-      var dynamischeTekst='';
-      if(datum){
-        // Tel hoeveel boekingen er al zijn op die datum
-        var boekOpDatum=boekingen.filter(function(b){
-          return !b.voltooid&&(b.levdatum===datum||b.ophdatum===datum);
-        }).length;
-        var gemPerDag=boekingen.length>30?boekingen.length/30:1;
-        var bezPct=boekOpDatum/Math.max(gemPerDag,1);
-        if(bezPct>=1.5){dynamischeFactor=1.15;dynamischeTekst='🔴 Drukke dag (+15%)';}
-        else if(bezPct>=1.0){dynamischeFactor=1.10;dynamischeTekst='🟠 Bezette dag (+10%)';}
-        else if(bezPct<=0.3&&datum.endsWith('-06')||datum.endsWith('-07')||datum.endsWith('-08')){
-          // Rustig in zomermaanden → toch geen korting (vraag is seizoensgebonden)
-          dynamischeFactor=1.0;
-        }
-      }
-      var aangepastePrijs=Math.round(totaalPrijs*dynamischeFactor);
-      prijsField.value=aangepastePrijs;
+      prijsField.value=totaalPrijs;
       prijsField.dataset.autoprijs='1';
       var ind=document.getElementById('prijs-suggestie-info');
-      if(ind){
-        ind.textContent='💡 Catalogusprijs: €'+totaalPrijs+(dynamischeFactor>1?' → €'+aangepastePrijs+' ('+dynamischeTekst+') — aanpasbaar':'— aanpasbaar');
-        ind.style.color=dynamischeFactor>1.12?'#A32D2D':dynamischeFactor>1?'#854F0B':'var(--sky)';
-      }
+      if(ind){ind.textContent='💡 Catalogusprijs: €'+totaalPrijs+' — aanpasbaar';ind.style.color='var(--sky)';}
     }
   } else if(totaalPrijs===0){
     var ind2=document.getElementById('prijs-suggestie-info');
@@ -2359,6 +2302,9 @@ async function saveBoeking(){
 function renderPlanning(){
   try{
   updateStats();
+  // Wagen data 1× laden per render (niet per kaart)
+  window._renderBW=laadBoekingWagens();
+  window._renderWagens=laadWagens();
   const container=document.getElementById('plan-list');
   const q=(document.getElementById('srch').value||'').trim();
   const t=today(),mon=getMon(t);
@@ -2488,7 +2434,7 @@ function renderPlanning(){
             ${b.hasOph?`<span class="badge boph">Ophaling ${b.ophuur}</span>`:''}
             <span class="status-badge ${stCls}">${stLbl}</span>
             ${openTaken>0?`<span class="status-badge" style="background:#FCEBEB;color:#791F1F">${openTaken} taak${openTaken>1?'en':''}</span>`:''}
-            ${(function(){var bw=laadBoekingWagens();var wId=bw[b.id];if(!wId)return'';var wagens=laadWagens();var w=wagens.find(function(x){return x.id===wId;});if(!w)return'';return'<span class="status-badge" style="background:'+w.kleur+'22;color:'+w.kleur+';border:.5px solid '+w.kleur+'"><i class="ti ti-truck-delivery" style="font-size:9px"></i> '+esc(w.naam)+'</span>';})()}
+            ${(function(){var wId=window._renderBW&&window._renderBW[b.id];if(!wId)return'';var w=(window._renderWagens||[]).find(function(x){return x.id===wId;});if(!w)return'';return'<span class="status-badge" style="background:'+w.kleur+'22;color:'+w.kleur+';border:.5px solid '+w.kleur+'"><i class="ti ti-truck-delivery" style="font-size:9px"></i> '+esc(w.naam)+'</span>';})()}
           </div>
         </div>
         <div class="bcard-actions" data-id="${b.id}">
@@ -2708,7 +2654,12 @@ function _buildDashboard(){
   else if(uur>=17) greeting='Goedenavond';
 
   html+='<div class="db-datum" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px"><div><i class="ti ti-calendar" style="color:var(--sky)"></i> <strong>'+greeting+'</strong> — '+datumStr+'</div>'
+    +'<div style="display:flex;gap:6px;flex-wrap:wrap">'
+    +'<button onclick="beschikbaarheidOpen()" style="background:#2D6A1E;color:#fff;border:none;border-radius:var(--rm);padding:5px 12px;font-size:11px;cursor:pointer;font-family:\'Poppins\',sans-serif;display:flex;align-items:center;gap:5px;font-weight:600"><i class="ti ti-calendar-search" style="font-size:11px"></i> Is dit vrij?</button>'
+    +'<button onclick="aiBoekingUitTekst()" style="background:linear-gradient(135deg,#0C1135,#61ABED);color:#fff;border:none;border-radius:var(--rm);padding:5px 12px;font-size:11px;cursor:pointer;font-family:\'Poppins\',sans-serif;display:flex;align-items:center;gap:5px"><i class="ti ti-mail-fast" style="font-size:11px"></i> Mail → Boeking</button>'
     +'<button id="ai-opmerking-btn" onclick="aiOpmerkingCheck()" style="background:linear-gradient(135deg,#0C1135,#61ABED);color:#fff;border:none;border-radius:var(--rm);padding:5px 12px;font-size:11px;cursor:pointer;font-family:\'Poppins\',sans-serif;display:flex;align-items:center;gap:5px"><i class="ti ti-robot" style="font-size:11px"></i> Scan opmerkingen</button>'
+    +'<button onclick="agendaAbonnement()" style="background:transparent;color:var(--tx2);border:.5px solid var(--bm);border-radius:var(--rm);padding:5px 12px;font-size:11px;cursor:pointer;font-family:\'Poppins\',sans-serif;display:flex;align-items:center;gap:5px"><i class="ti ti-calendar-plus" style="font-size:11px"></i> Apple Agenda</button>'
+    +'</div>'
     +'</div>';
 
   // Stat blokken
@@ -2846,61 +2797,6 @@ function _buildDashboard(){
         +'</div>';
       html+='</div></div>';
     }
-  })();
-  (function(){
-    // Bereken gemiddeld aantal boekingen per weekend in het verleden
-    // mon is al gedefinieerd in de bovenste scope van _buildDashboard
-    var weekendTelling={};
-    boekingen.forEach(function(b){
-      if(!b.levdatum) return;
-      var bd=new Date(b.levdatum+'T00:00:00');
-      var dag=bd.getDay(); // 6=za, 0=zo
-      if(dag!==6&&dag!==0) return;
-      // Gebruik zaterdag als weekendsleutel
-      var za=new Date(b.levdatum+'T00:00:00');
-      if(dag===0) za.setDate(za.getDate()-1); // zondag → vorige zaterdag
-      var zaStr=za.toISOString().split('T')[0];
-      weekendTelling[zaStr]=(weekendTelling[zaStr]||0)+1;
-    });
-    var aantallen=Object.values(weekendTelling);
-    if(aantallen.length<3) return; // te weinig data voor voorspelling
-    var gem=aantallen.reduce(function(a,b){return a+b;},0)/aantallen.length;
-    var drempelDruk=gem*1.4, drempelLicht=gem*0.7;
-
-    // Komende 8 weekenden
-    var komend=[];
-    var nu=new Date(t+'T00:00:00');
-    for(var w=0;w<8;w++){
-      var za=new Date(nu);
-      var dag=za.getDay();
-      var diffZa=dag<=6?6-dag:0; // eerstvolgende zaterdag
-      if(dag===6) diffZa=7; // volgende zaterdag (niet vandaag als zaterdag)
-      za.setDate(za.getDate()+diffZa+w*7);
-      var zaStr=za.toISOString().split('T')[0];
-      var zo=new Date(za);zo.setDate(zo.getDate()+1);
-      var zoStr=zo.toISOString().split('T')[0];
-      var n=(weekendTelling[zaStr]||0);
-      // Voeg ook geplande boekingen van dat weekend toe
-      var gepland=boekingen.filter(function(b){return !b.voltooid&&(b.levdatum===zaStr||b.levdatum===zoStr||b.ophdatum===zaStr||b.ophdatum===zoStr);}).length;
-      komend.push({zaStr:zaStr,zoStr:zoStr,hist:n,gepland:gepland,druk:gepland>=drempelDruk||n>=drempelDruk,licht:gepland<drempelLicht&&n<drempelLicht});
-    }
-    var drukke=komend.filter(function(x){return x.druk;});
-    var rustige=komend.filter(function(x){return x.licht;});
-    if(drukke.length===0&&rustige.length===0) return;
-    html+='<div class="db-section">';
-    html+='<div class="db-sec-hdr"><div class="db-sec-hdr-left"><i class="ti ti-chart-bar" style="color:#EF9F27"></i> Weekendpredictor <span style="font-size:10px;font-weight:400;opacity:.7">(gem. '+Math.round(gem)+' boekingen/weekend)</span></div></div>';
-    html+='<div style="padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px">';
-    komend.forEach(function(x){
-      var kleur=x.druk?'#E24B4A':x.licht?'#3B6D11':'var(--tx2)';
-      var bg=x.druk?'rgba(226,75,74,.08)':x.licht?'rgba(59,109,17,.06)':'var(--bg2)';
-      var label=x.druk?'🔴 Druk':x.licht?'🟢 Rustig':'⚪ Normaal';
-      html+='<div style="padding:8px 12px;border-radius:var(--rm);border:.5px solid '+kleur+';background:'+bg+';font-size:11px;min-width:100px">'
-        +'<div style="font-weight:600;color:'+kleur+';margin-bottom:2px">'+fmtShort(x.zaStr)+' – '+fmtShort(x.zoStr)+'</div>'
-        +'<div style="color:var(--tx2)">'+label+'</div>'
-        +(x.gepland>0?'<div style="color:var(--tx3);margin-top:2px">'+x.gepland+' gepland</div>':'')
-        +'</div>';
-    });
-    html+='</div></div>';
   })();
   if(week7lev.length+week7oph.length > 0){
     html+='<div class="db-section">';
@@ -3055,93 +2951,6 @@ function renderDashboard(){
   setTimeout(wgHerlaad, 100);
 }
 
-function renderTijdlijn(){
-  const sel=document.getElementById('tl-date-sel'),content=document.getElementById('tl-content');
-  const dates=new Set();
-  boekingen.filter(b=>!(b.voltooid===true||b.voltooid==='true')).forEach(b=>{
-    if(b.levdatum)dates.add(b.levdatum);
-    if(b.ophdatum)dates.add(b.ophdatum);
-  });
-  const sorted=[...dates].filter(d=>d).sort();
-  if(sorted.length===0){sel.innerHTML='';content.innerHTML='<div class="empty"><i class="ti ti-timeline"></i>Voeg boekingen toe om de tijdlijn te zien.</div>';return;}
-  const t=today();
-  let selDate=sel.dataset.sel||sorted.find(d=>d>=t)||sorted[0];
-  if(!sorted.includes(selDate))selDate=sorted[0];
-  sel.dataset.sel=selDate;
-  // Datum knoppen met kleur op basis van drukte
-  sel.innerHTML=sorted.map(function(d){
-    var nBoek=boekingen.filter(function(b){return !b.voltooid&&(b.levdatum===d||b.ophdatum===d);}).length;
-    var dotKleur=nBoek===0?'transparent':nBoek>=5?'#E24B4A':nBoek>=3?'#EF9F27':'#61ABED';
-    var dotHtml=nBoek>0?'<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:'+dotKleur+';margin-left:4px;vertical-align:middle"></span>':'';
-    return '<button class="rit-db'+(d===selDate?' active':'')+'" style="'+(d<t?'opacity:.55':'')+'" onclick="tlSelDate(\''+d+'\')">'
-      +fmtShort(d)+dotHtml+'</button>';
-  }).join('');
-  const dayB=boekingen.filter(b=>(b.levdatum===selDate||b.ophdatum===selDate)&&!(b.voltooid===true||b.voltooid==='true'));
-  if(dayB.length===0){content.innerHTML='<div class="empty"><i class="ti ti-calendar-off"></i>Geen events op deze datum.</div>';return;}
-
-  // Bouw per belevingsbouwer een overzicht
-  const perBB={};
-  dayB.forEach(b=>{
-    const levBBs=(b.opstellers_lev&&b.opstellers_lev.length)?b.opstellers_lev:['Niet toegewezen'];
-    const ophBBs=(b.opstellers_oph&&b.opstellers_oph.length)?b.opstellers_oph:['Niet toegewezen'];
-    if(b.levdatum===selDate){
-      levBBs.forEach(nm=>{
-        if(!perBB[nm])perBB[nm]=[];
-        if(!perBB[nm].find(e=>e.id===b.id&&e.type==='lev'))
-          perBB[nm].push({type:'lev',id:b.id,naam:b.naam,adres:b.adres,uur:b.levuur||'09:00',materiaal:b.materiaal,opmerking:b.opmerking});
-      });
-    }
-    if(b.ophdatum===selDate){
-      ophBBs.forEach(nm=>{
-        if(!perBB[nm])perBB[nm]=[];
-        if(!perBB[nm].find(e=>e.id===b.id&&e.type==='oph'))
-          perBB[nm].push({type:'oph',id:b.id,naam:b.naam,adres:b.adres,uur:b.ophuur||'10:00',materiaal:b.materiaal,opmerking:b.opmerking});
-      });
-    }
-  });
-
-  // Sorteer events per BB op tijdstip
-  Object.values(perBB).forEach(events=>events.sort((a,b)=>timeToMin(a.uur)-timeToMin(b.uur)));
-
-  let html=`<div class="tl-dag"><div class="tl-dag-hdr" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-    <span><i class="ti ti-calendar"></i> ${fmtDate(selDate)} <span class="dc">${dayB.length} boeking${dayB.length!==1?'en':''}</span></span>
-    <span style="display:flex;gap:10px;font-size:11px;color:var(--tx2)">
-      <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#B5D4F4;display:inline-block"></span>Levering</span>
-      <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#CDECAA;display:inline-block"></span>Ophaling</span>
-    </span>
-  </div>`;
-
-  Object.entries(perBB).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([bb,events])=>{
-    html+=`<div class="tl-bb-block">
-      <div class="tl-bb-hdr">
-        <div class="tl-bb-av">${ini(bb)}</div>
-        <div class="tl-bb-nm">${esc(bb)}</div>
-        <div class="tl-bb-ct">${events.length} event${events.length!==1?'s':''}</div>
-      </div>
-      <div class="tl-events">`;
-    events.forEach(ev=>{
-      const isLev=ev.type==='lev';
-      const matPreview=(ev.materiaal||'').split('\n').filter(x=>x.trim()).slice(0,3).join(' · ');
-      html+=`<div class="tl-event ${isLev?'tl-event-lev':'tl-event-oph'}" onclick="openDetail(${ev.id})">
-        <div class="tl-event-time">
-          <div class="tl-event-time-val">${ev.uur}</div>
-        </div>
-        <div class="tl-event-sep"></div>
-        <div class="tl-event-info">
-          <div class="tl-event-type"><i class="ti ${isLev?'ti-truck-delivery':'ti-arrow-back-up'}" style="font-size:10px"></i> ${isLev?'Levering':'Ophaling'}</div>
-          <div class="tl-event-naam">${esc(ev.naam)}</div>
-          <div class="tl-event-adres"><i class="ti ti-map-pin" style="font-size:10px"></i> ${esc(ev.adres)}</div>
-          ${matPreview?`<div class="tl-event-mat"><i class="ti ti-package" style="font-size:10px"></i> ${esc(matPreview)}</div>`:''}
-          ${ev.opmerking?`<div class="tl-event-opm"><i class="ti ti-alert-circle" style="font-size:10px"></i> ${esc(ev.opmerking)}</div>`:''}
-        </div>
-      </div>`;
-    });
-    html+='</div></div>';
-  });
-  html+='</div>';
-  content.innerHTML=html;
-}
-function tlSelDate(d){document.getElementById('tl-date-sel').dataset.sel=d;renderTijdlijn();}
 
 /* ══════════════════════════════════════════════
    KALENDERWEERGAVE
@@ -3495,7 +3304,7 @@ function renderBBGrid(){
     var werkVandaag=my.filter(function(b){return (b.levdatum===t||b.ophdatum===t)&&!b.voltooid;}).length;
     var ctHtml=werkVandaag>0?'<span style="color:#27500A;font-weight:600">●</span> '+werkVandaag+' vandaag':up>0?up+' komend':'geen jobs';
     var isMijn=nm===mijnBBLaad();
-    return '<div class="bb-card'+(isMijn?' bb-card-mijn':'')+'" onclick="mijnBBOpslaan(\''+nm+'\');showBBDetail(\''+nm+'\')"'
+    return '<div class="bb-card'+(isMijn?' bb-card-mijn':'')+'" data-bbnaam="'+esc(nm).replace(/"/g,'&quot;')+'"'
       +(isMijn?' style="border-color:var(--sky);background:#E6F1FB"':'')+'>'
       +'<div class="bb-av">'+ini(nm)+'</div>'
       +'<div class="bb-nm">'+esc(nm)+(isMijn?' <span style="font-size:9px;color:var(--sky);font-weight:600">IK</span>':'')+'</div>'
@@ -3517,6 +3326,18 @@ function renderBBGrid(){
     intro='<p style="font-size:13px;color:var(--tx2);margin-bottom:12px">Klik op jouw naam voor jouw planning. Je naam wordt onthouden.</p>';
   }
   bbSel.innerHTML=(mijnDagHtml||'')+intro+'<div class="bb-grid" id="bb-grid">'+gridHtml+'</div>';
+
+  // Event delegation — veilig voor namen met apostrofs (D'Hondt etc.)
+  if(!bbSel._bbListener){
+    bbSel._bbListener=true;
+    bbSel.addEventListener('click',function(e){
+      var card=e.target.closest('.bb-card');
+      if(!card||!card.dataset.bbnaam)return;
+      var nm=card.dataset.bbnaam;
+      mijnBBOpslaan(nm);
+      showBBDetail(nm);
+    });
+  }
 
   // Als er een onthouden BB is en geen vandaag-sectie: scroll direct naar hun planningsdetail
   if(onthouden&&!mijnDagHtml){
@@ -4373,6 +4194,7 @@ function renderVoorraad(){
   var html = '<div class="vr-hdr">';
   html += '<div>';
   html += '<div class="vr-hdr-title"><i class="ti ti-package" style="color:var(--sky)"></i> Voorraadoverzicht</div>';
+  html += '<button onclick="beschikbaarheidOpen()" style="background:#2D6A1E;color:#fff;border:none;border-radius:var(--rm);padding:8px 16px;font-size:13px;cursor:pointer;font-family:\'Poppins\',sans-serif;display:inline-flex;align-items:center;gap:6px;font-weight:600;margin-top:8px"><i class="ti ti-calendar-search"></i> Check beschikbaarheid op datum</button>';
   // Status samenvatting
   html += '<div class="vr-hdr-sub">';
   if(conflicten>0) html += '<span style="color:#A32D2D;font-weight:600"><i class="ti ti-alert-triangle" style="font-size:11px"></i> '+conflicten+' conflict'+(conflicten!==1?'en':'')+'</span> &nbsp;·&nbsp; ';
@@ -4643,6 +4465,138 @@ function vrRenderDetail(productId, prod, vr){
   body.innerHTML = html;
 }
 
+// ═══════════════════════════════════════════════════════════
+// BESCHIKBAARHEIDSCHECK — vervangt het Apple-Agenda doorzoeken
+// A: volledig datumoverzicht  |  B: snelle "kan ik dit beloven?"
+// ═══════════════════════════════════════════════════════════
+function beschikbaarheidOpen(){
+  var mo=document.getElementById('beschik-mo');
+  if(!mo){
+    mo=document.createElement('div');
+    mo.id='beschik-mo';
+    mo.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:550;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto';
+    mo.onclick=function(e){if(e.target===mo)mo.remove();};
+    document.body.appendChild(mo);
+  }
+  var vandaag=today();
+  mo.innerHTML='<div style="background:var(--bg1);border-radius:var(--rl);padding:0;max-width:560px;width:100%;margin:auto;overflow:hidden">'
+    +'<div style="background:var(--navy);padding:16px 20px;display:flex;align-items:center;justify-content:space-between">'
+    +'<strong style="font-size:15px;color:#fff"><i class="ti ti-calendar-search" style="color:var(--sky);margin-right:8px"></i>Is dit beschikbaar?</strong>'
+    +'<button onclick="document.getElementById(\'beschik-mo\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:rgba(255,255,255,.7)">✕</button></div>'
+    +'<div style="padding:18px 20px">'
+    // ── DATUM SELECTOR ──
+    +'<div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:16px;flex-wrap:wrap">'
+    +'<div style="flex:1;min-width:130px"><label style="font-size:11px;font-weight:600;color:var(--tx2);display:block;margin-bottom:4px">Leverdatum</label>'
+    +'<input type="date" id="beschik-lev" value="'+vandaag+'" onchange="beschikVervers()" style="width:100%;padding:10px;border:.5px solid var(--bm);border-radius:var(--rm);font-size:14px;background:var(--bg2);color:var(--tx1)"></div>'
+    +'<div style="flex:1;min-width:130px"><label style="font-size:11px;font-weight:600;color:var(--tx2);display:block;margin-bottom:4px">Ophaaldatum</label>'
+    +'<input type="date" id="beschik-oph" value="'+vandaag+'" onchange="beschikVervers()" style="width:100%;padding:10px;border:.5px solid var(--bm);border-radius:var(--rm);font-size:14px;background:var(--bg2);color:var(--tx1)"></div>'
+    +'</div>'
+    // ── B: SNELLE CHECK ──
+    +'<div style="background:var(--bg2);border:.5px solid var(--bl);border-radius:var(--rm);padding:12px 14px;margin-bottom:16px">'
+    +'<div style="font-size:12px;font-weight:600;color:var(--tx1);margin-bottom:8px"><i class="ti ti-bolt" style="color:#EF9F27;margin-right:4px"></i>Snelle check — kan ik dit beloven?</div>'
+    +'<p style="font-size:11px;color:var(--tx3);margin:0 0 8px">Tik de producten aan die de klant wil:</p>'
+    +'<div id="beschik-snelkeuze" style="display:flex;flex-wrap:wrap;gap:5px"></div>'
+    +'<div id="beschik-snel-resultaat" style="margin-top:10px"></div>'
+    +'</div>'
+    // ── A: VOLLEDIG OVERZICHT ──
+    +'<div style="font-size:12px;font-weight:600;color:var(--tx1);margin-bottom:8px"><i class="ti ti-list-check" style="color:var(--sky);margin-right:4px"></i>Alles op deze datum</div>'
+    +'<div id="beschik-overzicht"></div>'
+    +'</div></div>';
+  window._beschikSnel={}; // geselecteerde producten voor snelle check
+  beschikRenderSnelkeuze();
+  beschikVervers();
+}
+
+// Populaire producten voor de snelkeuze (meest verhuurd)
+function beschikRenderSnelkeuze(){
+  var wrap=document.getElementById('beschik-snelkeuze');
+  if(!wrap)return;
+  var vr=vrLaad();
+  // Toon enkel producten met voorraad > 0, gesorteerd op categorie
+  var producten=CATALOGUS.filter(function(p){
+    var v=vr.find(function(x){return x.id===p.id;});
+    return v&&v.stock>0;
+  });
+  wrap.innerHTML=producten.map(function(p){
+    var sel=window._beschikSnel&&window._beschikSnel[p.id];
+    return '<button onclick="beschikSnelToggle(\''+p.id+'\')" class="tg'+(sel?' sel':'')+'" style="font-size:11px;padding:5px 10px;min-height:auto">'
+      +esc(p.naam.split(' ').slice(0,3).join(' '))+'</button>';
+  }).join('');
+}
+
+function beschikSnelToggle(id){
+  if(!window._beschikSnel)window._beschikSnel={};
+  if(window._beschikSnel[id])delete window._beschikSnel[id];
+  else window._beschikSnel[id]=1;
+  beschikRenderSnelkeuze();
+  beschikVervers();
+}
+
+function beschikVervers(){
+  var lev=(document.getElementById('beschik-lev')||{}).value;
+  var oph=(document.getElementById('beschik-oph')||{}).value||lev;
+  if(!lev)return;
+  if(oph<lev){oph=lev;var oel=document.getElementById('beschik-oph');if(oel)oel.value=lev;}
+
+  // ── B: SNELLE CHECK RESULTAAT ──
+  var snelRes=document.getElementById('beschik-snel-resultaat');
+  if(snelRes){
+    var gekozen=Object.keys(window._beschikSnel||{});
+    if(gekozen.length===0){
+      snelRes.innerHTML='<span style="font-size:11px;color:var(--tx3)">Nog niets geselecteerd.</span>';
+    } else {
+      var allesOk=true, regels=[];
+      gekozen.forEach(function(id){
+        var p=CATALOGUS.find(function(x){return x.id===id;});
+        if(!p)return;
+        var check=vrCheckBeschikbaar(id,1,lev,oph,null,null,null);
+        var ok=check.beschikbaar>0;
+        if(!ok)allesOk=false;
+        regels.push('<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;font-size:12px">'
+          +'<span style="color:var(--tx2)">'+esc(p.naam)+'</span>'
+          +'<span style="font-weight:600;color:'+(ok?'#2D6A1E':'#A32D2D')+'">'
+          +(ok?'✅ '+check.beschikbaar+' vrij':'❌ Alles vergeven')+'</span></div>');
+      });
+      snelRes.innerHTML='<div style="border-radius:var(--rm);padding:10px 12px;background:'+(allesOk?'#EAF3DE':'#FCEBEB')+';border:.5px solid '+(allesOk?'#2D6A1E':'#A32D2D')+'">'
+        +'<div style="font-size:13px;font-weight:700;color:'+(allesOk?'#2D6A1E':'#A32D2D')+';margin-bottom:4px">'
+        +(allesOk?'✅ Alles beschikbaar — je kan dit beloven':'⚠️ Niet alles is vrij')+'</div>'
+        +regels.join('')+'</div>';
+    }
+  }
+
+  // ── A: VOLLEDIG OVERZICHT PER CATEGORIE ──
+  var overzicht=document.getElementById('beschik-overzicht');
+  if(!overzicht)return;
+  var vr=vrLaad();
+  var perCat={};
+  CATALOGUS.forEach(function(p){
+    var v=vr.find(function(x){return x.id===p.id;});
+    if(!v||v.stock<=0)return;
+    var check=vrCheckBeschikbaar(p.id,1,lev,oph,null,null,null);
+    if(!perCat[p.cat])perCat[p.cat]=[];
+    perCat[p.cat].push({p:p,check:check,stock:v.stock});
+  });
+  var html='';
+  Object.keys(perCat).sort().forEach(function(cat){
+    html+='<div style="margin-bottom:10px">';
+    html+='<div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">'+esc(cat)+'</div>';
+    perCat[cat].forEach(function(item){
+      var vrij=item.check.beschikbaar;
+      var totaal=item.stock;
+      var pct=totaal>0?vrij/totaal:0;
+      var kleur=vrij<=0?'#A32D2D':pct<=0.34?'#EF9F27':'#2D6A1E';
+      var bg=vrij<=0?'#FCEBEB':pct<=0.34?'#FAEEDA':'#EAF3DE';
+      html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-radius:var(--rm);background:'+bg+';margin-bottom:3px">'
+        +'<span style="font-size:12px;color:var(--tx1)">'+esc(item.p.naam)+'</span>'
+        +'<span style="font-size:12px;font-weight:700;color:'+kleur+';white-space:nowrap">'
+        +(vrij<=0?'Vol':vrij+' / '+totaal+' vrij')+'</span></div>';
+    });
+    html+='</div>';
+  });
+  overzicht.innerHTML=html||'<span style="font-size:12px;color:var(--tx3)">Geen voorraad ingesteld. Vul aantallen in via de Voorraad-tab.</span>';
+}
+
+
 function vrRenderPlanning(productId, prod, vr, dagen){
   var body = document.getElementById('vr-planning-body');
   if(!body) return;
@@ -4708,7 +4662,7 @@ function vrRenderPlanning(productId, prod, vr, dagen){
     reserveringen.forEach(function(res){
       var b=res.b, match=res.match, check=res.check;
       var statusKleur = check.status==='conflict'?'#E24B4A':check.status==='warn'?'#EF9F27':'#97C459';
-      lijstHtml += '<div class="md-reserv-item" onclick="vrSluitModal();openDetail('+b.id+')" style="cursor:pointer">';
+      lijstHtml += '<div class="md-reserv-item" onclick="document.getElementById(\'vr-mo\').classList.remove(\'open\');openDetail('+b.id+')" style="cursor:pointer">';
       lijstHtml += '<div class="md-reserv-dot" style="background:'+statusKleur+'"></div>';
       lijstHtml += '<div style="flex:1;min-width:0">';
       lijstHtml += '<div style="display:flex;align-items:center;gap:6px">';
@@ -6029,7 +5983,12 @@ function openDetail(id){
     <button class="bsm" style="background:#EAF3DE;color:#27500A;border-color:#97C459;font-weight:500" onclick="voltooiStap(${id})"><i class="ti ti-${stIdx>=3?'arrow-back-up':'truck-delivery'}" style="font-size:11px"></i> ${stIdx>=3?'Ophaling voltooid':'Levering voltooid'}</button>
     <button class="bsm" style="background:#EAF3DE;color:#173404;border-color:#3B6D11;font-weight:500" onclick="voltooiBoeking(${id})"><i class="ti ti-archive" style="font-size:11px"></i> Archiveren</button>
     <button class="bsm" style="color:#791F1F;border-color:#F09595" onclick="delBoeking(${id})"><i class="ti ti-trash"></i> Verwijderen</button>
-    ${renderAIKnoppen(id)}`;
+    ${renderAIKnoppen(id)}
+    <div style="margin-top:12px;padding-top:12px;border-top:.5px solid var(--bl)">
+      <div style="font-size:11px;font-weight:600;color:var(--sky);margin-bottom:8px;display:flex;align-items:center;gap:5px"><i class="ti ti-camera"></i> Foto's</div>
+      <div id="foto-sectie-${id}"></div>
+    </div>`;
+  fotoRenderSectie(id);
   document.getElementById('mo').classList.add('open');
   // Event delegation voor ik-btn knoppen
   var moBody=document.getElementById('mo-body');
@@ -6157,15 +6116,6 @@ function laadStatusWissen(boekingId){
   try{ localStorage.removeItem(LAAD_KEY_PREFIX + boekingId); }catch(e){}
 }
 
-function laadStatusVolledigWissen(){
-  // Wis alle laadstatussen (bv. na voltooien boeking)
-  try{
-    var keys = Object.keys(localStorage);
-    keys.forEach(function(k){
-      if(k.startsWith(LAAD_KEY_PREFIX)) localStorage.removeItem(k);
-    });
-  }catch(e){}
-}
 
 var EXTRA_MATERIAAL={
   // ============================================================
@@ -6967,6 +6917,216 @@ async function voltooiBoeking(id){
   catch(e){ banner('er','Opslaan mislukt — probeer opnieuw.'); return; }
   if(r&&r.success){banner('ok',b.naam+' volledig gearchiveerd');renderPlanning();}
 }
+// ═══════════════════════════════════════════════════════════
+// MAIL/WHATSAPP → BOEKING — plak tekst, AI parseert, jij accepteert
+// ═══════════════════════════════════════════════════════════
+async function aiBoekingUitTekst(){
+  var mo=document.getElementById('ai-mo');
+  if(!mo){mo=document.createElement('div');mo.id='ai-mo';mo.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px';mo.onclick=function(e){if(e.target===mo)mo.remove();};document.body.appendChild(mo);}
+  mo.innerHTML='<div style="background:var(--bg1);border-radius:var(--rl);padding:20px;max-width:520px;width:100%;max-height:85vh;overflow-y:auto">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><strong style="font-size:14px;color:var(--tx1)"><i class="ti ti-mail-fast" style="color:var(--sky);margin-right:6px"></i>Mail/WhatsApp → Boeking</strong><button onclick="document.getElementById(\'ai-mo\').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--tx2)">✕</button></div>'
+    +'<p style="font-size:12px;color:var(--tx2);margin-bottom:10px">Plak de volledige mail of WhatsApp-conversatie. AI haalt er alle boekingsgegevens uit — jij controleert en accepteert.</p>'
+    +'<textarea id="ai-boeking-tekst" style="width:100%;min-height:160px;padding:10px 12px;border:.5px solid var(--bm);border-radius:var(--rm);font-family:inherit;font-size:13px;resize:vertical;background:var(--bg2);color:var(--tx1)" placeholder="Plak hier de mail of WhatsApp tekst..."></textarea>'
+    +'<button onclick="aiBoekingParseer()" class="bprim" style="width:100%;margin-top:10px;padding:10px;font-size:13px" id="ai-parse-btn"><i class="ti ti-sparkles"></i> Analyseer & maak boekingsvoorstel</button>'
+    +'<div id="ai-boeking-resultaat"></div>'
+    +'</div>';
+  setTimeout(function(){var t=document.getElementById('ai-boeking-tekst');if(t)t.focus();},100);
+}
+
+async function aiBoekingParseer(){
+  var tekst=(document.getElementById('ai-boeking-tekst')||{}).value||'';
+  if(!tekst.trim()){banner('er','Plak eerst de tekst.');return;}
+  var btn=document.getElementById('ai-parse-btn');
+  if(btn){btn.disabled=true;btn.innerHTML='<i class="ti ti-loader"></i> AI analyseert...';}
+  var catalogusLijst=CATALOGUS.map(function(p){return p.naam+' (id:'+p.id+')';}).join(', ');
+  var antwoord=await claudeAPI(
+    'Je bent een boekingsassistent voor Familyrent, een Belgisch verhuurbedrijf. Vandaag is '+today()+'. '
+    +'Haal uit de klanttekst ALLE boekingsgegevens en geef ALLEEN een JSON-object terug (geen uitleg, geen markdown):\n'
+    +'{"naam":"","tel":"","email":"","adres":"","levdatum":"YYYY-MM-DD","levuur":"HH:MM","ophdatum":"YYYY-MM-DD","ophuur":"HH:MM","materiaal_items":[{"id":"catalogus_id","aantal":1}],"opmerking":"","zekerheid":"hoog","ontbrekend":[]}\n'
+    +'Regels: relatieve datums ("volgende zaterdag") omrekenen naar echte datums. Ophaaldatum = leverdatum+1 als niet vermeld. Gebruik ENKEL catalogus-ids uit: '+catalogusLijst,
+    'KLANTTEKST:\n'+tekst, 1000
+  );
+  if(btn){btn.disabled=false;btn.innerHTML='<i class="ti ti-sparkles"></i> Analyseer & maak boekingsvoorstel';}
+  if(!antwoord){banner('er','AI-analyse mislukt. Probeer opnieuw.');return;}
+  try{
+    var data=JSON.parse(antwoord.replace(/```json|```/g,'').trim());
+    window._aiBoekingVoorstel=data;
+    var res=document.getElementById('ai-boeking-resultaat');
+    var matHtml=(data.materiaal_items||[]).map(function(m){
+      var p=CATALOGUS.find(function(x){return x.id===m.id;});
+      return p?m.aantal+'x '+p.naam:null;
+    }).filter(Boolean).join('<br>')||'<span style="color:#A32D2D">Geen materiaal herkend</span>';
+    var zkKleur=data.zekerheid==='hoog'?'#2D6A1E':data.zekerheid==='middel'?'#C77A0A':'#A32D2D';
+    res.innerHTML='<div style="margin-top:14px;background:var(--bg2);border:.5px solid var(--bl);border-radius:var(--rm);padding:14px">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><strong style="font-size:13px;color:var(--tx1)">Boekingsvoorstel</strong>'
+      +'<span style="font-size:10px;padding:2px 8px;border-radius:10px;background:'+zkKleur+'22;color:'+zkKleur+';font-weight:600">Zekerheid: '+esc(data.zekerheid||'?')+'</span></div>'
+      +'<div style="font-size:12px;color:var(--tx2);line-height:1.7">'
+      +'<strong>'+esc(data.naam||'—')+'</strong>'+(data.tel?' · '+esc(data.tel):'')+(data.email?' · '+esc(data.email):'')+'<br>'
+      +'📍 '+esc(data.adres||'—')+'<br>'
+      +'📅 Levering: '+(data.levdatum?fmtDate(data.levdatum)+' om '+(data.levuur||'09:00'):'—')+'<br>'
+      +'📅 Ophaling: '+(data.ophdatum?fmtDate(data.ophdatum)+' om '+(data.ophuur||'10:00'):'—')+'<br>'
+      +'📦 '+matHtml
+      +(data.opmerking?'<br>💬 '+esc(data.opmerking):'')
+      +'</div>'
+      +((data.ontbrekend&&data.ontbrekend.length)?'<div style="margin-top:8px;font-size:11px;color:#C77A0A"><i class="ti ti-alert-triangle" style="font-size:11px"></i> Nog te controleren: '+data.ontbrekend.map(esc).join(', ')+'</div>':'')
+      +'<div style="display:flex;gap:8px;margin-top:12px">'
+      +'<button onclick="aiBoekingAccepteer()" class="bprim" style="flex:1;padding:9px;font-size:13px"><i class="ti ti-check"></i> Accepteer → naar formulier</button>'
+      +'<button onclick="document.getElementById(\'ai-mo\').remove()" class="fb" style="padding:9px 14px;font-size:13px">Annuleer</button>'
+      +'</div></div>';
+  }catch(e){
+    banner('er','AI gaf een onleesbaar antwoord. Probeer opnieuw of voer manueel in.');
+    console.error(e,antwoord);
+  }
+}
+
+function aiBoekingAccepteer(){
+  var d=window._aiBoekingVoorstel;
+  if(!d)return;
+  document.getElementById('ai-mo').remove();
+  showTab('nieuw');
+  setTimeout(function(){
+    if(d.naam)document.getElementById('f-naam').value=d.naam;
+    if(d.tel)document.getElementById('f-tel').value=d.tel;
+    if(d.email){var fe=document.getElementById('f-email');if(fe)fe.value=d.email;}
+    if(d.adres)document.getElementById('f-adres').value=d.adres;
+    if(d.levdatum)document.getElementById('f-levdatum').value=d.levdatum;
+    if(d.levuur)document.getElementById('f-levuur').value=d.levuur;
+    if(d.ophdatum)document.getElementById('f-ophdatum').value=d.ophdatum;
+    if(d.ophuur)document.getElementById('f-ophuur').value=d.ophuur;
+    if(d.opmerking){var fo=document.getElementById('f-opm');if(fo)fo.value=d.opmerking;}
+    ppQty={};
+    (d.materiaal_items||[]).forEach(function(m){if(m.id&&m.aantal>0)ppQty[m.id]=m.aantal;});
+    ppInit();
+    ppSaveToField();
+    if(d.levdatum)bbSuggestieToewijzen(d.levdatum);
+    banner('ok','✓ Voorstel ingevuld — controleer en klik Opslaan om te bevestigen');
+  },200);
+}
+
+// ═══════════════════════════════════════════════════════════
+// FOTO'S BIJ LEVERING & OPHALING — gecomprimeerd bewijs
+// ═══════════════════════════════════════════════════════════
+var FOTO_KEY='fr_fotos_v1';
+
+function fotosLaad(boekingId){
+  try{var alle=JSON.parse(localStorage.getItem(FOTO_KEY)||'{}');return alle[boekingId]||{lev:[],oph:[]};}catch(e){return {lev:[],oph:[]};}
+}
+function fotosSla(boekingId,fotos){
+  try{
+    var alle=JSON.parse(localStorage.getItem(FOTO_KEY)||'{}');
+    alle[boekingId]=fotos;
+    localStorage.setItem(FOTO_KEY,JSON.stringify(alle));
+    return true;
+  }catch(e){
+    banner('er','Opslag vol — verwijder oude foto\'s.');
+    return false;
+  }
+}
+
+function fotoMaak(boekingId,type){
+  var input=document.createElement('input');
+  input.type='file';
+  input.accept='image/*';
+  input.capture='environment';
+  input.onchange=function(){
+    var file=input.files[0];
+    if(!file)return;
+    var reader=new FileReader();
+    reader.onload=function(ev){
+      var img=new Image();
+      img.onload=function(){
+        var maxW=900;
+        var scale=Math.min(1,maxW/img.width);
+        var canvas=document.createElement('canvas');
+        canvas.width=Math.round(img.width*scale);
+        canvas.height=Math.round(img.height*scale);
+        canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+        var dataUrl=canvas.toDataURL('image/jpeg',0.7);
+        var fotos=fotosLaad(boekingId);
+        fotos[type]=fotos[type]||[];
+        if(fotos[type].length>=6){banner('er','Max 6 foto\'s per type.');return;}
+        fotos[type].push({data:dataUrl,ts:Date.now(),datum:today()});
+        if(fotosSla(boekingId,fotos)){
+          banner('ok','✓ Foto opgeslagen ('+(type==='lev'?'levering':'ophaling')+')');
+          fotoRenderSectie(boekingId);
+        }
+      };
+      img.src=ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+
+function fotoVerwijder(boekingId,type,idx){
+  if(!confirm('Deze foto verwijderen?'))return;
+  var fotos=fotosLaad(boekingId);
+  fotos[type].splice(idx,1);
+  fotosSla(boekingId,fotos);
+  fotoRenderSectie(boekingId);
+}
+
+function fotoBekijk(boekingId,type,idx){
+  var fotos=fotosLaad(boekingId);
+  var f=fotos[type][idx];
+  if(!f)return;
+  var mo=document.getElementById('ai-mo');
+  if(!mo){mo=document.createElement('div');mo.id='ai-mo';mo.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px';mo.onclick=function(e){if(e.target===mo)mo.remove();};document.body.appendChild(mo);}
+  mo.innerHTML='<div style="max-width:600px;width:100%"><img src="'+f.data+'" style="width:100%;border-radius:8px">'
+    +'<div style="display:flex;justify-content:space-between;margin-top:8px;color:#fff;font-size:12px"><span>'+fmtDate(f.datum)+'</span>'
+    +'<button onclick="document.getElementById(\'ai-mo\').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:6px 14px;cursor:pointer">Sluiten</button></div></div>';
+}
+
+function fotoRenderSectie(boekingId){
+  var wrap=document.getElementById('foto-sectie-'+boekingId);
+  if(!wrap)return;
+  var fotos=fotosLaad(boekingId);
+  var html='';
+  [['lev','Levering / plaatsing','ti-truck-delivery','#61ABED'],['oph','Ophaling / afbraak','ti-arrow-back-up','#3B6D11']].forEach(function(cfg){
+    var type=cfg[0],lbl=cfg[1],icon=cfg[2],kleur=cfg[3];
+    var lijst=fotos[type]||[];
+    html+='<div style="margin-bottom:10px">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
+      +'<span style="font-size:11px;font-weight:600;color:'+kleur+'"><i class="ti '+icon+'" style="font-size:11px"></i> '+lbl+' ('+lijst.length+')</span>'
+      +'<button onclick="fotoMaak('+boekingId+',\''+type+'\')" style="font-size:11px;padding:4px 12px;border-radius:var(--rm);border:.5px solid '+kleur+';background:transparent;color:'+kleur+';cursor:pointer;font-family:Poppins,sans-serif"><i class="ti ti-camera" style="font-size:11px"></i> Foto maken</button>'
+      +'</div>';
+    if(lijst.length>0){
+      html+='<div style="display:flex;gap:6px;flex-wrap:wrap">';
+      lijst.forEach(function(f,i){
+        html+='<div style="position:relative">'
+          +'<img src="'+f.data+'" onclick="fotoBekijk('+boekingId+',\''+type+'\','+i+')" style="width:64px;height:64px;object-fit:cover;border-radius:6px;cursor:pointer;border:.5px solid var(--bl)">'
+          +'<button onclick="fotoVerwijder('+boekingId+',\''+type+'\','+i+')" style="position:absolute;top:-5px;right:-5px;width:18px;height:18px;border-radius:50%;background:#A32D2D;color:#fff;border:none;font-size:10px;cursor:pointer;line-height:1;padding:0">✕</button>'
+          +'</div>';
+      });
+      html+='</div>';
+    }
+    html+='</div>';
+  });
+  wrap.innerHTML=html;
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// APPLE AGENDA ABONNEMENT — live sync via ICS feed uit Apps Script
+// ═══════════════════════════════════════════════════════════
+function agendaAbonnement(){
+  var feedUrl=window.FR_CONFIG.apps_script_url+'?action=ics';
+  var mo=document.getElementById('ai-mo');
+  if(!mo){mo=document.createElement('div');mo.id='ai-mo';mo.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px';mo.onclick=function(e){if(e.target===mo)mo.remove();};document.body.appendChild(mo);}
+  mo.innerHTML='<div style="background:var(--bg1);border-radius:var(--rl);padding:20px;max-width:480px;width:100%;max-height:85vh;overflow-y:auto">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><strong style="font-size:14px;color:var(--tx1)"><i class="ti ti-calendar-plus" style="color:var(--sky);margin-right:6px"></i>Apple Agenda synchronisatie</strong><button onclick="document.getElementById(\'ai-mo\').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--tx2)">✕</button></div>'
+    +'<p style="font-size:12px;color:var(--tx2);margin-bottom:12px">Abonneer je Apple Agenda op deze feed. Alle boekingen verschijnen automatisch en blijven gesynchroniseerd — nieuwe boekingen komen er vanzelf bij.</p>'
+    +'<div style="background:var(--bg2);border:.5px solid var(--bl);border-radius:var(--rm);padding:10px 12px;font-size:11px;font-family:monospace;word-break:break-all;color:var(--tx1);margin-bottom:10px" id="ics-feed-url">'+feedUrl+'</div>'
+    +'<button onclick="navigator.clipboard.writeText(document.getElementById(\'ics-feed-url\').textContent).then(function(){banner(\'ok\',\'Link gekopieerd\')})" class="bprim" style="width:100%;padding:9px;font-size:13px;margin-bottom:14px"><i class="ti ti-copy"></i> Kopieer feed-link</button>'
+    +'<div style="font-size:12px;color:var(--tx2);line-height:1.8">'
+    +'<strong style="color:var(--tx1)">Op iPhone/iPad:</strong><br>'
+    +'Instellingen → Agenda → Accounts → Voeg account toe → Andere → Voeg agenda-abonnement toe → plak de link<br><br>'
+    +'<strong style="color:var(--tx1)">Op Mac:</strong><br>'
+    +'Agenda-app → Archief → Nieuw agenda-abonnement → plak de link → stel vernieuwen in op "Elk uur"<br><br>'
+    +'<strong style="color:#C77A0A">⚠️ Eenmalig nodig:</strong> voeg de ICS-code toe aan je Google Apps Script (zie bestand apps-script-ics.txt dat ik meelever).'
+    +'</div></div>';
+}
+
 async function delBoeking(id){
   if(!confirm('Boeking verwijderen?'))return;
   let r;
@@ -7538,16 +7698,16 @@ function wizardStap4(){
   html+='<p style="font-size:13px;color:var(--tx2);margin:0">Wie gaat mee? Tik om te selecteren.</p>';
   html+='<div><div style="font-size:12px;font-weight:600;color:var(--sky);margin-bottom:8px"><i class="ti ti-truck-delivery" style="margin-right:4px"></i>Levering</div>';
   html+='<div style="display:flex;flex-wrap:wrap;gap:8px">';
-  BB.forEach(function(nm){
+  BB.forEach(function(nm,bbIdx){
     var sel=_wizData.opstellers_lev&&_wizData.opstellers_lev.includes(nm);
-    html+='<button onclick="wizBBToggle(\'lev\',\''+nm+'\')" class="tg'+(sel?' sel':'')+'" style="min-width:80px;min-height:44px" id="wiz-bb-lev-'+nm+'">'+ini(nm)+' '+esc(nm)+'</button>';
+    html+='<button onclick="wizBBToggle(\'lev\','+bbIdx+')" class="tg'+(sel?' sel':'')+'" style="min-width:80px;min-height:44px" id="wiz-bb-lev-'+bbIdx+'">'+ini(nm)+' '+esc(nm)+'</button>';
   });
   html+='</div></div>';
   html+='<div><div style="font-size:12px;font-weight:600;color:#3B6D11;margin-bottom:8px"><i class="ti ti-arrow-back-up" style="margin-right:4px"></i>Ophaling</div>';
   html+='<div style="display:flex;flex-wrap:wrap;gap:8px">';
-  BB.forEach(function(nm){
+  BB.forEach(function(nm,bbIdx){
     var sel=_wizData.opstellers_oph&&_wizData.opstellers_oph.includes(nm);
-    html+='<button onclick="wizBBToggle(\'oph\',\''+nm+'\')" class="tg'+(sel?' sel':'')+'" style="min-width:80px;min-height:44px" id="wiz-bb-oph-'+nm+'">'+ini(nm)+' '+esc(nm)+'</button>';
+    html+='<button onclick="wizBBToggle(\'oph\','+bbIdx+')" class="tg'+(sel?' sel':'')+'" style="min-width:80px;min-height:44px" id="wiz-bb-oph-'+bbIdx+'">'+ini(nm)+' '+esc(nm)+'</button>';
   });
   html+='</div></div>';
   html+='<div><label style="font-size:12px;font-weight:600;color:var(--tx2);display:block;margin-bottom:6px">Opmerking</label>'
@@ -7564,13 +7724,15 @@ function wizardStap4(){
   return html;
 }
 
-function wizBBToggle(type,nm){
+function wizBBToggle(type,bbIdx){
+  var nm=BB[bbIdx];
+  if(!nm)return;
   var field='opstellers_'+type;
   if(!_wizData[field])_wizData[field]=[];
   var idx=_wizData[field].indexOf(nm);
   if(idx>=0)_wizData[field].splice(idx,1);
   else _wizData[field].push(nm);
-  var btn=document.getElementById('wiz-bb-'+type+'-'+nm);
+  var btn=document.getElementById('wiz-bb-'+type+'-'+bbIdx);
   if(btn)btn.className='tg'+(_wizData[field].includes(nm)?' sel':'');
 }
 
