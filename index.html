@@ -189,6 +189,38 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 .bcard-wrap.swiping .bcard-swipe-bg{opacity:1}
 /* Mijn Dag view */
 .mijndag-wrap{max-width:520px;margin:0 auto}
+.bbdag-hdr{background:linear-gradient(135deg,#0C1135,#61ABED);color:#fff;border-radius:var(--rl);padding:16px 18px;margin-bottom:14px}
+.bbdag-hdr-greet{font-size:19px;font-weight:700;margin-bottom:2px}
+.bbdag-hdr-sub{font-size:13px;opacity:.85}
+.bbdag-hdr-cnt{font-size:13px;margin-top:8px;background:rgba(255,255,255,.15);border-radius:20px;padding:4px 12px;display:inline-block}
+.bbdag-card{background:var(--bg1);border:.5px solid var(--bl);border-radius:var(--rl);margin-bottom:12px;overflow:hidden;box-shadow:0 1px 6px rgba(12,17,53,.06)}
+.bbdag-card-top{padding:14px 16px;display:flex;align-items:center;gap:14px}
+.bbdag-card-top.lev{background:#E6F1FB}
+.bbdag-card-top.oph{background:#EAF3DE}
+.bbdag-tijd{font-size:26px;font-weight:800;line-height:1;min-width:62px;text-align:center}
+.bbdag-tijd.lev{color:#0C447C}
+.bbdag-tijd.oph{color:#27500A}
+.bbdag-tijd-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-top:3px;opacity:.7}
+.bbdag-kop-naam{font-size:17px;font-weight:700;color:var(--tx1);line-height:1.2}
+.bbdag-kop-type{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.bbdag-kop-type.lev{color:#185FA5}
+.bbdag-kop-type.oph{color:#3B6D11}
+.bbdag-body{padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.bbdag-adres{display:flex;align-items:center;gap:10px;font-size:15px;color:var(--tx1);font-weight:500;padding:10px 12px;background:var(--bg2);border-radius:var(--rm);text-decoration:none}
+.bbdag-adres i{font-size:20px;color:var(--sky)}
+.bbdag-mat{font-size:13px;color:var(--tx2)}
+.bbdag-mat-item{display:inline-block;background:var(--bg2);border:.5px solid var(--bl);border-radius:6px;padding:3px 9px;margin:2px 3px 2px 0;font-size:12px;color:var(--tx1)}
+.bbdag-opm{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:#854F0B;background:#FAEEDA;border-radius:var(--rm);padding:9px 12px}
+.bbdag-samen{font-size:12px;color:var(--tx3);display:flex;align-items:center;gap:6px}
+.bbdag-acties{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 16px 14px}
+.bbdag-btn{padding:12px;border-radius:var(--rm);font-size:14px;font-weight:600;border:none;cursor:pointer;font-family:'Poppins',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;text-decoration:none}
+.bbdag-btn.prim{background:var(--navy);color:#fff}
+.bbdag-btn.bel{background:#EAF3DE;color:#27500A;border:.5px solid #97C459}
+.bbdag-btn.wa{background:#25D366;color:#fff}
+.bbdag-btn.laad{background:var(--sky);color:#fff}
+.bbdag-btn.klaar{background:#2D6A1E;color:#fff;grid-column:1/-1}
+.bbdag-btn.klaar.done{background:var(--bg2);color:var(--tx3);border:.5px solid var(--bl)}
+.bbdag-toon-meer{text-align:center;font-size:13px;color:var(--sky);cursor:pointer;padding:12px;font-weight:600}
 .mijndag-greeting{font-size:20px;font-weight:700;color:var(--tx1);margin-bottom:4px}
 .mijndag-sub{font-size:13px;color:var(--tx2);margin-bottom:16px}
 .mijndag-leeg{text-align:center;padding:40px 20px;color:var(--tx2);font-size:13px}
@@ -891,6 +923,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
         <i class="ti ti-printer" style="font-size:13px"></i> Afdrukken
       </button>
     </div>
+    <div id="bb-vandaag"></div>
     <div class="bb-stats" id="bb-stats"></div>
     <div id="bb-list"></div>
   </div>
@@ -1124,12 +1157,14 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
       <button class="bsec" onclick="showTab('planning')">Annuleren</button>
     </div>
     <div class="ics-panel" id="ics-panel">
-      <div class="ics-title"><i class="ti ti-calendar-check" aria-hidden="true"></i> Boeking opgeslagen</div>
+      <div class="ics-title"><i class="ti ti-calendar-check" aria-hidden="true"></i> Boeking opgeslagen — wat wil je nu doen?</div>
       <div class="ics-btns">
-        <button class="ics-btn" onclick="dlLastICS('lev')"><i class="ti ti-calendar-plus"></i> .ics levering</button>
-        <button class="ics-btn" onclick="dlLastICS('oph')"><i class="ti ti-calendar-plus"></i> .ics ophaling</button>
+        <button class="ics-btn" onclick="dlLastICS('lev')"><i class="ti ti-calendar-plus"></i> Levering → Apple Agenda</button>
+        <button class="ics-btn" onclick="dlLastICS('oph')"><i class="ti ti-calendar-plus"></i> Ophaling → Apple Agenda</button>
+        <button class="ics-btn" onclick="if(lastSavedId)billitExport(lastSavedId)"><i class="ti ti-file-invoice"></i> Naar Billit</button>
       </div>
-      <p style="font-size:11px;color:#3B6D11;margin-top:7px"><i class="ti ti-info-circle"></i> Open op iPhone of Mac — Apple Agenda voegt toe.</p>
+      <p style="font-size:11px;color:#3B6D11;margin-top:7px"><i class="ti ti-info-circle"></i> De .ics-bestanden openen rechtstreeks in Apple Agenda op iPhone of Mac.</p>
+      <button onclick="document.getElementById('ics-panel').style.display='none';showTab('planning');clearForm();" style="margin-top:8px;background:#3B6D11;color:#fff;border:none;border-radius:var(--rm);padding:8px 16px;font-size:12px;cursor:pointer;font-family:'Poppins',sans-serif;font-weight:600"><i class="ti ti-check"></i> Klaar — naar planning</button>
     </div>
   </div>
 </div>
@@ -2286,11 +2321,12 @@ async function saveBoeking(){
           if(ok) banner('ok','Bevestigingsmail verstuurd naar '+b.email);
         });
       }
-      setTimeout(function(){
-        showTab('planning');
-        clearForm();
-        document.getElementById('ics-panel').style.display='none';
-      }, 800);
+      // Toon agenda-panel zodat je de boeking direct in Apple Agenda kan zetten
+      var icsPanel=document.getElementById('ics-panel');
+      if(icsPanel){
+        icsPanel.style.display='block';
+        icsPanel.scrollIntoView({behavior:'smooth',block:'center'});
+      }
     }
   } else if(!result){
     banner('er','Opslaan mislukt — controleer je verbinding en probeer opnieuw.');
@@ -3413,7 +3449,11 @@ function showBBDetail(name){
     html+='</div>';
   });
   var bbList=document.getElementById('bb-list');
-  bbList.innerHTML=html;
+  // Volledige lijst inklapbaar — jobstudent ziet standaard enkel 'vandaag'
+  bbList.innerHTML='<div class="bbdag-toon-meer" id="bb-toon-meer" onclick="bbToggleVolledig()"><i class="ti ti-chevron-down"></i> Toon alle komende ritten ('+my.length+')</div>'
+    +'<div id="bb-volledig" style="display:none">'+html+'</div>';
+  // ── GROTE "MIJN DAG VANDAAG" SECTIE ──
+  bbRenderVandaag(name,my,t);
   if(!bbList._bbListenerAdded){
     bbList._bbListenerAdded=true;
     bbList.addEventListener('click',function(e){
@@ -3424,6 +3464,121 @@ function showBBDetail(name){
     });
   }
 }
+
+
+// ═══════════════════════════════════════════════════════════
+// MIJN DAG VANDAAG — groot, simpel scherm voor weekend-jobstudent
+// Toont enkel vandaag, chronologisch, met alles wat hij nu nodig heeft
+// ═══════════════════════════════════════════════════════════
+function bbRenderVandaag(name,my,t){
+  var wrap=document.getElementById('bb-vandaag');
+  if(!wrap)return;
+
+  // Verzamel enkel de stops van VANDAAG waar deze BB bij staat
+  var events=[];
+  my.forEach(function(b){
+    var inLev=b.opstellers_lev&&b.opstellers_lev.includes(name);
+    var inOph=b.opstellers_oph&&b.opstellers_oph.includes(name);
+    if(inLev&&b.levdatum===t)events.push({b:b,type:'lev',uur:b.levuur||'09:00'});
+    if(inOph&&b.ophdatum===t&&b.ophdatum!==b.levdatum)events.push({b:b,type:'oph',uur:b.ophuur||'10:00'});
+    // Zelfde dag lev+oph → toon beide als het echt zo is
+    if(inOph&&b.ophdatum===t&&b.ophdatum===b.levdatum&&inLev)events.push({b:b,type:'oph',uur:b.ophuur||'17:00'});
+  });
+  events.sort(function(a,c){return timeToMin(a.uur)-timeToMin(c.uur);});
+
+  var voornaam=name.split(' ')[0];
+  var uur=new Date().getHours();
+  var groet=uur<12?'Goeiemorgen':uur<18?'Goeiemiddag':'Goeieavond';
+
+  if(events.length===0){
+    wrap.innerHTML='<div class="bbdag-hdr">'
+      +'<div class="bbdag-hdr-greet">'+groet+', '+esc(voornaam)+'!</div>'
+      +'<div class="bbdag-hdr-sub">Je hebt vandaag geen ritten ingepland.</div>'
+      +'</div>';
+    return;
+  }
+
+  var html='<div class="bbdag-hdr">'
+    +'<div class="bbdag-hdr-greet">'+groet+', '+esc(voornaam)+'!</div>'
+    +'<div class="bbdag-hdr-sub">'+fmtDate(t)+'</div>'
+    +'<div class="bbdag-hdr-cnt"><i class="ti ti-map-pin" style="font-size:12px"></i> '+events.length+' stop'+(events.length!==1?'s':'')+' vandaag</div>'
+    +'</div>';
+
+  events.forEach(function(ev){
+    var b=ev.b, isLev=ev.type==='lev';
+    var mUrl='https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(b.adres||'');
+    var matItems=(b.materiaal||'').split('\n').filter(function(x){return x&&x.trim();});
+    var matHtml=matItems.map(function(m){return '<span class="bbdag-mat-item">'+esc(m.trim())+'</span>';}).join('');
+    var samen=(isLev?(b.opstellers_lev||[]):(b.opstellers_oph||[])).filter(function(n){return n!==name;});
+    var telClean=b.tel?String(b.tel).replace(/\s/g,''):'';
+    var isKlaar=b.voltooid===true;
+
+    html+='<div class="bbdag-card">'
+      // Top: tijd + type + naam
+      +'<div class="bbdag-card-top '+(isLev?'lev':'oph')+'">'
+      +'<div><div class="bbdag-tijd '+(isLev?'lev':'oph')+'">'+ev.uur+'</div><div class="bbdag-tijd-lbl">uur</div></div>'
+      +'<div style="flex:1"><div class="bbdag-kop-type '+(isLev?'lev':'oph')+'">'+(isLev?'▲ Leveren / plaatsen':'▽ Ophalen / afbreken')+'</div>'
+      +'<div class="bbdag-kop-naam">'+esc(b.naam)+'</div></div>'
+      +'</div>'
+      // Body
+      +'<div class="bbdag-body">'
+      +'<a href="'+mUrl+'" target="_blank" class="bbdag-adres"><i class="ti ti-map-pin"></i><span>'+esc(b.adres||'Geen adres')+'</span></a>';
+    if(matHtml)html+='<div class="bbdag-mat"><div style="font-size:11px;font-weight:600;color:var(--tx3);text-transform:uppercase;margin-bottom:4px">Materiaal</div>'+matHtml+'</div>';
+    if(b.opmerking)html+='<div class="bbdag-opm"><i class="ti ti-alert-circle" style="font-size:16px;flex-shrink:0"></i><span>'+esc(b.opmerking)+'</span></div>';
+    if(samen.length)html+='<div class="bbdag-samen"><i class="ti ti-users"></i> Samen met '+samen.map(esc).join(', ')+'</div>';
+    html+='</div>';
+    // Acties: bellen, WhatsApp, laadlijst, klaar
+    html+='<div class="bbdag-acties">';
+    if(telClean)html+='<a href="tel:'+telClean+'" class="bbdag-btn bel"><i class="ti ti-phone"></i> Bellen</a>';
+    if(telClean&&isLev)html+='<a href="'+(waLink(b.tel,b.naam,ev.uur,b.adres)||'#')+'" target="_blank" class="bbdag-btn wa"><i class="ti ti-brand-whatsapp"></i> Onderweg</a>';
+    html+='<button class="bbdag-btn laad" data-bbdag-laad="'+b.id+'"><i class="ti ti-clipboard-list"></i> Laadlijst</button>';
+    html+='<button class="bbdag-btn prim" data-bbdag-detail="'+b.id+'"><i class="ti ti-info-circle"></i> Details</button>';
+    html+='<button class="bbdag-btn klaar'+(isKlaar?' done':'')+'" data-bbdag-klaar="'+b.id+'">'+(isKlaar?'<i class="ti ti-check"></i> Afgerond':'<i class="ti ti-circle-check"></i> Markeer als afgerond')+'</button>';
+    html+='</div></div>';
+  });
+
+  wrap.innerHTML=html;
+
+  // Event delegation voor de vandaag-knoppen
+  if(!wrap._bbdagListener){
+    wrap._bbdagListener=true;
+    wrap.addEventListener('click',function(e){
+      var laad=e.target.closest('[data-bbdag-laad]');
+      if(laad){openLaadbriefje(Number(laad.dataset.bbdagLaad));return;}
+      var det=e.target.closest('[data-bbdag-detail]');
+      if(det){openDetail(Number(det.dataset.bbdagDetail));return;}
+      var klaar=e.target.closest('[data-bbdag-klaar]');
+      if(klaar){bbMarkeerKlaar(Number(klaar.dataset.bbdagKlaar));return;}
+    });
+  }
+}
+
+function bbToggleVolledig(){
+  var vol=document.getElementById('bb-volledig');
+  var knop=document.getElementById('bb-toon-meer');
+  if(!vol||!knop)return;
+  var open=vol.style.display!=='none';
+  vol.style.display=open?'none':'block';
+  knop.innerHTML=open
+    ?'<i class="ti ti-chevron-down"></i> Toon alle komende ritten'
+    :'<i class="ti ti-chevron-up"></i> Verberg';
+}
+
+async function bbMarkeerKlaar(id){
+  var b=boekingen.find(function(x){return x.id===id;});
+  if(!b)return;
+  if(b.voltooid===true){banner('ok','Deze rit is al afgerond.');return;}
+  if(!confirm('Deze rit markeren als afgerond?\n\n'+b.naam+' — '+b.adres))return;
+  // Markeer als geleverd/opgehaald op basis van huidige status, niet meteen archiveren
+  if(b.status<3)b.status=3; // minimaal Geleverd
+  saveC(boekingen);window._lastSaveTS=Date.now();
+  api({action:'save',body:{action:'save',boeking:b}}).catch(function(){queueVoegToe('save',{action:'save',boeking:b});});
+  banner('ok','✓ '+b.naam+' afgerond');
+  // Herrender de dag
+  var naam=mijnBBLaad();
+  if(naam)showBBDetail(naam);
+}
+
 
 function renderBetalen(){
   var el=document.getElementById('bet-content');
@@ -6417,6 +6572,61 @@ function kopieerPortalLink(boekingId){
   }
 }
 
+// ═══════════════════════════════════════════════════════════
+// BILLIT EXPORT — kant-en-klare tekst om in Billit te plakken
+// Vermijdt het overtypen van klantgegevens en factuurregels
+// ═══════════════════════════════════════════════════════════
+function billitExport(boekingId){
+  var b=boekingen.find(function(x){return x.id===boekingId;});
+  if(!b){banner('er','Boeking niet gevonden.');return;}
+
+  var items=matchProducten(b.materiaal||'');
+  var totaalIncl=parseFloat(b.prijs)||0;
+  var excl=Math.round(totaalIncl/1.21*100)/100;
+  var btw=Math.round((totaalIncl-excl)*100)/100;
+
+  // Factuurregels
+  var regels=[];
+  items.forEach(function(m){
+    if(!m.product)return;
+    regels.push(m.aantal+' x '+m.product.naam+'  —  €'+(m.product.incl*m.aantal).toFixed(2)+' incl.');
+  });
+  if(regels.length===0)regels.push('Verhuur feestmateriaal  —  €'+totaalIncl.toFixed(2)+' incl.');
+
+  var mo=document.getElementById('ai-mo');
+  if(!mo){mo=document.createElement('div');mo.id='ai-mo';mo.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px';mo.onclick=function(e){if(e.target===mo)mo.remove();};document.body.appendChild(mo);}
+
+  // Blokken die apart kopieerbaar zijn
+  function kopieerBlok(id,tekst){
+    return '<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px">'
+      +'<div style="flex:1;background:var(--bg2);border:.5px solid var(--bl);border-radius:var(--rm);padding:8px 10px;font-size:12px;color:var(--tx1);white-space:pre-wrap;font-family:monospace" id="'+id+'">'+esc(tekst)+'</div>'
+      +'<button onclick="navigator.clipboard.writeText(document.getElementById(\''+id+'\').textContent).then(function(){banner(\'ok\',\'Gekopieerd\')})" style="background:var(--sky);color:#fff;border:none;border-radius:var(--rm);padding:8px 10px;cursor:pointer;flex-shrink:0" title="Kopieer"><i class="ti ti-copy"></i></button>'
+      +'</div>';
+  }
+
+  var klantBlok=b.naam+'\n'+b.adres+(b.email?'\n'+b.email:'')+(b.tel?'\n'+b.tel:'');
+  var regelBlok=regels.join('\n');
+  var bedragBlok='Excl. BTW: €'+excl.toFixed(2)+'\nBTW 21%: €'+btw.toFixed(2)+'\nTotaal incl.: €'+totaalIncl.toFixed(2);
+
+  mo.innerHTML='<div style="background:var(--bg1);border-radius:var(--rl);padding:0;max-width:520px;width:100%;max-height:85vh;overflow-y:auto">'
+    +'<div style="background:var(--navy);padding:14px 18px;display:flex;align-items:center;justify-content:space-between">'
+    +'<strong style="font-size:14px;color:#fff"><i class="ti ti-file-invoice" style="color:var(--sky);margin-right:6px"></i>Overzetten naar Billit</strong>'
+    +'<button onclick="document.getElementById(\'ai-mo\').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;color:rgba(255,255,255,.7)">✕</button></div>'
+    +'<div style="padding:16px 18px">'
+    +'<p style="font-size:12px;color:var(--tx2);margin:0 0 14px">Kopieer elk blok en plak het in Billit. Zo hoef je niets meer over te typen.</p>'
+    +'<div style="font-size:11px;font-weight:700;color:var(--tx3);text-transform:uppercase;margin-bottom:5px">Klantgegevens</div>'
+    +kopieerBlok('billit-klant',klantBlok)
+    +'<div style="font-size:11px;font-weight:700;color:var(--tx3);text-transform:uppercase;margin:12px 0 5px">Factuurregels</div>'
+    +kopieerBlok('billit-regels',regelBlok)
+    +'<div style="font-size:11px;font-weight:700;color:var(--tx3);text-transform:uppercase;margin:12px 0 5px">Bedragen</div>'
+    +kopieerBlok('billit-bedrag',bedragBlok)
+    +'<div style="display:flex;gap:8px;margin-top:16px">'
+    +'<button onclick="navigator.clipboard.writeText(document.getElementById(\'billit-klant\').textContent+\'\\n\\n\'+document.getElementById(\'billit-regels\').textContent+\'\\n\\n\'+document.getElementById(\'billit-bedrag\').textContent).then(function(){banner(\'ok\',\'Alles gekopieerd\')})" class="bprim" style="flex:1;padding:10px;font-size:13px"><i class="ti ti-copy"></i> Kopieer alles</button>'
+    +'<a href="https://app.billit.be" target="_blank" class="fb" style="padding:10px 16px;font-size:13px;text-decoration:none;display:inline-flex;align-items:center;gap:5px"><i class="ti ti-external-link"></i> Open Billit</a>'
+    +'</div></div></div>';
+}
+
+
 function genereerfactuur(boekingId){
   var b=boekingen.find(function(x){return x.id===boekingId;});
   if(!b){banner('er','Boeking niet gevonden.');return;}
@@ -7574,6 +7784,8 @@ function renderAIKnoppen(id){
     +'<button class="fb" style="font-size:11px;padding:5px 10px" onclick="aiHerinneringsmail('+id+')"><i class="ti ti-mail" style="font-size:11px"></i> Herinneringsmail</button>'
     +(htk?'<button class="fb" style="font-size:11px;padding:5px 10px;border-color:#3B6D11;color:#3B6D11" onclick="handtekeningBekijk('+id+')"><i class="ti ti-signature" style="font-size:11px"></i> ✓ Handtekening</button>':'<button class="fb" style="font-size:11px;padding:5px 10px" onclick="openLaadbriefje('+id+')"><i class="ti ti-signature" style="font-size:11px"></i> Ondertekenen</button>')
     +'<button class="fb" style="font-size:11px;padding:5px 10px" onclick="kopieerPortalLink('+id+')"><i class="ti ti-link" style="font-size:11px"></i> Portaallink klant</button>'
+    +'<button class="fb" style="font-size:11px;padding:5px 10px" onclick="dlICS('+id+',\'lev\')"><i class="ti ti-calendar-plus" style="font-size:11px"></i> + Agenda</button>'
+    +'<button class="fb" style="font-size:11px;padding:5px 10px" onclick="billitExport('+id+')"><i class="ti ti-file-invoice" style="font-size:11px"></i> Naar Billit</button>'
     +'<button class="fb" style="font-size:11px;padding:5px 10px" onclick="genereerfactuur('+id+')"><i class="ti ti-file-invoice" style="font-size:11px"></i> Factuur PDF</button>'
     +'</div></div>';
 }
