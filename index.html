@@ -810,6 +810,37 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
   .bcard-actions .bsm,.bcard-actions .bsm-bl{font-size:10px;padding:3px 8px}
   .modal{padding:14px}
 }
+.team-hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+.team-toggle{display:inline-flex;background:var(--bg2);border-radius:var(--rm);padding:3px;gap:2px}
+.team-toggle button{border:none;background:transparent;padding:7px 14px;border-radius:calc(var(--rm) - 2px);font-size:13px;font-weight:600;cursor:pointer;color:var(--tx2);font-family:'Poppins',sans-serif}
+.team-toggle button.active{background:var(--navy);color:#fff}
+.team-datum-nav{display:flex;align-items:center;gap:8px}
+.team-datum-nav button{width:34px;height:34px;border-radius:var(--rm);border:.5px solid var(--bm);background:var(--bg1);cursor:pointer;font-size:16px;color:var(--tx1)}
+.team-datum-lbl{font-size:14px;font-weight:600;color:var(--tx1);min-width:150px;text-align:center}
+.team-dag{margin-bottom:20px}
+.team-dag-titel{font-size:14px;font-weight:700;color:#fff;background:var(--navy);border-radius:var(--rm);padding:8px 14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.team-dag-titel .cnt{font-size:12px;font-weight:500;opacity:.85}
+.team-persoon{background:var(--bg1);border:.5px solid var(--bl);border-radius:var(--rl);margin-bottom:10px;overflow:hidden}
+.team-persoon-hdr{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg2);border-bottom:.5px solid var(--bl)}
+.team-av{width:34px;height:34px;border-radius:50%;background:#E6F1FB;color:#0C447C;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.team-persoon-naam{font-size:14px;font-weight:700;color:var(--tx1)}
+.team-persoon-cnt{font-size:11px;color:var(--tx2);margin-left:auto;background:var(--bg1);border-radius:20px;padding:3px 10px}
+.team-taak{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:.5px solid var(--bg2);cursor:pointer}
+.team-taak:last-child{border-bottom:none}
+.team-taak:hover{background:var(--bg2)}
+.team-taak-tijd{font-size:14px;font-weight:700;min-width:46px;text-align:center}
+.team-taak-tijd.lev{color:#0C447C}
+.team-taak-tijd.oph{color:#27500A}
+.team-taak-body{flex:1;min-width:0}
+.team-taak-klant{font-size:13px;font-weight:600;color:var(--tx1)}
+.team-taak-sub{font-size:11px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.team-taak-badge{font-size:9px;font-weight:700;text-transform:uppercase;padding:2px 7px;border-radius:10px;flex-shrink:0}
+.team-taak-badge.lev{background:#E6F1FB;color:#0C447C}
+.team-taak-badge.oph{background:#EAF3DE;color:#27500A}
+.team-onbemand{background:#FCEBEB;border:1px solid #E24B4A;border-radius:var(--rl);margin-bottom:10px;overflow:hidden}
+.team-onbemand-hdr{display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:13px;font-weight:700;color:#A32D2D}
+.team-vrij{font-size:12px;color:#27500A;padding:8px 14px;background:#EAF3DE;border-radius:var(--rm);display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.team-leeg{text-align:center;padding:30px;color:var(--tx3)}
 </style>
 </head>
 <body>
@@ -836,6 +867,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
   <button class="tab" onclick="showTab('kalender')" id="tab-kalender"><i class="ti ti-calendar-month" aria-hidden="true"></i> Kalender</button>
   <button class="tab" onclick="showTab('rit')" id="tab-rit"><i class="ti ti-route" aria-hidden="true"></i> Ritplanning</button>
   <button class="tab" onclick="showTab('mijn')" id="tab-mijn"><i class="ti ti-user" aria-hidden="true"></i> Mijn planning</button>
+  <button class="tab" onclick="showTab('team')" id="tab-team"><i class="ti ti-users-group" aria-hidden="true"></i> Team</button>
   <button class="tab" onclick="showTab('voorraad')" id="tab-voorraad"><i class="ti ti-package" aria-hidden="true"></i> Voorraad</button>
   <button class="tab" onclick="showTab('rapport')" id="tab-rapport"><i class="ti ti-chart-bar" aria-hidden="true"></i> Rapport</button>
   <button class="tab" onclick="showTab('nieuw')" id="tab-nieuw"><i class="ti ti-plus" aria-hidden="true"></i> Nieuw</button>
@@ -923,10 +955,11 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
         <i class="ti ti-printer" style="font-size:13px"></i> Afdrukken
       </button>
     </div>
-    <div id="bb-vandaag"></div>
-    <div class="bb-stats" id="bb-stats"></div>
-    <div id="bb-list"></div>
   </div>
+</div>
+
+<div class="view" id="view-team">
+  <div id="team-wrap"><div class="loading"><i class="ti ti-loader"></i>Teamoverzicht laden...</div></div>
 </div>
 
 <!-- VOORRAAD -->
@@ -1706,6 +1739,7 @@ async function loadData(){
   if(document.getElementById('view-dashboard').classList.contains('active')) renderDashboard();
   if(document.getElementById('view-rit').classList.contains('active')) renderRit();
   if(document.getElementById('view-mijn').classList.contains('active')) renderBBGrid();
+  if(document.getElementById('view-team').classList.contains('active')) renderTeam();
   // Queue-badge altijd bijwerken
   queueBadgeUpdate();
 }
@@ -1817,6 +1851,7 @@ function showTab(tab){
   if(tab==='kalender')renderKalender();
   if(tab==='rit'){laadLeafletLazy(function(){renderRit();setTimeout(function(){if(_ritKaart)_ritKaart.invalidateSize();},300);});}
   if(tab==='mijn')renderBBGrid();
+  if(tab==='team')renderTeam();
   if(tab==='voorraad')renderVoorraad();
   if(tab==='rapport')renderRapport();
   if(tab==='nieuw'&&!editId){clearForm();document.getElementById('ics-panel').style.display='none';}
@@ -3290,6 +3325,188 @@ function ritSelDate(d){document.getElementById('rit-ds').dataset.sel=d;laadLeafl
 var MIJN_BB_KEY='fr_mijn_bb_v1';
 function mijnBBOpslaan(naam){ try{localStorage.setItem(MIJN_BB_KEY,naam);}catch(e){} }
 function mijnBBLaad(){ try{return localStorage.getItem(MIJN_BB_KEY)||null;}catch(e){return null;} }
+
+// ═══════════════════════════════════════════════════════════
+// TEAM — eigenaarsoverzicht: wie doet wat, per weekend
+// Toggle tussen "per persoon" en "per opdracht"
+// Rode markering voor onbemande ritten
+// ═══════════════════════════════════════════════════════════
+var _teamModus='persoon'; // 'persoon' of 'opdracht'
+var _teamWeekStart=null;  // maandag van getoonde week
+
+function teamGetWeekend(startMaandag){
+  // Geef za+zo van de week terug
+  var za=new Date(startMaandag+'T00:00:00');za.setDate(za.getDate()+5);
+  var zo=new Date(startMaandag+'T00:00:00');zo.setDate(zo.getDate()+6);
+  return [za.toISOString().split('T')[0],zo.toISOString().split('T')[0]];
+}
+
+function renderTeam(){
+  var wrap=document.getElementById('team-wrap');
+  if(!wrap)return;
+  if(!_teamWeekStart)_teamWeekStart=getMon(today());
+
+  var weekend=teamGetWeekend(_teamWeekStart);
+  // Toon alle dagen van het weekend + eventueel vrijdag als er iets is
+  var vr=new Date(_teamWeekStart+'T00:00:00');vr.setDate(vr.getDate()+4);
+  var vrStr=vr.toISOString().split('T')[0];
+  var dagen=[vrStr,weekend[0],weekend[1]];
+
+  // Header met toggle en weeknavigatie
+  var zaDt=new Date(weekend[0]+'T00:00:00');
+  var weekLbl='Weekend '+zaDt.getDate()+' '+NLM[zaDt.getMonth()];
+
+  var html='<div class="team-hdr">';
+  html+='<div class="team-datum-nav">';
+  html+='<button onclick="teamNav(-1)"><i class="ti ti-chevron-left"></i></button>';
+  html+='<span class="team-datum-lbl">'+weekLbl+'</span>';
+  html+='<button onclick="teamNav(1)"><i class="ti ti-chevron-right"></i></button>';
+  html+='</div>';
+  html+='<div class="team-toggle">';
+  html+='<button class="'+(_teamModus==='persoon'?'active':'')+'" onclick="teamSetModus(\'persoon\')"><i class="ti ti-user" style="font-size:12px"></i> Per persoon</button>';
+  html+='<button class="'+(_teamModus==='opdracht'?'active':'')+'" onclick="teamSetModus(\'opdracht\')"><i class="ti ti-map-pin" style="font-size:12px"></i> Per opdracht</button>';
+  html+='</div>';
+  html+='</div>';
+
+  // Verzamel alle taken (lev + oph) in het weekend
+  var taken=[];
+  boekingen.forEach(function(b){
+    if(b.voltooid)return;
+    dagen.forEach(function(dag){
+      if(b.levdatum===dag){
+        taken.push({b:b,type:'lev',dag:dag,uur:b.levuur||'09:00',team:b.opstellers_lev||[]});
+      }
+      if(b.ophdatum===dag&&b.ophdatum!==b.levdatum){
+        taken.push({b:b,type:'oph',dag:dag,uur:b.ophuur||'10:00',team:b.opstellers_oph||[]});
+      }
+    });
+  });
+
+  if(taken.length===0){
+    html+='<div class="team-leeg"><i class="ti ti-calendar-off" style="font-size:32px;display:block;margin-bottom:10px"></i>Geen ritten dit weekend.</div>';
+    wrap.innerHTML=html;
+    return;
+  }
+
+  if(_teamModus==='persoon') html+=teamRenderPerPersoon(taken,dagen);
+  else html+=teamRenderPerOpdracht(taken,dagen);
+
+  wrap.innerHTML=html;
+
+  // Klik op taak → detail
+  if(!wrap._teamListener){
+    wrap._teamListener=true;
+    wrap.addEventListener('click',function(e){
+      var t=e.target.closest('[data-team-bid]');
+      if(t)openDetail(Number(t.dataset.teamBid));
+    });
+  }
+}
+
+function teamRenderPerPersoon(taken,dagen){
+  var html='';
+  dagen.forEach(function(dag){
+    var dagTaken=taken.filter(function(t){return t.dag===dag;});
+    if(dagTaken.length===0)return;
+    var dt=new Date(dag+'T00:00:00');
+    html+='<div class="team-dag">';
+    html+='<div class="team-dag-titel">'+NLD[dt.getDay()]+' '+dt.getDate()+' '+NLM[dt.getMonth()]+'<span class="cnt">'+dagTaken.length+' rit'+(dagTaken.length!==1?'ten':'')+'</span></div>';
+
+    // Groepeer per persoon
+    var perPersoon={};
+    var onbemand=[];
+    dagTaken.forEach(function(t){
+      if(t.team.length===0){onbemand.push(t);return;}
+      t.team.forEach(function(nm){
+        if(!perPersoon[nm])perPersoon[nm]=[];
+        perPersoon[nm].push(t);
+      });
+    });
+
+    // Onbemande ritten eerst (rood, belangrijk!)
+    if(onbemand.length>0){
+      html+='<div class="team-onbemand">';
+      html+='<div class="team-onbemand-hdr"><i class="ti ti-alert-triangle"></i> '+onbemand.length+' rit'+(onbemand.length!==1?'ten':'')+' zonder toewijzing</div>';
+      onbemand.sort(function(a,b){return timeToMin(a.uur)-timeToMin(b.uur);}).forEach(function(t){
+        html+=teamTaakRij(t);
+      });
+      html+='</div>';
+    }
+
+    // Personen met taken, gesorteerd op naam-volgorde van BB
+    var namenGesorteerd=BB.filter(function(nm){return perPersoon[nm];})
+      .concat(Object.keys(perPersoon).filter(function(nm){return BB.indexOf(nm)<0;}));
+    namenGesorteerd.forEach(function(nm){
+      var pt=perPersoon[nm].sort(function(a,b){return timeToMin(a.uur)-timeToMin(b.uur);});
+      html+='<div class="team-persoon">';
+      html+='<div class="team-persoon-hdr"><div class="team-av">'+ini(nm)+'</div>'
+        +'<div class="team-persoon-naam">'+esc(nm)+'</div>'
+        +'<div class="team-persoon-cnt">'+pt.length+' rit'+(pt.length!==1?'ten':'')+'</div></div>';
+      pt.forEach(function(t){html+=teamTaakRij(t);});
+      html+='</div>';
+    });
+
+    // Wie is vrij (BB zonder taken die dag)
+    var actief={};
+    Object.keys(perPersoon).forEach(function(nm){actief[nm]=1;});
+    var vrijeBB=BB.filter(function(nm){return !actief[nm];});
+    if(vrijeBB.length>0&&vrijeBB.length<BB.length){
+      html+='<div class="team-vrij"><i class="ti ti-user-check"></i> Vrij: '+vrijeBB.join(', ')+'</div>';
+    }
+
+    html+='</div>';
+  });
+  return html;
+}
+
+function teamRenderPerOpdracht(taken,dagen){
+  var html='';
+  dagen.forEach(function(dag){
+    var dagTaken=taken.filter(function(t){return t.dag===dag;})
+      .sort(function(a,b){return timeToMin(a.uur)-timeToMin(b.uur);});
+    if(dagTaken.length===0)return;
+    var dt=new Date(dag+'T00:00:00');
+    html+='<div class="team-dag">';
+    html+='<div class="team-dag-titel">'+NLD[dt.getDay()]+' '+dt.getDate()+' '+NLM[dt.getMonth()]+'<span class="cnt">'+dagTaken.length+' rit'+(dagTaken.length!==1?'ten':'')+'</span></div>';
+    html+='<div class="team-persoon">';
+    dagTaken.forEach(function(t){
+      var b=t.b, isLev=t.type==='lev';
+      var teamHtml=t.team.length>0
+        ? t.team.map(function(nm){return '<span style="display:inline-flex;align-items:center;gap:3px;background:var(--bg2);border-radius:10px;padding:1px 8px;font-size:11px;color:var(--tx1);margin-right:3px"><span style="width:16px;height:16px;border-radius:50%;background:#E6F1FB;color:#0C447C;display:inline-flex;align-items:center;justify-content:center;font-size:8px;font-weight:700">'+ini(nm)+'</span>'+esc(nm)+'</span>';}).join('')
+        : '<span style="color:#A32D2D;font-weight:700;font-size:12px"><i class="ti ti-alert-triangle" style="font-size:11px"></i> NIEMAND TOEGEWEZEN</span>';
+      html+='<div class="team-taak" data-team-bid="'+b.id+'" style="'+(t.team.length===0?'background:#FCEBEB':'')+'">';
+      html+='<div class="team-taak-tijd '+(isLev?'lev':'oph')+'">'+t.uur+'</div>';
+      html+='<div class="team-taak-body">';
+      html+='<div class="team-taak-klant">'+esc(b.naam)+' <span class="team-taak-badge '+(isLev?'lev':'oph')+'">'+(isLev?'Leveren':'Ophalen')+'</span></div>';
+      html+='<div style="margin-top:3px">'+teamHtml+'</div>';
+      html+='<div class="team-taak-sub" style="margin-top:2px">'+esc(b.adres||'')+'</div>';
+      html+='</div>';
+      html+='</div>';
+    });
+    html+='</div>';
+    html+='</div>';
+  });
+  return html;
+}
+
+function teamTaakRij(t){
+  var b=t.b, isLev=t.type==='lev';
+  var matKort=(b.materiaal||'').split('\n').filter(function(x){return x.trim();}).slice(0,2).join(', ');
+  return '<div class="team-taak" data-team-bid="'+b.id+'">'
+    +'<div class="team-taak-tijd '+(isLev?'lev':'oph')+'">'+t.uur+'</div>'
+    +'<div class="team-taak-body">'
+    +'<div class="team-taak-klant">'+esc(b.naam)+' <span class="team-taak-badge '+(isLev?'lev':'oph')+'">'+(isLev?'Leveren':'Ophalen')+'</span></div>'
+    +'<div class="team-taak-sub">'+esc(b.adres||'')+(matKort?' · '+esc(matKort):'')+'</div>'
+    +'</div></div>';
+}
+
+function teamSetModus(m){_teamModus=m;renderTeam();}
+function teamNav(richting){
+  var d=new Date(_teamWeekStart+'T00:00:00');
+  d.setDate(d.getDate()+richting*7);
+  _teamWeekStart=d.toISOString().split('T')[0];
+  renderTeam();
+}
 
 function renderBBGrid(){
   document.getElementById('bb-sel').style.display='block';document.getElementById('bb-det').classList.remove('active');
