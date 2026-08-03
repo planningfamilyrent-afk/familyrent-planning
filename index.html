@@ -841,6 +841,8 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 .team-onbemand-hdr{display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:13px;font-weight:700;color:#A32D2D}
 .team-vrij{font-size:12px;color:#27500A;padding:8px 14px;background:#EAF3DE;border-radius:var(--rm);display:flex;align-items:center;gap:6px;margin-bottom:6px}
 .team-leeg{text-align:center;padding:30px;color:var(--tx3)}
+.team-wijs-btn{width:36px;height:36px;border-radius:50%;border:.5px solid var(--sky);background:var(--bg1);color:var(--sky);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px}
+.team-wijs-btn:hover{background:var(--sky);color:#fff}
 </style>
 </head>
 <body>
@@ -1035,6 +1037,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
       <div class="fsec-title"><i class="ti ti-user" aria-hidden="true"></i> Klantgegevens</div>
       <div class="frow">
         <div class="fg"><label class="fl">Naam klant / bedrijf <span class="req">*</span></label><input class="fi" id="f-naam" placeholder="bv. Familie Janssen" oninput="acZoek(this.value)" onblur="setTimeout(acSluit,200)" autocomplete="off"></div>
+        <div id="klant-kaart" style="display:none;margin-bottom:10px"></div>
         <div class="fg"><label class="fl">Telefoonnummer</label><input class="fi" id="f-tel" placeholder="bv. 0478 12 34 56"></div>
       </div>
       <div class="frow">
@@ -1099,14 +1102,14 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
     <div class="fsec">
       <div class="fsec-title"><i class="ti ti-truck-delivery" aria-hidden="true"></i> <span id="form-lev-title">Levering</span></div>
       <div class="frow">
-        <div class="fg"><label class="fl">Datum <span class="req">*</span></label><input class="fi" type="date" id="f-levdatum" onchange="updateWeerFormulier();if(!editId)bbSuggestieToewijzen(this.value)"></div>
+        <div class="fg"><label class="fl">Datum <span class="req">*</span></label><input class="fi" type="date" id="f-levdatum" onchange="updateWeerFormulier();if(!editId)bbSuggestieToewijzen(this.value);if(typeof ppRender==='function')ppRender()"></div>
         <div class="fg"><label class="fl">Tijdstip</label><input class="fi" type="time" id="f-levuur" value="09:00"></div>
       </div>
     </div>
     <div class="fsec">
       <div class="fsec-title"><i class="ti ti-arrow-back-up" aria-hidden="true"></i> <span id="form-oph-title">Ophaling</span></div>
       <div class="frow">
-        <div class="fg"><label class="fl">Datum <span class="req">*</span></label><input class="fi" type="date" id="f-ophdatum"></div>
+        <div class="fg"><label class="fl">Datum <span class="req">*</span></label><input class="fi" type="date" id="f-ophdatum" onchange="if(typeof ppRender==='function')ppRender()"></div>
         <div class="fg"><label class="fl">Tijdstip</label><input class="fi" type="time" id="f-ophuur" value="10:00"></div>
       </div>
     </div>
@@ -2032,10 +2035,23 @@ function ppRender(){
   }
   list.innerHTML=filtered.map(function(p){
     var qty=ppQty[p.id]||0;
+    // Live beschikbaarheid als er een datum gekozen is
+    var availHtml='';
+    var lev=(document.getElementById('f-levdatum')||{}).value;
+    var oph=(document.getElementById('f-ophdatum')||{}).value||lev;
+    if(lev){
+      var check=vrCheckBeschikbaar(p.id,qty||1,lev,oph,editId||null,null,null);
+      if(check.stock<999){ // enkel tonen als voorraad is ingesteld
+        var kl=check.status==='conflict'?'pp-avail-conflict':check.status==='warn'?'pp-avail-warn':'pp-avail-ok';
+        var ic=check.status==='conflict'?'⛔':check.status==='warn'?'⚠️':'✓';
+        availHtml='<div class="pp-avail '+kl+'">'+ic+' '+check.beschikbaar+' vrij op deze datum</div>';
+      }
+    }
     return '<div class="pp-item'+(qty>0?' has-qty':'')+'" id="ppi-'+p.id+'">'+
       '<div class="pp-item-info">'+
         '<div class="pp-item-naam">'+esc(p.naam)+'</div>'+
         '<div class="pp-item-cat">'+esc(p.cat)+'</div>'+
+        availHtml+
       '</div>'+
       '<div class="pp-item-prijs">€'+p.incl+'</div>'+
       '<div class="pp-qty" data-pid="'+p.id+'">'+
@@ -2149,6 +2165,8 @@ function ppLoadFromField(tekst){
 }
 
 function clearForm(){
+  var _kk=document.getElementById('klant-kaart');
+  if(_kk){_kk.style.display='none';_kk.innerHTML='';}
   ['f-naam','f-tel','f-email','f-adres','f-mat','f-opm','f-and'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('f-levdatum').value=today();
   document.getElementById('f-ophdatum').value=today();
@@ -2273,7 +2291,8 @@ async function saveBoeking(){
   if(fs.levType==='levering'&&(!fs.vertrek||!fs.matStatus)){errEl.textContent='Selecteer vertrekpunt en materiaalstatus.';errEl.style.display='block';return;}
   errEl.style.display='none';
   const _ops=getOps();
-  // Voorraad conflict check (niet-blokkerend)
+  // ── VOORRAADCONFLICT CHECK VÓÓR OPSLAAN ──
+  // Waarschuwt duidelijk als materiaal al vergeven is, maar laat bewust doorgaan
   const _tempB={
     id:editId||0,
     materiaal:document.getElementById('f-mat').value.trim(),
@@ -2281,6 +2300,25 @@ async function saveBoeking(){
     ophdatum:document.getElementById('f-ophdatum').value||document.getElementById('f-levdatum').value
   };
   const _vrConflicten=vrCheckBoeking(_tempB);
+  var _echteConflicten=_vrConflicten.filter(function(c){return c.check.status==='conflict';});
+  if(_echteConflicten.length>0){
+    var _cfLijst=_echteConflicten.map(function(c){
+      return '• '+c.product.naam+' — '+c.check.beschikbaar+' vrij, '+c.aantal+' nodig';
+    }).join('\n');
+    var _doorgaan=confirm(
+      '⚠️ VOORRAADCONFLICT\n\n'+
+      'Op deze datum is niet genoeg materiaal vrij:\n\n'+_cfLijst+'\n\n'+
+      'Dit materiaal is mogelijk al aan een andere klant beloofd.\n\n'+
+      'Klik OK om TOCH op te slaan (bv. als je extra materiaal hebt),\n'+
+      'of Annuleer om de boeking aan te passen.'
+    );
+    if(!_doorgaan){
+      // Ga terug naar het formulier zonder op te slaan
+      var _btn=document.getElementById('savebtn');
+      if(_btn){_btn.disabled=false;_btn.innerHTML='<i class="ti ti-check"></i> Boeking opslaan';}
+      return;
+    }
+  }
   const b={
     id:editId||Date.now(),naam,adres,
     tel:document.getElementById('f-tel').value.trim(),
@@ -2338,16 +2376,6 @@ async function saveBoeking(){
     } else {
       // Nieuwe boeking: toon succes banner, reset formulier, ga naar planning
       banner('ok','Boeking opgeslagen — '+b.naam);
-      // Toon voorraadconflicten als waarschuwing
-      if(_vrConflicten.length>0){
-        var conflictNamen=_vrConflicten.filter(function(c){return c.check.status==='conflict';}).map(function(c){return c.product.naam;});
-        var warnNamen=_vrConflicten.filter(function(c){return c.check.status==='warn';}).map(function(c){return c.product.naam;});
-        if(conflictNamen.length>0){
-          setTimeout(function(){banner('er','Voorraadconflict: '+conflictNamen.slice(0,2).join(', ')+(conflictNamen.length>2?' +'+( conflictNamen.length-2)+' meer':''));},1000);
-        } else if(warnNamen.length>0){
-          setTimeout(function(){banner('ok','Beperkte voorraad: '+warnNamen.slice(0,2).join(', '));},1000);
-        }
-      }
       var nieuwTab=document.getElementById('tab-nieuw');
       if(nieuwTab) nieuwTab.innerHTML='<i class="ti ti-plus"></i> Nieuw';
       // Stuur bevestigingsmail naar klant
@@ -3367,6 +3395,7 @@ function renderTeam(){
   html+='<button class="'+(_teamModus==='opdracht'?'active':'')+'" onclick="teamSetModus(\'opdracht\')"><i class="ti ti-map-pin" style="font-size:12px"></i> Per opdracht</button>';
   html+='</div>';
   html+='</div>';
+  html+='<!--TELLER-->';
 
   // Verzamel alle taken (lev + oph) in het weekend
   var taken=[];
@@ -3384,19 +3413,30 @@ function renderTeam(){
 
   if(taken.length===0){
     html+='<div class="team-leeg"><i class="ti ti-calendar-off" style="font-size:32px;display:block;margin-bottom:10px"></i>Geen ritten dit weekend.</div>';
-    wrap.innerHTML=html;
+    wrap.innerHTML=html.replace('<!--TELLER-->','');
     return;
   }
 
   if(_teamModus==='persoon') html+=teamRenderPerPersoon(taken,dagen);
   else html+=teamRenderPerOpdracht(taken,dagen);
 
+  // Teller onbemande ritten bovenaan invoegen
+  var onbemandTotaal=taken.filter(function(t){return t.team.length===0;}).length;
+  var tellerHtml='<div style="margin-bottom:14px;padding:10px 14px;border-radius:var(--rm);font-size:13px;font-weight:600;'
+    +(onbemandTotaal>0
+      ?'background:#FCEBEB;color:#A32D2D"><i class="ti ti-alert-triangle"></i> '+onbemandTotaal+' van '+taken.length+' ritten nog onbemand'
+      :'background:#EAF3DE;color:#27500A"><i class="ti ti-circle-check"></i> Alle '+taken.length+' ritten zijn toegewezen')
+    +'</div>';
+  html=html.replace('<!--TELLER-->',tellerHtml);
+
   wrap.innerHTML=html;
 
-  // Klik op taak → detail
+  // Klik op taak → detail | klik op toewijs-knop → toewijs-modal
   if(!wrap._teamListener){
     wrap._teamListener=true;
     wrap.addEventListener('click',function(e){
+      var wijs=e.target.closest('[data-wijs-bid]');
+      if(wijs){e.stopPropagation();teamWijsOpen(Number(wijs.dataset.wijsBid),wijs.dataset.wijsType);return;}
       var t=e.target.closest('[data-team-bid]');
       if(t)openDetail(Number(t.dataset.teamBid));
     });
@@ -3481,6 +3521,7 @@ function teamRenderPerOpdracht(taken,dagen){
       html+='<div style="margin-top:3px">'+teamHtml+'</div>';
       html+='<div class="team-taak-sub" style="margin-top:2px">'+esc(b.adres||'')+'</div>';
       html+='</div>';
+      html+='<button class="team-wijs-btn" data-wijs-bid="'+b.id+'" data-wijs-type="'+t.type+'" title="Wie doet dit?"><i class="ti ti-user-plus"></i></button>';
       html+='</div>';
     });
     html+='</div>';
@@ -3497,7 +3538,60 @@ function teamTaakRij(t){
     +'<div class="team-taak-body">'
     +'<div class="team-taak-klant">'+esc(b.naam)+' <span class="team-taak-badge '+(isLev?'lev':'oph')+'">'+(isLev?'Leveren':'Ophalen')+'</span></div>'
     +'<div class="team-taak-sub">'+esc(b.adres||'')+(matKort?' · '+esc(matKort):'')+'</div>'
-    +'</div></div>';
+    +'</div>'
+    +'<button class="team-wijs-btn" data-wijs-bid="'+b.id+'" data-wijs-type="'+t.type+'" title="Wie doet dit?"><i class="ti ti-user-plus"></i></button>'
+    +'</div>';
+}
+
+// Toewijs-modal: kies wie de rit doet, direct vanuit teamoverzicht
+function teamWijsOpen(bid,type){
+  var b=boekingen.find(function(x){return x.id===bid;});
+  if(!b)return;
+  var isLev=type==='lev';
+  var huidige=(isLev?b.opstellers_lev:b.opstellers_oph)||[];
+  var mo=document.getElementById('ai-mo');
+  if(!mo){mo=document.createElement('div');mo.id='ai-mo';mo.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:600;display:flex;align-items:center;justify-content:center;padding:20px';mo.onclick=function(e){if(e.target===mo)mo.remove();};document.body.appendChild(mo);}
+  mo.innerHTML='<div style="background:var(--bg1);border-radius:var(--rl);padding:20px;max-width:400px;width:100%">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><strong style="font-size:14px;color:var(--tx1)"><i class="ti ti-user-plus" style="color:var(--sky);margin-right:6px"></i>Wie doet dit?</strong>'
+    +'<button onclick="document.getElementById(\'ai-mo\').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--tx2)">✕</button></div>'
+    +'<div style="font-size:12px;color:var(--tx2);margin-bottom:12px">'+esc(b.naam)+' — '+(isLev?'levering':'ophaling')+'</div>'
+    +'<div id="team-wijs-namen" style="display:flex;flex-wrap:wrap;gap:6px"></div>'
+    +'<button onclick="document.getElementById(\'ai-mo\').remove()" class="bprim" style="width:100%;margin-top:14px;padding:10px;font-size:13px"><i class="ti ti-check"></i> Klaar</button>'
+    +'</div>';
+  window._teamWijs={bid:bid,type:type};
+  teamWijsRenderNamen();
+}
+
+function teamWijsRenderNamen(){
+  var w=window._teamWijs;
+  var b=boekingen.find(function(x){return x.id===w.bid;});
+  if(!b)return;
+  var huidige=(w.type==='lev'?b.opstellers_lev:b.opstellers_oph)||[];
+  var wrap=document.getElementById('team-wijs-namen');
+  if(!wrap)return;
+  wrap.innerHTML=BB.map(function(nm){
+    var sel=huidige.indexOf(nm)>=0;
+    return '<button onclick="teamWijsToggle(\''+encodeURIComponent(nm)+'\')" class="tg'+(sel?' sel':'')+'" style="min-height:44px;padding:8px 14px;font-size:13px">'
+      +'<span style="display:inline-flex;align-items:center;gap:5px">'
+      +(sel?'<i class="ti ti-check" style="font-size:12px"></i>':'')+ini(nm)+' '+esc(nm)+'</span></button>';
+  }).join('');
+}
+
+async function teamWijsToggle(nmEnc){
+  var nm=decodeURIComponent(nmEnc);
+  var w=window._teamWijs;
+  var b=boekingen.find(function(x){return x.id===w.bid;});
+  if(!b)return;
+  var veld=w.type==='lev'?'opstellers_lev':'opstellers_oph';
+  if(!Array.isArray(b[veld]))b[veld]=[];
+  var idx=b[veld].indexOf(nm);
+  if(idx>=0)b[veld].splice(idx,1);
+  else b[veld].push(nm);
+  // Sla lokaal op en sync
+  saveC(boekingen);window._lastSaveTS=Date.now();
+  api({action:'save',body:{action:'save',boeking:b}}).catch(function(){queueVoegToe('save',{action:'save',boeking:b});});
+  teamWijsRenderNamen();
+  renderTeam(); // ververs het overzicht op de achtergrond
 }
 
 function teamSetModus(m){_teamModus=m;renderTeam();}
@@ -3750,7 +3844,12 @@ function bbRenderVandaag(name,my,t){
     if(telClean&&isLev)html+='<a href="'+(waLink(b.tel,b.naam,ev.uur,b.adres)||'#')+'" target="_blank" class="bbdag-btn wa"><i class="ti ti-brand-whatsapp"></i> Onderweg</a>';
     html+='<button class="bbdag-btn laad" data-bbdag-laad="'+b.id+'"><i class="ti ti-clipboard-list"></i> Laadlijst</button>';
     html+='<button class="bbdag-btn prim" data-bbdag-detail="'+b.id+'"><i class="ti ti-info-circle"></i> Details</button>';
-    html+='<button class="bbdag-btn klaar'+(isKlaar?' done':'')+'" data-bbdag-klaar="'+b.id+'">'+(isKlaar?'<i class="ti ti-check"></i> Afgerond':'<i class="ti ti-circle-check"></i> Markeer als afgerond')+'</button>';
+    if(!isLev){
+      // Bij ophaling: retourcontrole in plaats van generiek afronden
+      html+='<button class="bbdag-btn klaar" data-bbdag-retour="'+b.id+'"><i class="ti ti-clipboard-check"></i> Retourcontrole</button>';
+    } else {
+      html+='<button class="bbdag-btn klaar'+(isKlaar?' done':'')+'" data-bbdag-klaar="'+b.id+'">'+(isKlaar?'<i class="ti ti-check"></i> Afgerond':'<i class="ti ti-circle-check"></i> Markeer als afgerond')+'</button>';
+    }
     html+='</div></div>';
   });
 
@@ -3766,6 +3865,8 @@ function bbRenderVandaag(name,my,t){
       if(det){openDetail(Number(det.dataset.bbdagDetail));return;}
       var klaar=e.target.closest('[data-bbdag-klaar]');
       if(klaar){bbMarkeerKlaar(Number(klaar.dataset.bbdagKlaar));return;}
+      var retour=e.target.closest('[data-bbdag-retour]');
+      if(retour){retourOpen(Number(retour.dataset.bbdagRetour));return;}
     });
   }
 }
@@ -3982,12 +4083,16 @@ function acZoek(q){
   if(matches.length===0){list.style.display='none';return;}
   list.innerHTML=matches.map(function(k,i){
     var highlight=k.naam.replace(new RegExp('('+q.replace(/[.*+?^${}()|\[\]\\]/g,'\\$&')+')','gi'),'<span class="ac-highlight">$1</span>');
+    // Badge voor terugkerende klanten
+    var badge='';
+    var n=k.aantalBoekingen||0;
+    if(n>=5) badge='<span style="background:#F5E6C8;color:#8A6D1B;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px">⭐ TROUWE KLANT · '+n+'×</span>';
+    else if(n>=2) badge='<span style="background:#E6F1FB;color:#0C447C;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px">↩ '+n+'× geboekt</span>';
     return '<div class="ac-item" data-idx="'+i+'">'+
-      '<div class="ac-naam">'+highlight+'</div>'+
+      '<div class="ac-naam">'+highlight+badge+'</div>'+
       '<div class="ac-meta">'+
         (k.adres?'<i class="ti ti-map-pin" style="font-size:10px"></i> '+esc(k.adres)+' &nbsp;':'') +
-        (k.tel?'<i class="ti ti-phone" style="font-size:10px"></i> '+esc(k.tel)+' &nbsp;':'')+
-        k.aantalBoekingen+' boeking'+(k.aantalBoekingen!==1?'en':'')+
+        (k.tel?'<i class="ti ti-phone" style="font-size:10px"></i> '+esc(k.tel):'')+
       '</div>'+
     '</div>';
   }).join('');
@@ -4016,6 +4121,60 @@ function acKiesObj(k){
   if(fEmail&&k.email) fEmail.value=k.email;
   document.getElementById('ac-list').style.display='none';
   updateWeerFormulier();
+  klantKaartToon(k);
+}
+
+// Toont een kaartje met de geschiedenis van een terugkerende klant
+function klantKaartToon(k){
+  var wrap=document.getElementById('klant-kaart');
+  if(!wrap)return;
+  var n=k.aantalBoekingen||0;
+  if(n<2){wrap.style.display='none';wrap.innerHTML='';return;}
+
+  var isTrouwe=n>=5;
+  var kleur=isTrouwe?'#8A6D1B':'#0C447C';
+  var bg=isTrouwe?'#FBF3DF':'#E6F1FB';
+  var titel=isTrouwe?'⭐ Trouwe klant':'↩ Terugkerende klant';
+
+  // Laatste boeking + vorig materiaal
+  var laatst=k.laatstGeboekt?fmtDate(k.laatstGeboekt):'onbekend';
+  var vorigMat=(k.materiaalVorig||'').split('\n').filter(function(x){return x.trim();});
+
+  var html='<div style="background:'+bg+';border:.5px solid '+kleur+';border-radius:var(--rm);padding:12px 14px">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
+    +'<span style="font-size:13px;font-weight:700;color:'+kleur+'">'+titel+'</span>'
+    +'<span style="font-size:11px;color:'+kleur+';font-weight:600">'+n+' keer geboekt</span>'
+    +'</div>'
+    +'<div style="font-size:12px;color:var(--tx2);margin-bottom:'+(vorigMat.length?'10px':'0')+'">'
+    +'<i class="ti ti-clock" style="font-size:11px"></i> Laatste boeking: '+laatst
+    +'</div>';
+
+  if(vorigMat.length>0){
+    html+='<div style="font-size:11px;font-weight:600;color:var(--tx3);text-transform:uppercase;margin-bottom:5px">Vorige keer gehuurd</div>';
+    html+='<div style="margin-bottom:10px">'+vorigMat.slice(0,5).map(function(m){
+      return '<span style="display:inline-block;background:var(--bg1);border:.5px solid var(--bl);border-radius:6px;padding:2px 8px;margin:2px 3px 2px 0;font-size:11px;color:var(--tx1)">'+esc(m.trim())+'</span>';
+    }).join('')+'</div>';
+    html+='<button onclick="klantVorigMateriaal()" class="fb" style="font-size:12px;padding:6px 12px;width:100%"><i class="ti ti-copy" style="font-size:12px"></i> Neem dit materiaal over</button>';
+  }
+  html+='</div>';
+  wrap.innerHTML=html;
+  wrap.style.display='block';
+  window._klantVorigMat=k.materiaalVorig||'';
+}
+
+// Neemt het materiaal van de vorige boeking over in de productpicker
+function klantVorigMateriaal(){
+  var mat=window._klantVorigMat;
+  if(!mat){banner('er','Geen vorig materiaal gevonden.');return;}
+  // Parse het materiaal terug naar de productpicker
+  ppQty={};
+  var matches=matchProducten(mat);
+  matches.forEach(function(m){
+    if(m.product&&m.aantal>0)ppQty[m.product.id]=m.aantal;
+  });
+  ppInit();
+  ppSaveToField();
+  banner('ok','✓ Materiaal van vorige boeking overgenomen');
 }
 
 function acSluit(){
@@ -7495,7 +7654,8 @@ function fotoVerwijder(boekingId,type,idx){
 
 function fotoBekijk(boekingId,type,idx){
   var fotos=fotosLaad(boekingId);
-  var f=fotos[type][idx];
+  var arr=fotos[type]||[];
+  var f=arr[idx];
   if(!f)return;
   var mo=document.getElementById('ai-mo');
   if(!mo){mo=document.createElement('div');mo.id='ai-mo';mo.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px';mo.onclick=function(e){if(e.target===mo)mo.remove();};document.body.appendChild(mo);}
@@ -7992,9 +8152,224 @@ async function aiVerstuurHerinneringsmail(boekingId){
 }
 
 // AI-toolbar: toon in detail modal
+// ═══════════════════════════════════════════════════════════
+// RETOURCONTROLE BIJ OPHALING
+// Afvinken of alles compleet terugkwam + schade noteren met foto
+// ═══════════════════════════════════════════════════════════
+var RETOUR_KEY='fr_retour_v1';
+
+function retourLaad(boekingId){
+  try{var alle=JSON.parse(localStorage.getItem(RETOUR_KEY)||'{}');return alle[boekingId]||null;}catch(e){return null;}
+}
+function retourSla(boekingId,data){
+  try{
+    var alle=JSON.parse(localStorage.getItem(RETOUR_KEY)||'{}');
+    alle[boekingId]=data;
+    localStorage.setItem(RETOUR_KEY,JSON.stringify(alle));
+    return true;
+  }catch(e){banner('er','Opslag vol.');return false;}
+}
+
+function retourOpen(boekingId){
+  var b=boekingen.find(function(x){return x.id===boekingId;});
+  if(!b){banner('er','Boeking niet gevonden.');return;}
+  var items=matchProducten(b.materiaal||'');
+  var geldigeItems=items.filter(function(m){return m.product;});
+
+  // Laad bestaande retourstatus of maak nieuwe
+  var retour=retourLaad(boekingId)||{items:{},schade:'',afgerond:false,datum:''};
+  window._retourBoekingId=boekingId;
+  window._retourData=retour;
+
+  var mo=document.getElementById('retour-mo');
+  if(!mo){
+    mo=document.createElement('div');mo.id='retour-mo';
+    mo.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:600;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto';
+    mo.onclick=function(e){if(e.target===mo)mo.remove();};
+    document.body.appendChild(mo);
+  }
+
+  var itemsHtml=geldigeItems.map(function(m,i){
+    var key='item_'+i;
+    var st=retour.items[key]||{terug:0,totaal:m.aantal};
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:.5px solid var(--bl)">'
+      +'<div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--tx1)">'+esc(m.product.naam)+'</div>'
+      +'<div style="font-size:11px;color:var(--tx3)">'+m.aantal+' uitgeleend</div></div>'
+      +'<div style="display:flex;align-items:center;gap:6px">'
+      +'<button onclick="retourMin('+i+')" style="width:32px;height:32px;border-radius:8px;border:.5px solid var(--bm);background:var(--bg1);cursor:pointer;font-size:16px;color:var(--tx1)">−</button>'
+      +'<span id="retour-cnt-'+i+'" style="min-width:52px;text-align:center;font-size:14px;font-weight:700;color:'+(st.terug>=m.aantal?'#2D6A1E':st.terug===0?'#A32D2D':'#C77A0A')+'">'+st.terug+' / '+m.aantal+'</span>'
+      +'<button onclick="retourPlus('+i+','+m.aantal+')" style="width:32px;height:32px;border-radius:8px;border:.5px solid var(--bm);background:var(--bg1);cursor:pointer;font-size:16px;color:var(--tx1)">+</button>'
+      +'</div></div>';
+  }).join('');
+
+  mo.innerHTML='<div style="background:var(--bg1);border-radius:var(--rl);padding:0;max-width:500px;width:100%;margin:auto;overflow:hidden">'
+    +'<div style="background:var(--navy);padding:14px 18px;display:flex;align-items:center;justify-content:space-between">'
+    +'<strong style="font-size:14px;color:#fff"><i class="ti ti-clipboard-check" style="color:var(--sky);margin-right:6px"></i>Retourcontrole — '+esc(b.naam)+'</strong>'
+    +'<button onclick="document.getElementById(\'retour-mo\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:rgba(255,255,255,.7)">✕</button></div>'
+    +'<div style="padding:16px 18px">'
+    +'<p style="font-size:12px;color:var(--tx2);margin:0 0 6px">Vink af hoeveel van elk stuk terugkwam:</p>'
+    +'<div style="margin-bottom:8px">'+(geldigeItems.length>0?itemsHtml:'<div style="color:var(--tx3);font-size:12px;padding:10px 0">Geen herkend materiaal in deze boeking.</div>')+'</div>'
+    +'<button onclick="retourAllesTerug('+geldigeItems.length+')" class="fb" style="font-size:12px;padding:7px 14px;width:100%;margin-bottom:16px"><i class="ti ti-checks" style="font-size:12px"></i> Alles kwam compleet terug</button>'
+    // Schade sectie
+    +'<div style="font-size:12px;font-weight:600;color:var(--tx1);margin-bottom:6px"><i class="ti ti-alert-triangle" style="color:#C77A0A"></i> Schade of opmerkingen</div>'
+    +'<textarea id="retour-schade" placeholder="Bv. één statafel heeft een deuk, springkasteel moet gereinigd worden..." style="width:100%;min-height:70px;padding:10px;border:.5px solid var(--bm);border-radius:var(--rm);font-family:inherit;font-size:13px;resize:vertical;background:var(--bg2);color:var(--tx1)">'+esc(retour.schade||'')+'</textarea>'
+    // Schadefoto's — hergebruikt fotosysteem met type 'schade'
+    +'<div style="margin-top:10px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
+    +'<span style="font-size:11px;font-weight:600;color:#C77A0A"><i class="ti ti-camera" style="font-size:11px"></i> Schadefoto\'s</span>'
+    +'<button onclick="retourFoto('+boekingId+')" style="font-size:11px;padding:4px 12px;border-radius:var(--rm);border:.5px solid #C77A0A;background:transparent;color:#C77A0A;cursor:pointer;font-family:Poppins,sans-serif"><i class="ti ti-camera" style="font-size:11px"></i> Foto maken</button></div>'
+    +'<div id="retour-fotos"></div></div>'
+    // Opslaan
+    +'<button onclick="retourAfronden('+boekingId+')" class="bprim" style="width:100%;margin-top:16px;padding:12px;font-size:14px"><i class="ti ti-check"></i> Retour bevestigen & afronden</button>'
+    +'</div></div>';
+
+  retourRenderFotos(boekingId);
+}
+
+function retourPlus(i,max){
+  var key='item_'+i;
+  var r=window._retourData;
+  if(!r.items[key])r.items[key]={terug:0,totaal:max};
+  r.items[key].terug=Math.min(max,r.items[key].terug+1);
+  retourUpdateItem(i,max);
+}
+function retourMin(i){
+  var key='item_'+i;
+  var r=window._retourData;
+  if(!r.items[key])return;
+  r.items[key].terug=Math.max(0,r.items[key].terug-1);
+  retourUpdateItem(i,r.items[key].totaal);
+}
+function retourUpdateItem(i,max){
+  var key='item_'+i;
+  var terug=window._retourData.items[key].terug;
+  var el=document.getElementById('retour-cnt-'+i);
+  if(el){
+    el.textContent=terug+' / '+max;
+    el.style.color=terug>=max?'#2D6A1E':terug===0?'#A32D2D':'#C77A0A';
+  }
+}
+function retourAllesTerug(aantal){
+  var r=window._retourData;
+  for(var i=0;i<aantal;i++){
+    var key='item_'+i;
+    if(r.items[key])r.items[key].terug=r.items[key].totaal;
+    else{
+      // Haal totaal uit de UI
+      var el=document.getElementById('retour-cnt-'+i);
+      if(el){var m=el.textContent.match(/\/ (\d+)/);if(m){r.items[key]={terug:parseInt(m[1]),totaal:parseInt(m[1])};}}
+    }
+    retourUpdateItem(i,r.items[key]?r.items[key].totaal:0);
+  }
+  banner('ok','Alles afgevinkt als terug');
+}
+
+// Schadefoto's — hergebruikt het bestaande fotosysteem met type 'schade'
+function retourFoto(boekingId){
+  var input=document.createElement('input');
+  input.type='file';input.accept='image/*';input.capture='environment';
+  input.onchange=function(){
+    var file=input.files[0];if(!file)return;
+    var reader=new FileReader();
+    reader.onload=function(ev){
+      var img=new Image();
+      img.onload=function(){
+        var maxW=900,scale=Math.min(1,maxW/img.width);
+        var canvas=document.createElement('canvas');
+        canvas.width=Math.round(img.width*scale);canvas.height=Math.round(img.height*scale);
+        canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+        var dataUrl=canvas.toDataURL('image/jpeg',0.7);
+        var fotos=fotosLaad(boekingId);
+        fotos.schade=fotos.schade||[];
+        if(fotos.schade.length>=6){banner('er','Max 6 schadefoto\'s.');return;}
+        fotos.schade.push({data:dataUrl,ts:Date.now(),datum:today()});
+        fotosSla(boekingId,fotos);
+        banner('ok','✓ Schadefoto opgeslagen');
+        retourRenderFotos(boekingId);
+      };
+      img.src=ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+function retourRenderFotos(boekingId){
+  var wrap=document.getElementById('retour-fotos');
+  if(!wrap)return;
+  var fotos=fotosLaad(boekingId);
+  var lijst=fotos.schade||[];
+  if(lijst.length===0){wrap.innerHTML='<span style="font-size:11px;color:var(--tx3)">Nog geen schadefoto\'s.</span>';return;}
+  wrap.innerHTML='<div style="display:flex;gap:6px;flex-wrap:wrap">'+lijst.map(function(f,i){
+    return '<div style="position:relative"><img src="'+f.data+'" onclick="fotoBekijk('+boekingId+',\'schade\','+i+')" style="width:60px;height:60px;object-fit:cover;border-radius:6px;cursor:pointer;border:.5px solid #C77A0A">'
+      +'<button onclick="retourFotoVerwijder('+boekingId+','+i+')" style="position:absolute;top:-5px;right:-5px;width:18px;height:18px;border-radius:50%;background:#A32D2D;color:#fff;border:none;font-size:10px;cursor:pointer;line-height:1;padding:0">✕</button></div>';
+  }).join('')+'</div>';
+}
+function retourFotoVerwijder(boekingId,idx){
+  if(!confirm('Deze schadefoto verwijderen?'))return;
+  var fotos=fotosLaad(boekingId);
+  if(fotos.schade)fotos.schade.splice(idx,1);
+  fotosSla(boekingId,fotos);
+  retourRenderFotos(boekingId);
+}
+
+async function retourAfronden(boekingId){
+  var r=window._retourData;
+  r.schade=(document.getElementById('retour-schade')||{}).value||'';
+  r.afgerond=true;
+  r.datum=today();
+  retourSla(boekingId,r);
+
+  // Bereken of alles compleet terugkwam
+  var compleet=true,ontbreekt=[];
+  Object.keys(r.items).forEach(function(key){
+    if(r.items[key].terug<r.items[key].totaal){
+      compleet=false;
+      ontbreekt.push(r.items[key].totaal-r.items[key].terug);
+    }
+  });
+
+  // Markeer boeking als opgehaald/voltooid
+  var b=boekingen.find(function(x){return x.id===boekingId;});
+  if(b){
+    b.status=4; // Opgehaald
+    if(compleet&&!r.schade.trim())b.voltooid=true; // enkel volledig afronden als alles OK
+    saveC(boekingen);window._lastSaveTS=Date.now();
+    api({action:'save',body:{action:'save',boeking:b}}).catch(function(){queueVoegToe('save',{action:'save',boeking:b});});
+  }
+
+  var mo=document.getElementById('retour-mo');if(mo)mo.remove();
+  if(compleet&&!r.schade.trim()){
+    banner('ok','✓ Alles compleet terug — boeking afgerond');
+  } else if(!compleet){
+    banner('er','⚠️ Niet alles kwam terug — genoteerd bij de boeking');
+  } else {
+    banner('ok','✓ Retour genoteerd — schade vastgelegd');
+  }
+  if(typeof renderPlanning==='function')renderPlanning();
+}
+
+// Toont retour-status badge (voor in detail/planning)
+function retourStatus(boekingId){
+  var r=retourLaad(boekingId);
+  if(!r||!r.afgerond)return null;
+  var compleet=true;
+  Object.keys(r.items).forEach(function(key){if(r.items[key].terug<r.items[key].totaal)compleet=false;});
+  return {compleet:compleet,schade:!!(r.schade&&r.schade.trim()),datum:r.datum};
+}
+
 function renderAIKnoppen(id){
   var htk=handtekeningLaad(id);
+  // Retourcontrole knop met status
+  var rs=retourStatus(id);
+  var retourBtn;
+  if(rs&&rs.afgerond!==false){
+    var kl=rs.compleet&&!rs.schade?'#2D6A1E':rs.schade?'#C77A0A':'#A32D2D';
+    var lbl=rs.compleet&&!rs.schade?'✓ Retour compleet':rs.schade?'⚠ Retour met schade':'⚠ Retour onvolledig';
+    retourBtn='<button onclick="retourOpen('+id+')" style="width:100%;padding:10px;font-size:13px;font-weight:600;border-radius:var(--rm);border:.5px solid '+kl+';background:'+kl+'11;color:'+kl+';cursor:pointer;font-family:Poppins,sans-serif;margin-bottom:10px"><i class="ti ti-clipboard-check"></i> '+lbl+' — bekijk/wijzig</button>';
+  } else {
+    retourBtn='<button onclick="retourOpen('+id+')" style="width:100%;padding:10px;font-size:13px;font-weight:600;border-radius:var(--rm);border:none;background:#3B6D11;color:#fff;cursor:pointer;font-family:Poppins,sans-serif;margin-bottom:10px"><i class="ti ti-clipboard-check"></i> Retourcontrole bij ophaling</button>';
+  }
   return '<div style="margin-top:12px;padding-top:12px;border-top:.5px solid var(--bl)">'
+    +retourBtn
     +'<div style="font-size:11px;font-weight:600;color:var(--sky);margin-bottom:8px;display:flex;align-items:center;gap:5px"><i class="ti ti-robot"></i> AI Assistent</div>'
     +'<div style="display:flex;flex-wrap:wrap;gap:6px">'
     +'<button class="fb" style="font-size:11px;padding:5px 10px" onclick="aiAlternatiefVoorConflict('+id+')"><i class="ti ti-calendar-search" style="font-size:11px"></i> Alternatieve data</button>'
