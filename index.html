@@ -2659,6 +2659,109 @@ function updateStats(){
 }
 
 /* TIJDLIJN */
+// ═══════════════════════════════════════════════════════════
+// CONFLICT-OVERZICHT — toont snel WAT er botst en WELKE boekingen
+// Gegroepeerd per product+datum, met directe links naar de boekingen
+// ═══════════════════════════════════════════════════════════
+function conflictOverzichtOpen(){
+  var t=today();
+  var t30=new Date(t+'T00:00:00');t30.setDate(t30.getDate()+30);
+  var t30s=t30.toISOString().split('T')[0];
+
+  // Verzamel alle conflicten met de betrokken boeking erbij
+  var actief=boekingen.filter(function(b){return !(b.voltooid===true||b.voltooid==='true');});
+  var rauweConflicten=[];
+  actief.filter(function(b){return b.levdatum&&b.levdatum<=t30s;}).forEach(function(b){
+    vrCheckBoeking(b).forEach(function(c){
+      if(c.check.status==='conflict'){
+        rauweConflicten.push({boeking:b,product:c.product,aantal:c.aantal,check:c.check});
+      }
+    });
+  });
+
+  // Groepeer per product + overlappende periode
+  // Sleutel: productId — binnen een product tonen we alle betrokken boekingen
+  var perProduct={};
+  rauweConflicten.forEach(function(rc){
+    var pid=rc.product.id;
+    if(!perProduct[pid]){
+      perProduct[pid]={product:rc.product,stock:rc.check.stock,boekingen:[]};
+    }
+    // Vermijd dubbels (zelfde boeking kan meerdere keren botsen)
+    if(!perProduct[pid].boekingen.some(function(x){return x.boeking.id===rc.boeking.id;})){
+      perProduct[pid].boekingen.push(rc);
+    }
+  });
+
+  var productLijst=Object.values(perProduct).sort(function(a,b){
+    return b.boekingen.length-a.boekingen.length;
+  });
+
+  var mo=document.getElementById('conflict-mo');
+  if(!mo){
+    mo=document.createElement('div');mo.id='conflict-mo';
+    mo.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:600;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto';
+    mo.onclick=function(e){if(e.target===mo)mo.remove();};
+    document.body.appendChild(mo);
+  }
+
+  var html='<div style="background:var(--bg1);border-radius:var(--rl);max-width:600px;width:100%;margin:auto;overflow:hidden">'
+    +'<div style="background:#A32D2D;padding:14px 18px;display:flex;align-items:center;justify-content:space-between">'
+    +'<strong style="font-size:15px;color:#fff"><i class="ti ti-alert-triangle" style="margin-right:8px"></i>Voorraadconflicten oplossen</strong>'
+    +'<button onclick="document.getElementById(\'conflict-mo\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:rgba(255,255,255,.8)">✕</button></div>'
+    +'<div style="padding:16px 18px">';
+
+  if(productLijst.length===0){
+    html+='<div style="text-align:center;padding:30px;color:#2D6A1E"><i class="ti ti-circle-check" style="font-size:40px;display:block;margin-bottom:10px"></i>Geen conflicten meer — alles opgelost!</div>';
+  } else {
+    html+='<p style="font-size:12px;color:var(--tx2);margin:0 0 14px">Voor elk product zie je welke boekingen om hetzelfde materiaal strijden. Klik op een boeking om ze aan te passen (datum, materiaal of aantal).</p>';
+
+    productLijst.forEach(function(pg){
+      var vrij=pg.stock;
+      html+='<div style="border:.5px solid #E24B4A;border-radius:var(--rm);margin-bottom:14px;overflow:hidden">';
+      // Product header
+      html+='<div style="background:#FCEBEB;padding:10px 14px;display:flex;align-items:center;justify-content:space-between">'
+        +'<div><span style="font-size:14px;font-weight:700;color:#A32D2D">'+esc(pg.product.naam)+'</span>'
+        +'<span style="font-size:12px;color:#A32D2D;margin-left:8px">voorraad: '+pg.stock+'</span></div>'
+        +'<span style="font-size:11px;font-weight:600;color:#A32D2D;background:#fff;border-radius:10px;padding:2px 8px">'+pg.boekingen.length+' boekingen</span>'
+        +'</div>';
+      // Betrokken boekingen chronologisch
+      var sorted=pg.boekingen.sort(function(a,b){return (a.boeking.levdatum||'').localeCompare(b.boeking.levdatum||'');});
+      sorted.forEach(function(rc){
+        var b=rc.boeking;
+        html+='<div style="padding:10px 14px;border-top:.5px solid var(--bl);display:flex;align-items:center;gap:10px;cursor:pointer" onclick="document.getElementById(\'conflict-mo\').remove();openDetail('+b.id+')">'
+          +'<div style="flex:1;min-width:0">'
+          +'<div style="font-size:13px;font-weight:600;color:var(--tx1)">'+esc(b.naam)+'</div>'
+          +'<div style="font-size:11px;color:var(--tx3)">'
+          +'<i class="ti ti-calendar" style="font-size:10px"></i> '+fmtShort(b.levdatum)+' → '+fmtShort(b.ophdatum||b.levdatum)
+          +' &nbsp;·&nbsp; <i class="ti ti-package" style="font-size:10px"></i> '+rc.aantal+'× gevraagd'
+          +(b.opstellers_lev&&b.opstellers_lev.length?' &nbsp;·&nbsp; '+esc(b.opstellers_lev.join(', ')):'')
+          +'</div></div>'
+          +'<i class="ti ti-chevron-right" style="color:var(--tx3)"></i>'
+          +'</div>';
+      });
+      // Uitleg wat er moet gebeuren
+      var totaalGevraagd=sorted.reduce(function(s,rc){return s+rc.aantal;},0);
+      html+='<div style="padding:8px 14px;background:#FAEEDA;font-size:11px;color:#854F0B;border-top:.5px solid var(--bl)">'
+        +'<i class="ti ti-info-circle" style="font-size:11px"></i> Samen gevraagd: '+totaalGevraagd+'× · beschikbaar: '+pg.stock+'× · '
+        +'<strong>'+(totaalGevraagd-pg.stock)+' te veel</strong> in deze periode'
+        +'</div>';
+      html+='</div>';
+    });
+
+    html+='<div style="background:var(--bg2);border-radius:var(--rm);padding:10px 14px;font-size:11px;color:var(--tx2);margin-top:4px">'
+      +'<strong style="color:var(--tx1)">Hoe los je dit op?</strong><br>'
+      +'• Klik een boeking aan en verplaats de datum, óf<br>'
+      +'• Pas het aantal aan als een klant minder nodig heeft, óf<br>'
+      +'• Leen/huur extra materiaal bij voor die piekdag, óf<br>'
+      +'• Verhoog je voorraad in de Voorraad-tab als je meer stuks hebt dan ingesteld'
+      +'</div>';
+  }
+
+  html+='</div></div>';
+  mo.innerHTML=html;
+}
+
 function _buildDashboard(){
   var wrap=document.getElementById('db-wrap');
   if(!wrap) return;
@@ -2823,7 +2926,7 @@ function _buildDashboard(){
   }
   // Widget: voorraadconflicten
   if(_vrCheck30.length>0){
-    html+='<div class="db-stat" style="border-color:#E24B4A;background:rgba(226,75,74,.06)" data-goto="voorraad"><div class="db-stat-icon" style="background:#FCEBEB;color:#A32D2D"><i class="ti ti-alert-triangle"></i></div><div class="db-stat-val" style="color:#A32D2D">'+_vrCheck30.length+'</div><div class="db-stat-lbl">Voorraadconflicten</div><div class="db-stat-sub">komende 30 dagen</div></div>';
+    html+='<div class="db-stat" style="border-color:#E24B4A;background:rgba(226,75,74,.06);cursor:pointer" onclick="conflictOverzichtOpen()"><div class="db-stat-icon" style="background:#FCEBEB;color:#A32D2D"><i class="ti ti-alert-triangle"></i></div><div class="db-stat-val" style="color:#A32D2D">'+_vrCheck30.length+'</div><div class="db-stat-lbl">Voorraadconflicten</div><div class="db-stat-sub" style="color:#A32D2D;font-weight:600">klik om op te lossen →</div></div>';
   }
   // Widget: open taken
   html+='<div class="db-stat db-tak" data-goto="planning" data-filter="alle"><div class="db-stat-icon"><i class="ti ti-checklist"></i></div><div class="db-stat-val">'+openTaken.length+'</div><div class="db-stat-lbl">Open taken</div><div class="db-stat-sub">over alle boekingen</div></div>';
