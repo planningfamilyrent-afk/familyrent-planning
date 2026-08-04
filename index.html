@@ -843,6 +843,70 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 .team-leeg{text-align:center;padding:30px;color:var(--tx3)}
 .team-wijs-btn{width:36px;height:36px;border-radius:50%;border:.5px solid var(--sky);background:var(--bg1);color:var(--sky);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px}
 .team-wijs-btn:hover{background:var(--sky);color:#fff}
+/* ═══ OFFERTETOOL ═══ */
+.off-wrap{display:grid;grid-template-columns:1fr 360px;gap:16px;align-items:start;max-width:1100px;margin:0 auto}
+.off-left{display:flex;flex-direction:column;gap:14px}
+.off-right{position:sticky;top:10px}
+.off-card{background:var(--bg1);border:.5px solid var(--bl);border-radius:var(--rl);overflow:hidden}
+.off-card-hdr{background:var(--navy);color:#fff;padding:11px 16px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px}
+.off-num{background:var(--sky);color:#fff;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.off-card-body{padding:16px}
+.off-fg{margin-bottom:10px}
+.off-fg:last-child{margin-bottom:0}
+.off-fg label{display:block;font-size:12px;font-weight:600;color:var(--tx1);margin-bottom:5px}
+.off-opt{font-weight:400;color:var(--tx3);font-size:11px}
+.off-fg input,.off-fg textarea{width:100%;border:.5px solid var(--bm);border-radius:var(--rm);padding:9px 12px;font-family:'Poppins',sans-serif;font-size:13px;color:var(--tx1);background:var(--bg2);outline:none}
+.off-fg input:focus,.off-fg textarea:focus{border-color:var(--sky);background:var(--bg1)}
+.off-fg textarea{resize:vertical;min-height:64px}
+.off-row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.off-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.off-search{width:100%;border:.5px solid var(--bm);border-radius:var(--rm);padding:9px 12px;font-family:'Poppins',sans-serif;font-size:13px;background:var(--bg2);color:var(--tx1);outline:none;margin-bottom:12px}
+.off-sec-lbl{display:flex;align-items:center;gap:8px;margin:14px 0 6px}
+.off-sec-lbl .dot{width:7px;height:7px;background:var(--sky);border-radius:50%;flex-shrink:0}
+.off-sec-lbl h4{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sky)}
+.off-sec-lbl::after{content:'';flex:1;height:1px;background:var(--bl)}
+.off-prow{display:grid;grid-template-columns:40px 1fr 90px 96px;align-items:center;gap:10px;padding:7px 0;border-bottom:.5px solid var(--bl)}
+.off-prow:last-child{border-bottom:none}
+.off-prow.active{background:rgba(97,171,237,.06);margin:0 -16px;padding:7px 16px;border-radius:6px;border-bottom:none}
+.off-pimg{width:40px;height:34px;object-fit:cover;border-radius:5px;flex-shrink:0}
+.off-pname{font-size:13px;font-weight:500;color:var(--tx1)}
+.off-pprice{font-size:12px;color:var(--tx3);text-align:right}
+.off-qty{display:flex;align-items:center;gap:4px;justify-content:flex-end}
+.off-qbtn{width:26px;height:26px;border-radius:50%;border:.5px solid var(--bm);background:var(--bg1);color:var(--tx1);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;line-height:1}
+.off-qbtn:hover{border-color:var(--sky);color:var(--sky)}
+.off-qinp{width:42px;height:26px;border:.5px solid var(--bm);border-radius:6px;text-align:center;font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:var(--tx1);background:var(--bg1);outline:none;-moz-appearance:textfield}
+.off-qinp:focus{border-color:var(--sky)}
+.off-qinp::-webkit-inner-spin-button,.off-qinp::-webkit-outer-spin-button{-webkit-appearance:none}
+.off-transport{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.off-tr-item{border:.5px solid var(--bl);border-radius:var(--rm);padding:12px}
+.off-tr-item label{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--tx1);margin-bottom:8px;cursor:pointer}
+.off-tr-item input[type=checkbox]{width:15px;height:15px;accent-color:var(--sky);cursor:pointer}
+.off-tr-price{border:.5px solid var(--bm);border-radius:var(--rm);padding:8px 12px;font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:var(--tx1);background:var(--bg2);width:100%;outline:none}
+.off-tr-price:focus{border-color:var(--sky);background:var(--bg1)}
+.off-tr-price:disabled{opacity:.4;cursor:not-allowed}
+.off-tr-lbl{font-size:11px;color:var(--tx3);margin-top:5px}
+.off-sum-card{background:var(--bg1);border:.5px solid var(--bl);border-radius:var(--rl);overflow:hidden}
+.off-sum-hdr{background:var(--navy);padding:14px 16px}
+.off-sum-hdr h3{color:#fff;font-size:14px;font-weight:700}
+.off-sum-hdr p{color:rgba(255,255,255,.5);font-size:12px;margin-top:2px}
+.off-sum-body{padding:14px 16px}
+.off-sum-lines{max-height:280px;overflow-y:auto;margin-bottom:10px}
+.off-sum-line{display:flex;justify-content:space-between;padding:5px 0;border-bottom:.5px solid var(--bl);font-size:12px;gap:8px}
+.off-sum-line:last-child{border-bottom:none}
+.off-sum-empty{text-align:center;color:var(--tx3);font-size:13px;padding:16px 0}
+.off-divider{border:none;border-top:.5px solid var(--bl);margin:8px 0}
+.off-sum-transport{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;color:var(--tx3)}
+.off-sum-transport span:last-child{font-weight:600;color:var(--tx1)}
+.off-sum-excl,.off-sum-btw{display:flex;justify-content:space-between;font-size:12px;color:var(--tx3);padding:2px 0}
+.off-sum-total{display:flex;justify-content:space-between;align-items:baseline;padding:10px 0 0;border-top:2px solid var(--navy);margin-top:6px}
+.off-sum-total span:first-child{font-size:13px;font-weight:700;color:var(--tx1)}
+.off-sum-total span:last-child{font-size:22px;font-weight:900;color:var(--tx1)}
+.off-validity{background:var(--bg2);border-radius:var(--rm);padding:10px 12px;font-size:12px;color:var(--tx3);margin-top:10px;line-height:1.5}
+.off-btn-pdf{width:100%;background:var(--navy);color:#fff;border:none;padding:13px;border-radius:var(--rm);font-family:'Poppins',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px}
+.off-btn-pdf:hover{background:#1a2154}
+.off-btn-reset{width:100%;background:none;border:.5px solid var(--bm);color:var(--tx3);padding:10px;border-radius:var(--rm);font-family:'Poppins',sans-serif;font-size:13px;cursor:pointer;margin-top:6px}
+.off-btn-reset:hover{border-color:var(--navy);color:var(--tx1)}
+@media(max-width:900px){.off-wrap{grid-template-columns:1fr}.off-right{position:static}.off-transport{grid-template-columns:1fr}.off-row3{grid-template-columns:1fr 1fr}.off-row2{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -872,6 +936,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
   <button class="tab" onclick="showTab('team')" id="tab-team"><i class="ti ti-users-group" aria-hidden="true"></i> Team</button>
   <button class="tab" onclick="showTab('voorraad')" id="tab-voorraad"><i class="ti ti-package" aria-hidden="true"></i> Voorraad</button>
   <button class="tab" onclick="showTab('rapport')" id="tab-rapport"><i class="ti ti-chart-bar" aria-hidden="true"></i> Rapport</button>
+  <button class="tab" onclick="showTab('offerte')" id="tab-offerte"><i class="ti ti-file-euro" aria-hidden="true"></i> Offerte</button>
   <button class="tab" onclick="showTab('nieuw')" id="tab-nieuw"><i class="ti ti-plus" aria-hidden="true"></i> Nieuw</button>
   <button class="notif-btn" id="notif-btn" onclick="wgOpen()" title="Waarschuwingen"><i class="ti ti-bell" style="font-size:15px"></i><span class="notif-dot" id="notif-dot"></span></button>
 </div>
@@ -1029,6 +1094,108 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
   <div id="rpt-pin-wrap"></div>
   <div id="rpt-content" style="display:none"></div>
 </div>
+
+<!-- OFFERTETOOL -->
+<div class="view" id="view-offerte">
+  <div class="off-wrap">
+    <div class="off-left">
+      <!-- Klantgegevens -->
+      <div class="off-card">
+        <div class="off-card-hdr"><span class="off-num">1</span> Klantgegevens</div>
+        <div class="off-card-body">
+          <div class="off-row2">
+            <div class="off-fg"><label>Voornaam</label><input type="text" id="oVoornaam" placeholder="Jan" oninput="offUpdate()"></div>
+            <div class="off-fg"><label>Achternaam</label><input type="text" id="oAchternaam" placeholder="Peeters" oninput="offUpdate()"></div>
+          </div>
+          <div class="off-row2">
+            <div class="off-fg"><label>E-mailadres</label><input type="email" id="oEmail" placeholder="jan@voorbeeld.be"></div>
+            <div class="off-fg"><label>Telefoonnummer</label><input type="tel" id="oTel" placeholder="0478 12 34 56"></div>
+          </div>
+          <div class="off-row2">
+            <div class="off-fg"><label>Straat & nr.</label><input type="text" id="oStraat" placeholder="Kerkstraat 12"></div>
+            <div class="off-fg"><label>Gemeente</label><input type="text" id="oGemeente" placeholder="Beveren"></div>
+          </div>
+          <div class="off-row2">
+            <div class="off-fg"><label>BTW-nummer <span class="off-opt">(optioneel)</span></label><input type="text" id="oBtw" placeholder="BE 0123.456.789"></div>
+            <div class="off-fg"><label>Type evenement</label><input type="text" id="oEvenement" placeholder="Bruiloft, communie, ..."></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Offertegegevens -->
+      <div class="off-card">
+        <div class="off-card-hdr"><span class="off-num">2</span> Offertegegevens</div>
+        <div class="off-card-body">
+          <div class="off-row3">
+            <div class="off-fg"><label>Offerte nr.</label><input type="text" id="oOfferteNr" placeholder="2026-001"></div>
+            <div class="off-fg"><label>Evenementdatum</label><input type="date" id="oDatum"></div>
+            <div class="off-fg"><label>Geldig tot</label><input type="date" id="oGeldigTot" oninput="offUpdate()"></div>
+          </div>
+          <div class="off-row2">
+            <div class="off-fg"><label>Aantal dagen</label><input type="number" id="oDagen" value="1" min="1" max="30" oninput="offUpdate()"></div>
+            <div class="off-fg"><label>Locatie evenement</label><input type="text" id="oLocatie" placeholder="Feeststraat 5, Stekene"></div>
+          </div>
+          <div class="off-fg"><label>Opmerkingen / bijzonderheden</label><textarea id="oOpmerking" placeholder="Speciale wensen, opmerkingen voor de klant..."></textarea></div>
+        </div>
+      </div>
+
+      <!-- Materiaal -->
+      <div class="off-card">
+        <div class="off-card-hdr"><span class="off-num">3</span> Materiaal selecteren</div>
+        <div class="off-card-body">
+          <input type="text" id="oSearch" placeholder="🔍  Zoek product..." oninput="offFilter(this.value)" class="off-search">
+          <div id="oSections"></div>
+        </div>
+      </div>
+
+      <!-- Transport -->
+      <div class="off-card">
+        <div class="off-card-hdr"><span class="off-num">4</span> Transport, plaatsing & afbraak</div>
+        <div class="off-card-body">
+          <div class="off-transport">
+            <div class="off-tr-item">
+              <label><input type="checkbox" id="ocbTransport" onchange="offToggleTr('Transport')"> Transport</label>
+              <input type="number" id="oprTransport" class="off-tr-price" placeholder="€ 0,00" min="0" step="0.01" disabled oninput="offUpdate()">
+              <div class="off-tr-lbl">Levering & ophaling</div>
+            </div>
+            <div class="off-tr-item">
+              <label><input type="checkbox" id="ocbPlaatsing" onchange="offToggleTr('Plaatsing')"> Plaatsing</label>
+              <input type="number" id="oprPlaatsing" class="off-tr-price" placeholder="€ 0,00" min="0" step="0.01" disabled oninput="offUpdate()">
+              <div class="off-tr-lbl">Opbouw door ons team</div>
+            </div>
+            <div class="off-tr-item">
+              <label><input type="checkbox" id="ocbAfbraak" onchange="offToggleTr('Afbraak')"> Afbraak</label>
+              <input type="number" id="oprAfbraak" class="off-tr-price" placeholder="€ 0,00" min="0" step="0.01" disabled oninput="offUpdate()">
+              <div class="off-tr-lbl">Afbraak door ons team</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rechterkolom: overzicht -->
+    <div class="off-right">
+      <div class="off-sum-card">
+        <div class="off-sum-hdr">
+          <h3>Offerteoverzicht</h3>
+          <p id="oSumKlant">Geen klant ingevuld</p>
+        </div>
+        <div class="off-sum-body">
+          <div class="off-sum-lines" id="oSumLines"><div class="off-sum-empty">Selecteer materiaal om te beginnen</div></div>
+          <div id="oTransportLines"></div>
+          <hr class="off-divider">
+          <div class="off-sum-excl"><span>Subtotaal excl. btw</span><span id="oSumExcl">€ 0,00</span></div>
+          <div class="off-sum-btw"><span>BTW 21%</span><span id="oSumBtw">€ 0,00</span></div>
+          <div class="off-sum-total"><span>Totaal incl. btw</span><span id="oSumIncl">€ 0,00</span></div>
+          <div class="off-validity" id="oValidity">Vul offertenummer en geldigheid in om de PDF te vervolledigen.</div>
+          <button class="off-btn-pdf" onclick="offGeneratePDF()"><i class="ti ti-file-type-pdf"></i> Download offerte PDF</button>
+          <button class="off-btn-reset" onclick="offReset()">✕ Alles wissen</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 
 <!-- NIEUWE BOEKING -->
 <div class="view" id="view-nieuw">
@@ -1567,9 +1734,11 @@ function fmtRound(n){return Math.round(Number(n)||0).toLocaleString('nl-BE');}
 const fmtDate=d=>{const dt=new Date(d+'T00:00:00');return NLD[dt.getDay()]+' '+dt.getDate()+' '+NLM[dt.getMonth()]};
 const fmtShort=d=>{const dt=new Date(d+'T00:00:00');return dt.getDate()+' '+NLM[dt.getMonth()].slice(0,3)};
 const pad=n=>String(n).padStart(2,'0');
-const today=()=>new Date().toISOString().split('T')[0];
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
+// Lokale datum-string uit een Date-object (vermijdt UTC-verschuiving in zomertijd)
+const dstr=(d)=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const ini=n=>n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-function getMon(d){const dt=new Date(d+'T00:00:00'),day=dt.getDay(),diff=dt.getDate()-day+(day===0?-6:1);return new Date(dt.setDate(diff)).toISOString().split('T')[0]}
+function getMon(d){const dt=new Date(d+'T00:00:00'),day=dt.getDay(),diff=dt.getDate()-day+(day===0?-6:1);dt.setDate(diff);return dstr(dt);}
 function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML}
 function saveC(d){try{localStorage.setItem(CK,JSON.stringify(d))}catch(e){}}
 function loadC(){try{const c=localStorage.getItem(CK);if(c)return JSON.parse(c)}catch(e){}return null}
@@ -1857,6 +2026,7 @@ function showTab(tab){
   if(tab==='team')renderTeam();
   if(tab==='voorraad')renderVoorraad();
   if(tab==='rapport')renderRapport();
+  if(tab==='offerte')renderOfferte();
   if(tab==='nieuw'&&!editId){clearForm();document.getElementById('ics-panel').style.display='none';}
   if(tab==='nieuw'){setTimeout(function(){ppInit();},10);}
   // FAB: verberg op nieuw-tab (formulier heeft eigen opslaan knop)
@@ -2407,7 +2577,7 @@ function renderPlanning(){
   const container=document.getElementById('plan-list');
   const q=(document.getElementById('srch').value||'').trim();
   const t=today(),mon=getMon(t);
-  const sunDt=new Date(mon+'T00:00:00');sunDt.setDate(sunDt.getDate()+6);const sun=sunDt.toISOString().split('T')[0];
+  const sunDt=new Date(mon+'T00:00:00');sunDt.setDate(sunDt.getDate()+6);const sun=dstr(sunDt);
 
   // Uitgebreide zoekparser
   // #bo → BB-filter | 2025-06-14 → datum | !onbetaald → onbetaalde boekingen | rest → vrije tekst
@@ -2666,7 +2836,7 @@ function updateStats(){
 function conflictOverzichtOpen(){
   var t=today();
   var t30=new Date(t+'T00:00:00');t30.setDate(t30.getDate()+30);
-  var t30s=t30.toISOString().split('T')[0];
+  var t30s=dstr(t30);
 
   // Verzamel alle conflicten met de betrokken boeking erbij
   var actief=boekingen.filter(function(b){return !(b.voltooid===true||b.voltooid==='true');});
@@ -2768,7 +2938,7 @@ function _buildDashboard(){
   var t=today();
   var mon=getMon(t); // maandaanvang van huidige week (maandag)
   var morgenDt=new Date(t+'T00:00:00'); morgenDt.setDate(morgenDt.getDate()+1);
-  var morgen=morgenDt.toISOString().split('T')[0];
+  var morgen=dstr(morgenDt);
   var actief=boekingen.filter(function(b){return !(b.voltooid===true||b.voltooid==='true');});
 
   // Vandaag stats
@@ -2880,7 +3050,7 @@ function _buildDashboard(){
 
   // ── Komende 7 dagen ────────────────────────────────────────
   var d7=new Date(t+'T00:00:00');d7.setDate(d7.getDate()+7);
-  var d7s=d7.toISOString().split('T')[0];
+  var d7s=dstr(d7);
   var week7lev=actief.filter(function(b){return b.levdatum>t&&b.levdatum<=d7s;});
   var week7oph=actief.filter(function(b){return b.ophdatum>t&&b.ophdatum<=d7s&&b.ophdatum!==b.levdatum;});
   // Drukste dag = dag met meeste stops
@@ -2903,7 +3073,7 @@ function _buildDashboard(){
   // ── Voorraadconflicten (komende 30 dagen) ─────────────────
   var _vrCheck30=[];
   var _t30=new Date(t+'T00:00:00');_t30.setDate(_t30.getDate()+30);
-  var _t30s=_t30.toISOString().split('T')[0];
+  var _t30s=dstr(_t30);
   actief.filter(function(b){return b.levdatum&&b.levdatum<=_t30s;}).forEach(function(b){
     vrCheckBoeking(b).forEach(function(c){if(c.check.status==='conflict')_vrCheck30.push(c);});
   });
@@ -2940,8 +3110,8 @@ function _buildDashboard(){
     // Omzet vorige week (vergelijking)
     var vwStart=new Date(mon+'T00:00:00');vwStart.setDate(vwStart.getDate()-7);
     var vwEind=new Date(mon+'T00:00:00');vwEind.setDate(vwEind.getDate()-1);
-    var vwStartS=vwStart.toISOString().split('T')[0];
-    var vwEindS=vwEind.toISOString().split('T')[0];
+    var vwStartS=dstr(vwStart);
+    var vwEindS=dstr(vwEind);
     var omzetVorigeWeek=boekingen.filter(function(b){return b.levdatum>=vwStartS&&b.levdatum<=vwEindS;})
       .reduce(function(s,b){return s+(parseFloat(b.prijs)||0);},0);
     var omzetTrend=omzetVorigeWeek>0?Math.round((omzetWeek-omzetVorigeWeek)/omzetVorigeWeek*100):null;
@@ -2968,7 +3138,7 @@ function _buildDashboard(){
       for(var sw=3;sw>=0;sw--){
         var wsS=new Date(mon+'T00:00:00');wsS.setDate(wsS.getDate()-sw*7);
         var wsE=new Date(wsS);wsE.setDate(wsE.getDate()+6);
-        var wsSS=wsS.toISOString().split('T')[0],wsES=wsE.toISOString().split('T')[0];
+        var wsSS=dstr(wsS),wsES=dstr(wsE);
         sparkWeken.push(boekingen.filter(function(b){return b.levdatum>=wsSS&&b.levdatum<=wsES;}).reduce(function(s,b){return s+(parseFloat(b.prijs)||0);},0));
       }
       var sparkMax=Math.max(1,...sparkWeken);
@@ -3007,7 +3177,7 @@ function _buildDashboard(){
     html+='<div class="db-7d-grid">';
     for(var di=1;di<=7;di++){
       var dd7=new Date(t+'T00:00:00');dd7.setDate(dd7.getDate()+di);
-      var dds7=dd7.toISOString().split('T')[0];
+      var dds7=dstr(dd7);
       var nLev7=week7lev.filter(function(b){return b.levdatum===dds7;}).length;
       var nOph7=week7oph.filter(function(b){return b.ophdatum===dds7;}).length;
       var nTot7=nLev7+nOph7;
@@ -3197,7 +3367,7 @@ function kalTitel(){
   // Week: toon datumbereik
   var ma=new Date(_kalWeekStart+'T00:00:00');
   var zo=new Date(ma);zo.setDate(zo.getDate()+6);
-  return fmtShort(_kalWeekStart)+' – '+fmtShort(zo.toISOString().split('T')[0]);
+  return fmtShort(_kalWeekStart)+' – '+fmtShort(dstr(zo));
 }
 
 function kalNav(richting){
@@ -3208,7 +3378,7 @@ function kalNav(richting){
   } else {
     var d=new Date(_kalWeekStart+'T00:00:00');
     d.setDate(d.getDate()+richting*7);
-    _kalWeekStart=d.toISOString().split('T')[0];
+    _kalWeekStart=dstr(d);
   }
   renderKalender();
 }
@@ -3313,7 +3483,7 @@ function bouwWeekKalender(){
   for(var d=0;d<7;d++){
     var dt=new Date(_kalWeekStart+'T00:00:00');
     dt.setDate(dt.getDate()+d);
-    weekDagen.push(dt.toISOString().split('T')[0]);
+    weekDagen.push(dstr(dt));
   }
   var NLD_KORT=['Ma','Di','Wo','Do','Vr','Za','Zo'];
   var html='<div class="kal-week-grid">';
@@ -3469,7 +3639,7 @@ function teamGetWeekend(startMaandag){
   // Geef za+zo van de week terug
   var za=new Date(startMaandag+'T00:00:00');za.setDate(za.getDate()+5);
   var zo=new Date(startMaandag+'T00:00:00');zo.setDate(zo.getDate()+6);
-  return [za.toISOString().split('T')[0],zo.toISOString().split('T')[0]];
+  return [dstr(za),dstr(zo)];
 }
 
 function renderTeam(){
@@ -3480,7 +3650,7 @@ function renderTeam(){
   var weekend=teamGetWeekend(_teamWeekStart);
   // Toon alle dagen van het weekend + eventueel vrijdag als er iets is
   var vr=new Date(_teamWeekStart+'T00:00:00');vr.setDate(vr.getDate()+4);
-  var vrStr=vr.toISOString().split('T')[0];
+  var vrStr=dstr(vr);
   var dagen=[vrStr,weekend[0],weekend[1]];
 
   // Header met toggle en weeknavigatie
@@ -3701,8 +3871,338 @@ function teamSetModus(m){_teamModus=m;renderTeam();}
 function teamNav(richting){
   var d=new Date(_teamWeekStart+'T00:00:00');
   d.setDate(d.getDate()+richting*7);
-  _teamWeekStart=d.toISOString().split('T')[0];
+  _teamWeekStart=dstr(d);
   renderTeam();
+}
+
+// ═══════════════════════════════════════════════════════════
+// OFFERTETOOL — los tabblad, eigen catalogus & PDF
+// Prefix "off" om conflicten met planning-tool te vermijden
+// ═══════════════════════════════════════════════════════════
+var OFF_PRODUCTS = [
+  { id:'tent3x3',cat:'tenten',name:'Partytent 3x3 m',excl:78.51,incl:95 },
+  { id:'tent4x4',cat:'tenten',name:'Partytent 4x4 m (zwart)',excl:82.64,incl:100 },
+  { id:'tent4x4wit',cat:'tenten',name:'Partytent 4x4 m (wit)',excl:103.31,incl:125 },
+  { id:'tent4x8',cat:'tenten',name:'Partytent 4x8 m (zwart)',excl:157.02,incl:190 },
+  { id:'tent4x8wit',cat:'tenten',name:'Partytent 4x8 m (wit)',excl:173.55,incl:210 },
+  { id:'tent4x12',cat:'tenten',name:'Partytent 4x12 m',excl:231.40,incl:280 },
+  { id:'tent4x16',cat:'tenten',name:'Partytent 4x16 m / 8x8 m',excl:305.79,incl:370 },
+  { id:'zijwand_r',cat:'tenten',name:'Zijwand raam',excl:7.44,incl:9 },
+  { id:'zijwand_d',cat:'tenten',name:'Zijwand deur',excl:7.44,incl:9 },
+  { id:'stretch6x6',cat:'stretch',name:'Stretchtent 6x6 m',excl:590,incl:713.90 },
+  { id:'stretch6x105',cat:'stretch',name:'Stretchtent 6x10,5 m',excl:693,incl:838.53 },
+  { id:'stretch75x105',cat:'stretch',name:'Stretchtent 7,5x10,5 m',excl:869,incl:1051.49 },
+  { id:'stretch105x12',cat:'stretch',name:'Stretchtent 10,5x12 m',excl:1260,incl:1524.60 },
+  { id:'stretch105x18',cat:'stretch',name:'Stretchtent 10,5x18 m',excl:1890,incl:2286.90 },
+  { id:'stretch21x24',cat:'stretch',name:'Stretchtent 21x24 m',excl:4020,incl:4864.20 },
+  { id:'sailcloth1016',cat:'stretch',name:'Sailcloth tent 10x16 m',excl:2450,incl:2964.50 },
+  { id:'sailcloth1022',cat:'stretch',name:'Sailcloth tent 10x22 m',excl:2950,incl:3569.50 },
+  { id:'zijwand_stretch',cat:'stretch',name:'Zijwand stretchtent (p/m)',excl:17.50,incl:21.18 },
+  { id:'verlich_tent',cat:'stretch',name:'Verlichting tent (p/25m)',excl:25,incl:30.25 },
+  { id:'vloer_ophalen',cat:'vloer',name:'Houten vloer - ophalen (m2)',excl:3,incl:3.63 },
+  { id:'vloer_gelegd',cat:'vloer',name:'Houten vloer - gelegd (m2)',excl:6.50,incl:7.87 },
+  { id:'bardag',cat:'bar',name:'Mobiele bar (dag)',excl:144.63,incl:175 },
+  { id:'barweekend',cat:'bar',name:'Mobiele bar (weekend)',excl:206.61,incl:250 },
+  { id:'stoel_pvc',cat:'stoelen',name:'PVC stoel',excl:1.65,incl:2 },
+  { id:'stoel_cb',cat:'stoelen',name:'Crossback stoel',excl:5.79,incl:7 },
+  { id:'stoel_cbk',cat:'stoelen',name:'Crossback stoel + kussen',excl:7.44,incl:9 },
+  { id:'barkruk',cat:'stoelen',name:'Barkruk zwart',excl:4.96,incl:6 },
+  { id:'kinderstoel',cat:'stoelen',name:'Kinderstoel',excl:1.24,incl:1.50 },
+  { id:'recept',cat:'tafels',name:'Receptietafel',excl:6.61,incl:8 },
+  { id:'klaptafel',cat:'tafels',name:'Klaptafel',excl:8.26,incl:10 },
+  { id:'rondh152',cat:'tafels',name:'Ronde tafel 150 cm',excl:9.09,incl:11 },
+  { id:'rondh180',cat:'tafels',name:'Ronde tafel 180 cm',excl:11.57,incl:14 },
+  { id:'kindertafel',cat:'tafels',name:'Kindertafel wit',excl:2.89,incl:3.50 },
+  { id:'stretch_r',cat:'tafels',name:'Stretchdoek rechthoek',excl:3.31,incl:4 },
+  { id:'stretch_k',cat:'tafels',name:'Stretchdoek klaptafel',excl:4.13,incl:5 },
+  { id:'tafelkleed152',cat:'tafels',name:'Wit tafellaken 150 cm',excl:9.92,incl:12 },
+  { id:'tafelkleed183',cat:'tafels',name:'Wit tafellaken 180 cm',excl:9.92,incl:12 },
+  { id:'toog_b',cat:'koeling',name:'Toog / bar (beige)',excl:49.59,incl:60 },
+  { id:'toog_s',cat:'koeling',name:'Toog met spoelbak',excl:57.85,incl:70 },
+  { id:'ijskast',cat:'koeling',name:'IJskast glazen deur',excl:61.98,incl:75 },
+  { id:'ijsblok',cat:'koeling',name:'IJsblokmachine',excl:28.93,incl:35 },
+  { id:'verlich',cat:'sfeer',name:'Verlichting bol (10 m)',excl:20.66,incl:25 },
+  { id:'verwarm',cat:'sfeer',name:'Verwarming op gas',excl:37.19,incl:45 },
+  { id:'gasfles',cat:'sfeer',name:'Gasfles (navulling)',excl:33.06,incl:40 },
+  { id:'loper',cat:'sfeer',name:'Rode loper 5 m',excl:20.66,incl:25 },
+  { id:'cavawall',cat:'sfeer',name:'Cava wall',excl:90.91,incl:110 },
+  { id:'krokko',cat:'entert',name:'Springkasteel Krokko',excl:128.10,incl:155 },
+  { id:'unicorn',cat:'entert',name:'Springkasteel Unicorn',excl:128.10,incl:155 },
+  { id:'muziekbox',cat:'entert',name:'Muziekbox 1600W + 2 micro',excl:49.59,incl:60 },
+  { id:'silent',cat:'entert',name:'Silent Disco hoofdtelefoon',excl:4.50,incl:5.45 },
+  { id:'audiotel',cat:'entert',name:'Audio gastenboek + Telefooncel',excl:206.61,incl:250 },
+  { id:'audiogast',cat:'entert',name:'Audio gastenboek (zonder cel)',excl:82.64,incl:100 },
+  { id:'houten',cat:'photo',name:'Houten Photobooth',excl:412.40,incl:499 },
+  { id:'spiegel',cat:'photo',name:'Spiegelbooth (43" touchscreen)',excl:495.04,incl:599 },
+  { id:'achtergrond',cat:'photo',name:'Achtergrond / backdrop',excl:41.32,incl:50 },
+  { id:'partybar',cat:'horeca',name:'Partybar',excl:41.32,incl:50 },
+  { id:'perculator',cat:'horeca',name:'Perculator koffie 15L',excl:20.66,incl:25 },
+  { id:'dranktoren',cat:'horeca',name:'Dranktoren 5L',excl:16.53,incl:20 },
+  { id:'kookplaat',cat:'horeca',name:'Elektrische kookplaat',excl:12.40,incl:15 },
+  { id:'bord_groot',cat:'borden',name:'Groot wit bord',excl:0.40,incl:0.48 },
+  { id:'bord_klein',cat:'borden',name:'Klein wit bord',excl:0.35,incl:0.42 },
+  { id:'vork',cat:'borden',name:'Vork',excl:0.30,incl:0.36 },
+  { id:'mes',cat:'borden',name:'Mes',excl:0.30,incl:0.36 },
+  { id:'lepel_groot',cat:'borden',name:'Grote lepel',excl:0.30,incl:0.36 },
+  { id:'lepel_klein',cat:'borden',name:'Kleine lepel',excl:0.30,incl:0.36 },
+  { id:'champagne_beker',cat:'glazen',name:'Champagne beker (p/40)',excl:11.90,incl:14.40 },
+  { id:'beker_gewoon',cat:'glazen',name:'Gewone beker 25cl',excl:0.20,incl:0.24 },
+  { id:'wijnbeker',cat:'glazen',name:'Wijnbeker 27cl',excl:0.33,incl:0.40 },
+  { id:'cava_glas',cat:'glazen',name:'Cava glas (p/40)',excl:13.55,incl:16.40 },
+  { id:'wijn_glas',cat:'glazen',name:'Wijnglas (p/24)',excl:8.13,incl:9.84 },
+  { id:'fris_glas',cat:'glazen',name:'Frisdrankglas (p/24)',excl:8.13,incl:9.84 },
+  { id:'gin_glas',cat:'glazen',name:'Gin glas',excl:0.50,incl:0.60 },
+];
+var OFF_CAT_LABELS = {
+  tenten:'Partytenten',stretch:'Stretchtenten',vloer:'Houten vloer',bar:'Mobiele bar',
+  stoelen:'Stoelen & meubilair',tafels:'Tafels',koeling:'Bar & koeling',sfeer:'Verlichting & sfeer',
+  entert:'Entertainment',photo:'Photobooths',horeca:'Horeca & catering',borden:'Borden & bestek',glazen:'Glazen & bekers'
+};
+var offQ = {};
+OFF_PRODUCTS.forEach(function(p){offQ[p.id]=0;});
+var _offBuilt=false;
+
+function offFmt(n){return '\u20AC\u00a0'+n.toLocaleString('nl-BE',{minimumFractionDigits:2,maximumFractionDigits:2});}
+
+function offBuildSections(){
+  var cats=[];OFF_PRODUCTS.forEach(function(p){if(cats.indexOf(p.cat)<0)cats.push(p.cat);});
+  var c=document.getElementById('oSections');
+  if(!c)return;
+  c.innerHTML='';
+  cats.forEach(function(cat){
+    var prods=OFF_PRODUCTS.filter(function(p){return p.cat===cat;});
+    var sec=document.createElement('div');
+    sec.id='osec-'+cat;
+    sec.innerHTML='<div class="off-sec-lbl"><div class="dot"></div><h4>'+(OFF_CAT_LABELS[cat]||cat)+'</h4></div>';
+    prods.forEach(function(p){
+      var row=document.createElement('div');
+      row.className='off-prow';row.id='oprow-'+p.id;
+      row.innerHTML='<div style="width:40px;height:34px;border-radius:5px;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:16px">📦</div>'
+        +'<div class="off-pname">'+p.name+'</div>'
+        +'<div class="off-pprice">'+offFmt(p.incl)+'/dag</div>'
+        +'<div class="off-qty"><button class="off-qbtn" onclick="offChg(\''+p.id+'\',-1)">−</button>'
+        +'<input class="off-qinp" type="number" min="0" value="0" id="oqi-'+p.id+'" oninput="offSetQ(\''+p.id+'\',this.value)">'
+        +'<button class="off-qbtn" onclick="offChg(\''+p.id+'\',1)">+</button></div>';
+      sec.appendChild(row);
+    });
+    c.appendChild(sec);
+  });
+  _offBuilt=true;
+}
+function offChg(id,d){
+  offQ[id]=Math.max(0,(offQ[id]||0)+d);
+  var inp=document.getElementById('oqi-'+id);if(inp)inp.value=offQ[id];
+  offRow(id);offUpdate();
+}
+function offSetQ(id,v){offQ[id]=Math.max(0,parseInt(v)||0);offRow(id);offUpdate();}
+function offRow(id){var r=document.getElementById('oprow-'+id);if(r)r.classList.toggle('active',(offQ[id]||0)>0);}
+function offFilter(q){
+  var s=q.toLowerCase().trim();
+  var cats=[];OFF_PRODUCTS.forEach(function(p){if(cats.indexOf(p.cat)<0)cats.push(p.cat);});
+  cats.forEach(function(cat){
+    var sec=document.getElementById('osec-'+cat);if(!sec)return;
+    var any=false;
+    OFF_PRODUCTS.filter(function(p){return p.cat===cat;}).forEach(function(p){
+      var row=document.getElementById('oprow-'+p.id);if(!row)return;
+      var show=!s||p.name.toLowerCase().includes(s);
+      row.style.display=show?'':'none';if(show)any=true;
+    });
+    sec.style.display=any?'':'none';
+  });
+}
+function offToggleTr(t){
+  var cb=document.getElementById('ocb'+t);var pr=document.getElementById('opr'+t);
+  pr.disabled=!cb.checked;if(!cb.checked)pr.value='';offUpdate();
+}
+function offUpdate(){
+  var dagen=parseInt((document.getElementById('oDagen')||{}).value)||1;
+  var vn=(document.getElementById('oVoornaam')||{}).value||'';
+  var an=(document.getElementById('oAchternaam')||{}).value||'';
+  var kEl=document.getElementById('oSumKlant');
+  if(kEl)kEl.textContent=(vn||an)?(vn+' '+an).trim():'Geen klant ingevuld';
+
+  var selected=OFF_PRODUCTS.filter(function(p){return (offQ[p.id]||0)>0;});
+  var linesEl=document.getElementById('oSumLines');
+  var totIncl=0,totExcl=0;
+  if(linesEl){
+    linesEl.innerHTML='';
+    if(selected.length===0){linesEl.innerHTML='<div class="off-sum-empty">Selecteer materiaal om te beginnen</div>';}
+    else selected.forEach(function(p){
+      var q=offQ[p.id];var lI=p.incl*q*dagen;var lE=p.excl*q*dagen;
+      totIncl+=lI;totExcl+=lE;
+      var d=document.createElement('div');d.className='off-sum-line';
+      d.innerHTML='<span>'+p.name+' x'+q+'</span><span style="font-weight:600;white-space:nowrap">'+offFmt(lI)+'</span>';
+      linesEl.appendChild(d);
+    });
+  }
+  // Transport (excl. btw ingevoerd, btw komt er bovenop)
+  var trEl=document.getElementById('oTransportLines');
+  var tExcl=0;
+  if(trEl){
+    trEl.innerHTML='';
+    ['Transport','Plaatsing','Afbraak'].forEach(function(t){
+      var cb=document.getElementById('ocb'+t);var pr=document.getElementById('opr'+t);
+      if(cb&&cb.checked&&pr.value&&parseFloat(pr.value)>0){
+        var v=parseFloat(pr.value);tExcl+=v;
+        var d=document.createElement('div');d.className='off-sum-transport';
+        d.innerHTML='<span>'+t+'</span><span>'+offFmt(v)+'</span>';
+        trEl.appendChild(d);
+      }
+    });
+  }
+  // Correcte btw-berekening: alles excl → +21%
+  var grandExcl=totExcl+tExcl;
+  var grandIncl=grandExcl*1.21;
+  var btw=grandIncl-grandExcl;
+  var eEl=document.getElementById('oSumExcl');if(eEl)eEl.textContent=offFmt(grandExcl);
+  var bEl=document.getElementById('oSumBtw');if(bEl)bEl.textContent=offFmt(btw);
+  var iEl=document.getElementById('oSumIncl');if(iEl)iEl.textContent=offFmt(grandIncl);
+
+  var offerteNr=(document.getElementById('oOfferteNr')||{}).value||'';
+  var geldigTot=(document.getElementById('oGeldigTot')||{}).value||'';
+  var vEl=document.getElementById('oValidity');
+  if(vEl&&offerteNr&&geldigTot){
+    var dt=new Date(geldigTot+'T00:00:00');
+    vEl.textContent='Offerte nr. '+offerteNr+' · Geldig tot '+dt.toLocaleDateString('nl-BE',{day:'2-digit',month:'long',year:'numeric'});
+  }
+}
+function offReset(){
+  if(!confirm('Alle offertegegevens wissen?'))return;
+  OFF_PRODUCTS.forEach(function(p){offQ[p.id]=0;var i=document.getElementById('oqi-'+p.id);if(i)i.value=0;offRow(p.id);});
+  ['oVoornaam','oAchternaam','oEmail','oTel','oStraat','oGemeente','oBtw','oEvenement','oOfferteNr','oLocatie','oOpmerking'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
+  var dg=document.getElementById('oDagen');if(dg)dg.value=1;
+  var dt=document.getElementById('oDatum');if(dt)dt.value='';
+  var gt=document.getElementById('oGeldigTot');if(gt)gt.value='';
+  ['Transport','Plaatsing','Afbraak'].forEach(function(t){var cb=document.getElementById('ocb'+t);if(cb)cb.checked=false;var pr=document.getElementById('opr'+t);if(pr){pr.value='';pr.disabled=true;}});
+  offVulOfferteNr();
+  offUpdate();
+}
+function offVulOfferteNr(){
+  var el=document.getElementById('oOfferteNr');if(!el||el.value)return;
+  var yr=new Date().getFullYear();
+  var stored=localStorage.getItem('fr_offerte_seq_'+yr)||'0';
+  var next=String(parseInt(stored)+1).padStart(3,'0');
+  el.value=yr+'-'+next;
+}
+function offGeneratePDF(){
+  var vn=(document.getElementById('oVoornaam')||{}).value.trim();
+  var an=(document.getElementById('oAchternaam')||{}).value.trim();
+  if(!vn&&!an){alert('Vul eerst de klantgegevens in.');return;}
+  // Verhoog het volgnummer nu de offerte echt gemaakt wordt
+  var yr=new Date().getFullYear();
+  var stored=localStorage.getItem('fr_offerte_seq_'+yr)||'0';
+  localStorage.setItem('fr_offerte_seq_'+yr,parseInt(stored)+1);
+
+  var dagen=parseInt((document.getElementById('oDagen')||{}).value)||1;
+  var email=(document.getElementById('oEmail')||{}).value.trim();
+  var tel=(document.getElementById('oTel')||{}).value.trim();
+  var straat=(document.getElementById('oStraat')||{}).value.trim();
+  var gemeente=(document.getElementById('oGemeente')||{}).value.trim();
+  var btwNr=(document.getElementById('oBtw')||{}).value.trim();
+  var evenement=(document.getElementById('oEvenement')||{}).value.trim();
+  var offerteNr=(document.getElementById('oOfferteNr')||{}).value.trim()||'—';
+  var locatie=(document.getElementById('oLocatie')||{}).value.trim();
+  var opmerking=(document.getElementById('oOpmerking')||{}).value.trim();
+  var datumVal=(document.getElementById('oDatum')||{}).value;
+  var geldigVal=(document.getElementById('oGeldigTot')||{}).value;
+  var fmtDate=function(v){return v?new Date(v+'T00:00:00').toLocaleDateString('nl-BE',{day:'2-digit',month:'long',year:'numeric'}):'—';};
+
+  var selected=OFF_PRODUCTS.filter(function(p){return (offQ[p.id]||0)>0;});
+  var totIncl=0,totExcl=0;
+  var byCat={};selected.forEach(function(p){if(!byCat[p.cat])byCat[p.cat]=[];byCat[p.cat].push(p);});
+  var productRows='';
+  Object.keys(byCat).forEach(function(cat){
+    productRows+='<tr><td colspan="4" style="background:#F0F3FC;padding:6px 12px;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#4a96d8">'+(OFF_CAT_LABELS[cat]||cat)+'</td></tr>';
+    byCat[cat].forEach(function(p){
+      var q=offQ[p.id];var lI=p.incl*q*dagen;var lE=p.excl*q*dagen;
+      totIncl+=lI;totExcl+=lE;
+      productRows+='<tr><td style="padding:7px 12px;font-size:12px;color:#0C1135">'+p.name+'</td>'
+        +'<td style="padding:7px 12px;font-size:12px;text-align:center;color:#6b7280">'+q+'</td>'
+        +'<td style="padding:7px 12px;font-size:12px;text-align:right;color:#6b7280">'+offFmt(p.incl)+'</td>'
+        +'<td style="padding:7px 12px;font-size:12px;text-align:right;font-weight:700;color:#0C1135">'+offFmt(lI)+'</td></tr>';
+    });
+  });
+  var transportRows='';var tExcl=0;
+  ['Transport','Plaatsing','Afbraak'].forEach(function(t){
+    var cb=document.getElementById('ocb'+t);var pr=document.getElementById('opr'+t);
+    if(cb&&cb.checked&&pr.value&&parseFloat(pr.value)>0){
+      var v=parseFloat(pr.value);tExcl+=v;
+      var vIncl=v*1.21;
+      transportRows+='<tr><td style="padding:7px 12px;font-size:12px;color:#0C1135">'+t+'</td>'
+        +'<td style="padding:7px 12px;font-size:12px;text-align:center;color:#6b7280">1</td>'
+        +'<td style="padding:7px 12px;font-size:12px;text-align:right;color:#6b7280">'+offFmt(vIncl)+'</td>'
+        +'<td style="padding:7px 12px;font-size:12px;text-align:right;font-weight:700;color:#0C1135">'+offFmt(vIncl)+'</td></tr>';
+    }
+  });
+  if(transportRows)transportRows='<tr><td colspan="4" style="background:#F0F3FC;padding:6px 12px;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#4a96d8">Transport & service</td></tr>'+transportRows;
+
+  var grandExcl=totExcl+tExcl;
+  var grandIncl=grandExcl*1.21;
+  var btwBedrag=grandIncl-grandExcl;
+
+  var html='<!DOCTYPE html><html lang="nl"><head><meta charset="UTF-8"><title>Offerte '+offerteNr+' — '+vn+' '+an+'</title>'
+    +'<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,Helvetica,sans-serif;color:#0C1135;background:#fff;font-size:12px}@page{margin:15mm 15mm 20mm;size:A4}.page{max-width:780px;margin:0 auto;padding:20px}'
+    +'.pdf-header{background:#0C1135;color:#fff;padding:24px 28px;border-radius:8px;display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}'
+    +'.pdf-logo{font-size:22px;font-weight:900;letter-spacing:1px}.pdf-logo span{color:#61ABED}.pdf-logo-sub{color:rgba(255,255,255,.5);font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-top:3px}'
+    +'.pdf-header-right{text-align:right}.pdf-offerte-num{color:#61ABED;font-size:14px;font-weight:700}.pdf-header-right div{color:rgba(255,255,255,.65);font-size:10px;margin-top:3px;line-height:1.6}'
+    +'.pdf-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}.pdf-box{border:1px solid #dde3f5;border-radius:6px;padding:14px 16px}'
+    +'.pdf-box-title{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#4a96d8;margin-bottom:10px}.pdf-box table{width:100%}.pdf-box td{padding:3px 0;font-size:11px;vertical-align:top}.pdf-box td:first-child{color:#6b7280;width:110px}.pdf-box td:last-child{color:#0C1135;font-weight:500}'
+    +'.pdf-table{width:100%;border-collapse:collapse;margin-bottom:20px}.pdf-table thead tr{background:#0C1135}.pdf-table thead th{color:#fff;padding:9px 12px;font-size:10px;font-weight:700;text-align:left}.pdf-table thead th:not(:first-child){text-align:right}.pdf-table tbody tr:nth-child(even){background:#fafbff}'
+    +'.pdf-totaal{margin-left:auto;width:280px;border:1px solid #dde3f5;border-radius:6px;overflow:hidden}.pdf-totaal table{width:100%}.pdf-totaal td{padding:7px 14px;font-size:11px}.pdf-totaal tr:not(:last-child) td{border-bottom:1px solid #dde3f5;color:#6b7280}.pdf-totaal tr:not(:last-child) td:last-child{text-align:right;color:#0C1135;font-weight:500}.pdf-totaal .totaal-final{background:#0C1135}.pdf-totaal .totaal-final td{color:#fff;font-weight:700;font-size:13px;padding:10px 14px}.pdf-totaal .totaal-final td:last-child{text-align:right;color:#61ABED}'
+    +'.pdf-footer{margin-top:28px;padding-top:16px;border-top:1px solid #dde3f5;display:flex;justify-content:space-between;align-items:flex-end}.pdf-footer-left,.pdf-footer-right{font-size:9px;color:#6b7280;line-height:1.7}.pdf-footer-right{text-align:right}'
+    +'.pdf-validity{background:#F0F3FC;border-radius:6px;padding:10px 14px;margin-top:16px;font-size:10px;color:#0C1135;line-height:1.6}.pdf-opmerking{background:#fffbe6;border-left:3px solid #fbbf24;border-radius:0 6px 6px 0;padding:10px 14px;margin-top:12px;font-size:10px;color:#0C1135;line-height:1.6}</style></head><body><div class="page">'
+    +'<div class="pdf-header"><div><div class="pdf-logo">FAMILY<span>RENT</span></div><div class="pdf-logo-sub">Verhuur van feestmateriaal</div></div>'
+    +'<div class="pdf-header-right"><div class="pdf-offerte-num">Offerte nr. '+offerteNr+'</div>'
+    +'<div>Datum: '+new Date().toLocaleDateString('nl-BE',{day:'2-digit',month:'long',year:'numeric'})+'</div>'
+    +(geldigVal?'<div>Geldig tot: '+fmtDate(geldigVal)+'</div>':'')
+    +(evenement?'<div>Evenement: '+evenement+'</div>':'')
+    +(datumVal?'<div>Datum event: '+fmtDate(datumVal)+'</div>':'')
+    +(dagen>1?'<div>Aantal dagen: '+dagen+'</div>':'')
+    +'</div></div>'
+    +'<div class="pdf-grid"><div class="pdf-box"><div class="pdf-box-title">Klantgegevens</div><table>'
+    +'<tr><td>Naam</td><td>'+vn+' '+an+'</td></tr>'
+    +(email?'<tr><td>E-mail</td><td>'+email+'</td></tr>':'')
+    +(tel?'<tr><td>Telefoon</td><td>'+tel+'</td></tr>':'')
+    +((straat||gemeente)?'<tr><td>Adres</td><td>'+[straat,gemeente].filter(Boolean).join(', ')+'</td></tr>':'')
+    +(btwNr?'<tr><td>BTW-nr.</td><td>'+btwNr+'</td></tr>':'')
+    +'</table></div><div class="pdf-box"><div class="pdf-box-title">Familyrent</div><table>'
+    +'<tr><td>Adres</td><td>Callamerenstraat 24<br>9120 Kallo (Beveren)</td></tr>'
+    +'<tr><td>E-mail</td><td>info@familyrent.be</td></tr>'
+    +'<tr><td>Telefoon</td><td>0497 03 52 23</td></tr>'
+    +'<tr><td>Website</td><td>www.familyrent.be</td></tr>'
+    +(locatie?'<tr><td>Feestlocatie</td><td>'+locatie+'</td></tr>':'')
+    +'</table></div></div>'
+    +'<table class="pdf-table"><thead><tr><th style="width:50%">Omschrijving</th><th style="width:10%">Aantal</th><th style="width:20%">Dagprijs incl. btw</th><th style="width:20%">Totaal incl. btw</th></tr></thead><tbody>'
+    +productRows+transportRows+'</tbody></table>'
+    +'<div class="pdf-totaal"><table><tr><td>Subtotaal excl. btw</td><td>'+offFmt(grandExcl)+'</td></tr><tr><td>BTW 21%</td><td>'+offFmt(btwBedrag)+'</td></tr><tr class="totaal-final"><td>TOTAAL incl. btw</td><td>'+offFmt(grandIncl)+'</td></tr></table></div>'
+    +'<div class="pdf-validity"><strong>Geldigheid & voorwaarden:</strong> Deze offerte is vrijblijvend en geldig '+(geldigVal?'tot '+fmtDate(geldigVal):'voor 14 dagen')+'. Vermelde prijzen zijn '+(dagen>1?dagen+' x ':'')+'dagprijzen incl. 21% BTW.'
+    +(tExcl>0?' Transport, plaatsing en/of afbraak zijn inbegrepen zoals vermeld.':' Transport, plaatsing en afbraak zijn niet inbegrepen tenzij apart vermeld.')+'</div>'
+    +(opmerking?'<div class="pdf-opmerking"><strong>Opmerkingen:</strong> '+opmerking+'</div>':'')
+    +'<div class="pdf-footer"><div class="pdf-footer-left"><strong>Familyrent</strong><br>Callamerenstraat 24 — 9120 Kallo (Beveren)<br>info@familyrent.be — 0497 03 52 23 — www.familyrent.be</div>'
+    +'<div class="pdf-footer-right">BE1027.728.460<br>IBAN: op aanvraag<br>'+new Date().getFullYear()+' © Familyrent</div></div>'
+    +'</div></body></html>';
+
+  var win=window.open('','_blank');
+  win.document.write(html);
+  win.document.close();
+  setTimeout(function(){win.print();},600);
+}
+function renderOfferte(){
+  if(!_offBuilt)offBuildSections();
+  offVulOfferteNr();
+  // Auto geldig-tot bij datum
+  var dt=document.getElementById('oDatum');
+  if(dt&&!dt._listener){
+    dt._listener=true;
+    dt.addEventListener('change',function(){
+      var gt=document.getElementById('oGeldigTot');
+      if(this.value&&gt&&!gt.value){
+        var d=new Date(this.value+'T00:00:00');d.setDate(d.getDate()+14);
+        gt.value=dstr(d);offUpdate();
+      }
+    });
+  }
+  offUpdate();
 }
 
 function renderBBGrid(){
@@ -3796,7 +4296,7 @@ function renderBBGrid(){
 }
 function showBBDetail(name){
   document.getElementById('bb-sel').style.display='none';document.getElementById('bb-det').classList.add('active');
-  const t=today(),mon=getMon(t);const sunDt=new Date(mon+'T00:00:00');sunDt.setDate(sunDt.getDate()+6);const sun=sunDt.toISOString().split('T')[0];
+  const t=today(),mon=getMon(t);const sunDt=new Date(mon+'T00:00:00');sunDt.setDate(sunDt.getDate()+6);const sun=dstr(sunDt);
   const my=boekingen.filter(b=>{
     if(b.voltooid===true||b.voltooid==='true') return false;
     const inLev=(b.opstellers_lev&&b.opstellers_lev.includes(name));
@@ -4965,7 +5465,7 @@ function vrRenderDetail(productId, prod, vr){
 
   // Bezettingsgraad: verhuurd in laatste 90 dagen / 90 dagen
   var d90=new Date(t+'T00:00:00'); d90.setDate(d90.getDate()-90);
-  var d90s=d90.toISOString().split('T')[0];
+  var d90s=dstr(d90);
   var verhuurdDagen90 = 0;
   boekingen.forEach(function(b){
     if(!b.levdatum||!b.ophdatum||b.levdatum<d90s) return;
@@ -5238,7 +5738,7 @@ function vrRenderPlanning(productId, prod, vr, dagen){
 
   var t = today();
   var dEnd=new Date(t+'T00:00:00'); dEnd.setDate(dEnd.getDate()+dagen);
-  var dEndS=dEnd.toISOString().split('T')[0];
+  var dEndS=dstr(dEnd);
 
   // Selector 30/60/90
   var selectorHtml='<div style="display:flex;gap:6px;margin-bottom:12px">'
@@ -5256,8 +5756,8 @@ function vrRenderPlanning(productId, prod, vr, dagen){
   for(var w=0;w<nWeken;w++){
     var wStart=new Date(t+'T00:00:00');wStart.setDate(wStart.getDate()+w*7);
     var wEind=new Date(wStart);wEind.setDate(wEind.getDate()+6);
-    var wS=wStart.toISOString().split('T')[0];
-    var wE=wEind.toISOString().split('T')[0];
+    var wS=dstr(wStart);
+    var wE=dstr(wEind);
     var maxVerhuurd=vrBerekenVerhuurd(productId,wS,wE,null,null,null);
     var stock=vr.stock||1;
     var pct=Math.min(100,Math.round(maxVerhuurd/stock*100));
@@ -5469,9 +5969,9 @@ function _waarschuwingsEngineBerekening(){
   var resultaat = [];
   var t = today();
   var morgenDt = new Date(t+'T00:00:00'); morgenDt.setDate(morgenDt.getDate()+1);
-  var morgen = morgenDt.toISOString().split('T')[0];
+  var morgen = dstr(morgenDt);
   var w7Dt = new Date(t+'T00:00:00'); w7Dt.setDate(w7Dt.getDate()+7);
-  var w7 = w7Dt.toISOString().split('T')[0];
+  var w7 = dstr(w7Dt);
   var nu = new Date(t+'T00:00:00');
 
   var actief = boekingen.filter(function(b){
@@ -5823,7 +6323,7 @@ function wgRender(){
       if(item.datum){
         var t = today();
         var morgen = new Date(t+'T00:00:00'); morgen.setDate(morgen.getDate()+1);
-        var morgenStr = morgen.toISOString().split('T')[0];
+        var morgenStr = dstr(morgen);
         if(item.datum===t) datumTag='<span style="font-size:10px;background:#FCEBEB;color:#A32D2D;border-radius:4px;padding:1px 5px;font-weight:600;margin-left:4px">VANDAAG</span>';
         else if(item.datum===morgenStr) datumTag='<span style="font-size:10px;background:#FAEEDA;color:#854F0B;border-radius:4px;padding:1px 5px;font-weight:600;margin-left:4px">MORGEN</span>';
       }
@@ -8111,11 +8611,11 @@ async function aiAlternatiefVoorConflict(boekingId){
   var startDt=new Date(b.levdatum+'T00:00:00');
   for(var i=1;i<=60;i++){
     var testDt=new Date(startDt);testDt.setDate(testDt.getDate()+i);
-    var testStr=testDt.toISOString().split('T')[0];
+    var testStr=dstr(testDt);
     var testOph=new Date(testDt);
     var origDuur=Math.ceil((new Date(b.ophdatum)-new Date(b.levdatum))/(1000*60*60*24));
     testOph.setDate(testOph.getDate()+origDuur);
-    var testOphStr=testOph.toISOString().split('T')[0];
+    var testOphStr=dstr(testOph);
     var ok=conflictIds.every(function(pid){return vrBerekenVerhuurd(pid,testStr,testOphStr,b.id)===0;});
     if(ok) beschikbaar.push({lev:testStr,oph:testOphStr});
     if(beschikbaar.length>=5) break;
