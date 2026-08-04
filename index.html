@@ -1099,6 +1099,17 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 <div class="view" id="view-offerte">
   <div class="off-wrap">
     <div class="off-left">
+      <!-- AI: Plak website-aanvraag -->
+      <div class="off-card" style="border-color:var(--sky)">
+        <div class="off-card-hdr" style="background:linear-gradient(135deg,#0C1135,#61ABED)"><i class="ti ti-sparkles" style="margin-right:2px"></i> Automatisch invullen uit aanvraag</div>
+        <div class="off-card-body">
+          <p style="font-size:12px;color:var(--tx2);margin:0 0 10px">Plak hier de aanvraag uit je websiteformulier. De AI vult de klantgegevens en het materiaal automatisch in — jij controleert en verfijnt daarna.</p>
+          <textarea id="oParseInput" placeholder="Plak hier de volledige aanvraag..." style="width:100%;min-height:90px;border:.5px solid var(--bm);border-radius:var(--rm);padding:10px 12px;font-family:'Poppins',sans-serif;font-size:12px;color:var(--tx1);background:var(--bg2);resize:vertical;outline:none"></textarea>
+          <button onclick="offParseAanvraag()" id="oParseBtn" class="off-btn-pdf" style="margin-top:10px"><i class="ti ti-wand"></i> Lees uit & vul in</button>
+          <div id="oParseStatus" style="font-size:12px;margin-top:8px"></div>
+        </div>
+      </div>
+
       <!-- Klantgegevens -->
       <div class="off-card">
         <div class="off-card-hdr"><span class="off-num">1</span> Klantgegevens</div>
@@ -1126,10 +1137,9 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
       <div class="off-card">
         <div class="off-card-hdr"><span class="off-num">2</span> Offertegegevens</div>
         <div class="off-card-body">
-          <div class="off-row3">
-            <div class="off-fg"><label>Offerte nr.</label><input type="text" id="oOfferteNr" placeholder="2026-001"></div>
-            <div class="off-fg"><label>Evenementdatum</label><input type="date" id="oDatum"></div>
-            <div class="off-fg"><label>Geldig tot</label><input type="date" id="oGeldigTot" oninput="offUpdate()"></div>
+          <div class="off-row2">
+            <div class="off-fg"><label>Evenementdatum</label><input type="date" id="oDatum" oninput="offUpdate()"></div>
+            <div class="off-fg"><label>Geldig tot <span class="off-opt">(automatisch: +14 dagen)</span></label><input type="date" id="oGeldigTot" oninput="offUpdate()"></div>
           </div>
           <div class="off-row2">
             <div class="off-fg"><label>Aantal dagen</label><input type="number" id="oDagen" value="1" min="1" max="30" oninput="offUpdate()"></div>
@@ -4058,40 +4068,30 @@ function offUpdate(){
   var bEl=document.getElementById('oSumBtw');if(bEl)bEl.textContent=offFmt(btw);
   var iEl=document.getElementById('oSumIncl');if(iEl)iEl.textContent=offFmt(grandIncl);
 
-  var offerteNr=(document.getElementById('oOfferteNr')||{}).value||'';
+  var vn2=(document.getElementById('oVoornaam')||{}).value||'';
+  var an2=(document.getElementById('oAchternaam')||{}).value||'';
+  var klantNaam=(vn2+' '+an2).trim();
   var geldigTot=(document.getElementById('oGeldigTot')||{}).value||'';
   var vEl=document.getElementById('oValidity');
-  if(vEl&&offerteNr&&geldigTot){
+  if(vEl&&geldigTot){
     var dt=new Date(geldigTot+'T00:00:00');
-    vEl.textContent='Offerte nr. '+offerteNr+' · Geldig tot '+dt.toLocaleDateString('nl-BE',{day:'2-digit',month:'long',year:'numeric'});
+    vEl.textContent='Offerte voor '+(klantNaam||'—')+' · Geldig tot '+dt.toLocaleDateString('nl-BE',{day:'2-digit',month:'long',year:'numeric'});
   }
 }
 function offReset(){
   if(!confirm('Alle offertegegevens wissen?'))return;
   OFF_PRODUCTS.forEach(function(p){offQ[p.id]=0;var i=document.getElementById('oqi-'+p.id);if(i)i.value=0;offRow(p.id);});
-  ['oVoornaam','oAchternaam','oEmail','oTel','oStraat','oGemeente','oBtw','oEvenement','oOfferteNr','oLocatie','oOpmerking'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
+  ['oVoornaam','oAchternaam','oEmail','oTel','oStraat','oGemeente','oBtw','oEvenement','oLocatie','oOpmerking'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
   var dg=document.getElementById('oDagen');if(dg)dg.value=1;
   var dt=document.getElementById('oDatum');if(dt)dt.value='';
-  var gt=document.getElementById('oGeldigTot');if(gt)gt.value='';
+  var gt=document.getElementById('oGeldigTot');if(gt){var g=new Date();g.setDate(g.getDate()+14);gt.value=dstr(g);}
   ['Transport','Plaatsing','Afbraak'].forEach(function(t){var cb=document.getElementById('ocb'+t);if(cb)cb.checked=false;var pr=document.getElementById('opr'+t);if(pr){pr.value='';pr.disabled=true;}});
-  offVulOfferteNr();
   offUpdate();
-}
-function offVulOfferteNr(){
-  var el=document.getElementById('oOfferteNr');if(!el||el.value)return;
-  var yr=new Date().getFullYear();
-  var stored=localStorage.getItem('fr_offerte_seq_'+yr)||'0';
-  var next=String(parseInt(stored)+1).padStart(3,'0');
-  el.value=yr+'-'+next;
 }
 function offGeneratePDF(){
   var vn=(document.getElementById('oVoornaam')||{}).value.trim();
   var an=(document.getElementById('oAchternaam')||{}).value.trim();
   if(!vn&&!an){alert('Vul eerst de klantgegevens in.');return;}
-  // Verhoog het volgnummer nu de offerte echt gemaakt wordt
-  var yr=new Date().getFullYear();
-  var stored=localStorage.getItem('fr_offerte_seq_'+yr)||'0';
-  localStorage.setItem('fr_offerte_seq_'+yr,parseInt(stored)+1);
 
   var dagen=parseInt((document.getElementById('oDagen')||{}).value)||1;
   var email=(document.getElementById('oEmail')||{}).value.trim();
@@ -4100,7 +4100,7 @@ function offGeneratePDF(){
   var gemeente=(document.getElementById('oGemeente')||{}).value.trim();
   var btwNr=(document.getElementById('oBtw')||{}).value.trim();
   var evenement=(document.getElementById('oEvenement')||{}).value.trim();
-  var offerteNr=(document.getElementById('oOfferteNr')||{}).value.trim()||'—';
+  var klantNaam=(vn+' '+an).trim();
   var locatie=(document.getElementById('oLocatie')||{}).value.trim();
   var opmerking=(document.getElementById('oOpmerking')||{}).value.trim();
   var datumVal=(document.getElementById('oDatum')||{}).value;
@@ -4140,7 +4140,7 @@ function offGeneratePDF(){
   var grandIncl=grandExcl*1.21;
   var btwBedrag=grandIncl-grandExcl;
 
-  var html='<!DOCTYPE html><html lang="nl"><head><meta charset="UTF-8"><title>Offerte '+offerteNr+' — '+vn+' '+an+'</title>'
+  var html='<!DOCTYPE html><html lang="nl"><head><meta charset="UTF-8"><title>Offerte '+klantNaam+'</title>'
     +'<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,Helvetica,sans-serif;color:#0C1135;background:#fff;font-size:12px}@page{margin:15mm 15mm 20mm;size:A4}.page{max-width:780px;margin:0 auto;padding:20px}'
     +'.pdf-header{background:#0C1135;color:#fff;padding:24px 28px;border-radius:8px;display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}'
     +'.pdf-logo{font-size:22px;font-weight:900;letter-spacing:1px}.pdf-logo span{color:#61ABED}.pdf-logo-sub{color:rgba(255,255,255,.5);font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-top:3px}'
@@ -4152,7 +4152,7 @@ function offGeneratePDF(){
     +'.pdf-footer{margin-top:28px;padding-top:16px;border-top:1px solid #dde3f5;display:flex;justify-content:space-between;align-items:flex-end}.pdf-footer-left,.pdf-footer-right{font-size:9px;color:#6b7280;line-height:1.7}.pdf-footer-right{text-align:right}'
     +'.pdf-validity{background:#F0F3FC;border-radius:6px;padding:10px 14px;margin-top:16px;font-size:10px;color:#0C1135;line-height:1.6}.pdf-opmerking{background:#fffbe6;border-left:3px solid #fbbf24;border-radius:0 6px 6px 0;padding:10px 14px;margin-top:12px;font-size:10px;color:#0C1135;line-height:1.6}</style></head><body><div class="page">'
     +'<div class="pdf-header"><div><div class="pdf-logo">FAMILY<span>RENT</span></div><div class="pdf-logo-sub">Verhuur van feestmateriaal</div></div>'
-    +'<div class="pdf-header-right"><div class="pdf-offerte-num">Offerte nr. '+offerteNr+'</div>'
+    +'<div class="pdf-header-right"><div class="pdf-offerte-num">Offerte voor '+klantNaam+'</div>'
     +'<div>Datum: '+new Date().toLocaleDateString('nl-BE',{day:'2-digit',month:'long',year:'numeric'})+'</div>'
     +(geldigVal?'<div>Geldig tot: '+fmtDate(geldigVal)+'</div>':'')
     +(evenement?'<div>Evenement: '+evenement+'</div>':'')
@@ -4187,20 +4187,105 @@ function offGeneratePDF(){
   win.document.close();
   setTimeout(function(){win.print();},600);
 }
-function renderOfferte(){
-  if(!_offBuilt)offBuildSections();
-  offVulOfferteNr();
-  // Auto geldig-tot bij datum
-  var dt=document.getElementById('oDatum');
-  if(dt&&!dt._listener){
-    dt._listener=true;
-    dt.addEventListener('change',function(){
-      var gt=document.getElementById('oGeldigTot');
-      if(this.value&&gt&&!gt.value){
-        var d=new Date(this.value+'T00:00:00');d.setDate(d.getDate()+14);
-        gt.value=dstr(d);offUpdate();
+async function offParseAanvraag(){
+  var tekst=(document.getElementById('oParseInput')||{}).value||'';
+  if(!tekst.trim()){
+    var st=document.getElementById('oParseStatus');
+    if(st){st.innerHTML='<span style="color:#A32D2D">Plak eerst een aanvraag.</span>';}
+    return;
+  }
+  var btn=document.getElementById('oParseBtn');
+  if(btn){btn.disabled=true;btn.innerHTML='<i class="ti ti-loader"></i> AI leest de aanvraag...';}
+  var status=document.getElementById('oParseStatus');
+  if(status)status.innerHTML='<span style="color:var(--tx2)">Even geduld, de aanvraag wordt geanalyseerd...</span>';
+
+  // Bouw catalogus-lijst voor de AI
+  var catLijst=OFF_PRODUCTS.map(function(p){return p.id+' = '+p.name;}).join('\n');
+
+  var systeem='Je bent een assistent voor Familyrent, een Belgisch verhuurbedrijf. '
+    +'Vandaag is '+today()+'. Lees de aanvraag uit een websiteformulier en geef ALLEEN een JSON-object terug (geen uitleg, geen markdown):\n'
+    +'{"voornaam":"","achternaam":"","email":"","tel":"","straat":"","gemeente":"","evenement":"","eventdatum":"YYYY-MM-DD","locatie":"","dagen":1,"transport":false,"plaatsing":false,"afbraak":false,"opmerking":"","materiaal":[{"id":"catalogus_id","aantal":1}]}\n\n'
+    +'REGELS:\n'
+    +'- Splits de naam in voornaam en achternaam.\n'
+    +'- Adres: splits in straat+nummer (straat) en postcode+gemeente (gemeente). Vul ook "locatie" met het volledige adres.\n'
+    +'- eventdatum = de feestdatum in YYYY-MM-DD.\n'
+    +'- dagen = bereken uit leverdatum tot ophaaldatum (bv. lev 11 sept, oph 14 sept = 3 dagen). Minimaal 1.\n'
+    +'- transport/plaatsing/afbraak = true als de klant aangeeft dat wij plaatsen/afbreken/leveren ("Ja, graag" e.d.).\n'
+    +'- opmerking = neem de speciale wensen en relevante context over (ondergrond, doorgang, zijkanten-vraag, elektriciteit).\n'
+    +'- materiaal: kies ENKEL uit onderstaande catalogus-ids. Lees zowel de keuzevelden als de vrije opmerking (bv. "1x partytent 4x12 en 1x partytent 4x4" → tent4x12 + tent4x4). Bij "Statafels" zonder aantal: gebruik aantal 4 als redelijke schatting. Bij "Verlichting" voor tenten: kies verlich_tent. Vraagt de klant zijwanden/zijkanten? Voeg zijwand_r toe met een redelijk aantal (bv. 4) maar zet dit ook in de opmerking zodat de gebruiker het kan aanpassen.\n'
+    +'- Als een veld onbekend is, laat het leeg ("") of gebruik een redelijke standaard.\n\n'
+    +'CATALOGUS:\n'+catLijst;
+
+  var antwoord=await claudeAPI(systeem,'AANVRAAG:\n'+tekst,1500);
+
+  if(btn){btn.disabled=false;btn.innerHTML='<i class="ti ti-wand"></i> Lees uit & vul in';}
+
+  if(!antwoord){
+    if(status)status.innerHTML='<span style="color:#A32D2D">De AI-analyse lukte niet. Probeer opnieuw of vul handmatig in.</span>';
+    return;
+  }
+  try{
+    var d=JSON.parse(antwoord.replace(/```json|```/g,'').trim());
+    // Vul de velden
+    function zet(id,val){var e=document.getElementById(id);if(e&&val!=null&&val!=='')e.value=val;}
+    zet('oVoornaam',d.voornaam);
+    zet('oAchternaam',d.achternaam);
+    zet('oEmail',d.email);
+    zet('oTel',d.tel);
+    zet('oStraat',d.straat);
+    zet('oGemeente',d.gemeente);
+    zet('oEvenement',d.evenement);
+    zet('oDatum',d.eventdatum);
+    zet('oLocatie',d.locatie);
+    zet('oOpmerking',d.opmerking);
+    if(d.dagen&&d.dagen>0){var dg=document.getElementById('oDagen');if(dg)dg.value=d.dagen;}
+
+    // Transport-opties
+    [['transport','Transport'],['plaatsing','Plaatsing'],['afbraak','Afbraak']].forEach(function(pair){
+      if(d[pair[0]]){
+        var cb=document.getElementById('ocb'+pair[1]);
+        if(cb&&!cb.checked){cb.checked=true;offToggleTr(pair[1]);}
       }
     });
+
+    // Materiaal: reset en vul opnieuw
+    var aantalGevonden=0;
+    OFF_PRODUCTS.forEach(function(p){offQ[p.id]=0;});
+    (d.materiaal||[]).forEach(function(m){
+      var prod=OFF_PRODUCTS.find(function(x){return x.id===m.id;});
+      if(prod&&m.aantal>0){offQ[m.id]=m.aantal;aantalGevonden++;}
+    });
+    // Herbouw de quantity-inputs en rijen
+    OFF_PRODUCTS.forEach(function(p){
+      var inp=document.getElementById('oqi-'+p.id);
+      if(inp)inp.value=offQ[p.id];
+      offRow(p.id);
+    });
+
+    // Geldigheid opnieuw op vandaag+14 (voor de zekerheid)
+    var gt=document.getElementById('oGeldigTot');
+    if(gt&&!gt.value){var g=new Date();g.setDate(g.getDate()+14);gt.value=dstr(g);}
+
+    offUpdate();
+
+    var klant=((d.voornaam||'')+' '+(d.achternaam||'')).trim();
+    if(status)status.innerHTML='<span style="color:#2D6A1E"><i class="ti ti-circle-check"></i> Ingevuld voor '+esc(klant||'klant')+' — '+aantalGevonden+' product'+(aantalGevonden!==1?'en':'')+' herkend. Controleer en verfijn hieronder.</span>';
+    // Scroll naar klantgegevens
+    var kg=document.getElementById('oVoornaam');
+    if(kg)kg.scrollIntoView({behavior:'smooth',block:'center'});
+  }catch(e){
+    console.error(e,antwoord);
+    if(status)status.innerHTML='<span style="color:#A32D2D">De AI gaf een onleesbaar antwoord. Probeer opnieuw.</span>';
+  }
+}
+
+function renderOfferte(){
+  if(!_offBuilt)offBuildSections();
+  // Geldigheid automatisch: aanmaakdatum (vandaag) + 14 dagen
+  var gt=document.getElementById('oGeldigTot');
+  if(gt&&!gt.value){
+    var g=new Date();g.setDate(g.getDate()+14);
+    gt.value=dstr(g);
   }
   offUpdate();
 }
