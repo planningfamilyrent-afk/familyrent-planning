@@ -23,7 +23,9 @@ window.FR_CONFIG={
   emailjs_service:'service_3y294mh',
   emailjs_template_intern:'template_rdfunwf',
   emailjs_template_klant:'template_6zmn5tp',
-  apps_script_url:'https://script.google.com/macros/s/AKfycbzh_GfQKgsoOpkfMRiBUYf_s6usyqUlH27GOI-LuLHMIZ9PUlPyR0Ddgiympg3UYAAoIg/exec'
+  apps_script_url:'https://script.google.com/macros/s/AKfycbzh_GfQKgsoOpkfMRiBUYf_s6usyqUlH27GOI-LuLHMIZ9PUlPyR0Ddgiympg3UYAAoIg/exec',
+  // AI-proxy (Vercel) — vervang door je eigen URL na het opzetten van de tussenserver
+  ai_proxy_url:'https://familyrent-ai.vercel.app/api/claude'
 };
 // EmailJS init — in try-catch zodat een CDN-timeout de tool niet blokkeert
 try{
@@ -8578,8 +8580,15 @@ async function bulkBBOpslaan(){
 
 async function claudeAPI(systeemPrompt, gebruikersBericht, maxTokens){
   maxTokens=maxTokens||800;
+  var proxyUrl=window.FR_CONFIG.ai_proxy_url;
+  // Controleer of de proxy is ingesteld
+  if(!proxyUrl||proxyUrl==='VUL_HIER_JE_VERCEL_URL_IN'){
+    console.error('AI-proxy niet ingesteld in FR_CONFIG.ai_proxy_url');
+    banner('er','AI-functie niet actief — de tussenserver is nog niet ingesteld.');
+    return null;
+  }
   try{
-    var resp=await fetch('https://api.anthropic.com/v1/messages',{
+    var resp=await fetch(proxyUrl,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
