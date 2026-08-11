@@ -112,6 +112,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 /* FILTER */
 .fbar{display:flex;gap:6px;margin-bottom:12px;align-items:center;flex-wrap:wrap}
 .fb{font-size:12px;padding:5px 11px;border-radius:20px;border:.5px solid var(--bm);background:transparent;cursor:pointer;font-family:'Poppins',sans-serif;color:var(--tx2);white-space:nowrap}
+.off-subtab.active{background:var(--navy)!important;color:#fff!important;border-color:var(--navy)!important}
 .fb.active{background:var(--navy);color:#fff;border-color:var(--navy)}
 .fb:hover:not(.active){background:var(--bg2)}
 .fsrch{font-size:13px;padding:5px 10px;border-radius:var(--rm);border:.5px solid var(--bm);background:var(--bg1);color:var(--tx1);font-family:'Poppins',sans-serif;flex:1;min-width:120px}
@@ -1099,7 +1100,21 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 
 <!-- OFFERTETOOL -->
 <div class="view" id="view-offerte">
-  <div class="off-wrap">
+  <div class="off-subnav" style="display:flex;gap:8px;margin-bottom:14px">
+    <button class="fb off-subtab active" id="off-subtab-nieuw" onclick="offShowSub('nieuw')" style="padding:8px 16px;font-weight:600">Nieuwe offerte</button>
+    <button class="fb off-subtab" id="off-subtab-track" onclick="offShowSub('track')" style="padding:8px 16px;font-weight:600;display:flex;align-items:center;gap:6px">Opvolging <span id="offTrackBadge" class="status-badge" style="display:none;background:#FCEBEB;color:#A32D2D"></span></button>
+  </div>
+
+  <div id="off-panel-track" style="display:none">
+    <div class="off-card">
+      <div class="off-card-body">
+        <div id="off-track-filters" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px"></div>
+        <div id="off-track-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="off-panel-nieuw" class="off-wrap">
     <div class="off-left">
       <!-- AI: Plak website-aanvraag -->
       <div class="off-card" style="border-color:var(--sky)">
@@ -4153,6 +4168,15 @@ function offGeneratePDF(){
   var grandIncl=grandExcl*1.21;
   var btwBedrag=grandIncl-grandExcl;
 
+  offTrackAdd({
+    klantNaam: klantNaam,
+    email: email,
+    tel: tel,
+    evenement: evenement,
+    evenementDatum: datumVal?fmtDate(datumVal):'',
+    bedrag: grandIncl
+  });
+
   var html='<!DOCTYPE html><html lang="nl"><head><meta charset="UTF-8"><title>Offerte '+klantNaam+'</title>'
     +'<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,Helvetica,sans-serif;color:#0C1135;background:#fff;font-size:12px}@page{margin:15mm 15mm 20mm;size:A4}.page{max-width:780px;margin:0 auto;padding:20px}'
     +'.pdf-header{background:#0C1135;color:#fff;padding:24px 28px;border-radius:8px;display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}'
@@ -4292,8 +4316,162 @@ async function offParseAanvraag(){
   }
 }
 
+// ===== OFFERTE-OPVOLGING =====
+const OFF_TRACK_KEY='FR_OFFERTES_V1';
+const OFF_TRACK_STATUSSEN=['open','ongoing','akkoord','afgewezen'];
+const OFF_TRACK_LABELS={open:'Open',ongoing:'On going',akkoord:'Akkoord',afgewezen:'Gaat niet door'};
+const OFF_TRACK_KLEUR={
+  open:{bg:'#E6F1FB',tx:'#0C447C'},
+  ongoing:{bg:'#FAEEDA',tx:'#854F0B'},
+  akkoord:{bg:'#EAF3DE',tx:'#173404'},
+  afgewezen:{bg:'#FCEBEB',tx:'#A32D2D'}
+};
+const OFF_TRACK_REDENEN=['Te duur','Geen antwoord','Event geannuleerd','Andere leverancier gekozen','Andere reden'];
+var _offTrackFilter='alle';
+
+function offTrackLoad(){
+  try{return JSON.parse(localStorage.getItem(OFF_TRACK_KEY)||'[]');}catch(e){return [];}
+}
+function offTrackSave(arr){
+  try{localStorage.setItem(OFF_TRACK_KEY,JSON.stringify(arr));}catch(e){}
+}
+function offTrackAdd(rec){
+  var lijst=offTrackLoad();
+  var idx=lijst.findIndex(function(r){
+    return r.klantNaam===rec.klantNaam && r.email===rec.email && (r.status==='open'||r.status==='ongoing');
+  });
+  if(idx>=0){
+    lijst[idx].bedrag=rec.bedrag;
+    lijst[idx].evenement=rec.evenement;
+    lijst[idx].evenementDatum=rec.evenementDatum;
+    lijst[idx].laatstGewijzigd=Date.now();
+    lijst[idx].downloads=(lijst[idx].downloads||1)+1;
+  } else {
+    rec.id='ot_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+    rec.status='open';
+    rec.aangemaakt=Date.now();
+    rec.laatstGewijzigd=Date.now();
+    rec.downloads=1;
+    rec.reden='';
+    lijst.unshift(rec);
+  }
+  offTrackSave(lijst);
+  offTrackUpdateBadge();
+}
+function offTrackSetStatus(id,status){
+  var lijst=offTrackLoad();
+  var rec=lijst.find(function(r){return r.id===id;});
+  if(!rec)return;
+  rec.status=status;
+  if(status!=='afgewezen')rec.reden='';
+  rec.laatstGewijzigd=Date.now();
+  offTrackSave(lijst);
+  offTrackRenderList();
+  offTrackUpdateBadge();
+}
+function offTrackSetReden(id,reden){
+  var lijst=offTrackLoad();
+  var rec=lijst.find(function(r){return r.id===id;});
+  if(!rec)return;
+  rec.reden=reden;
+  offTrackSave(lijst);
+}
+function offTrackDelete(id){
+  if(!confirm('Deze offerte uit de opvolglijst verwijderen?'))return;
+  var lijst=offTrackLoad().filter(function(r){return r.id!==id;});
+  offTrackSave(lijst);
+  offTrackRenderList();
+  offTrackUpdateBadge();
+}
+function offTrackDagenGeleden(ts){
+  return Math.floor((Date.now()-ts)/(1000*60*60*24));
+}
+function offTrackUpdateBadge(){
+  var lijst=offTrackLoad();
+  var n=lijst.filter(function(r){
+    return (r.status==='open'||r.status==='ongoing') && offTrackDagenGeleden(r.laatstGewijzigd)>=5;
+  }).length;
+  var badge=document.getElementById('offTrackBadge');
+  if(!badge)return;
+  if(n>0){badge.style.display='inline-flex';badge.textContent=n;}
+  else{badge.style.display='none';}
+}
+function offTrackFmtGeld(v){
+  return '€ '+(v||0).toFixed(2).replace('.',',');
+}
+function offShowSub(which){
+  document.getElementById('off-panel-nieuw').style.display=which==='nieuw'?'':'none';
+  document.getElementById('off-panel-track').style.display=which==='track'?'':'none';
+  document.getElementById('off-subtab-nieuw').classList.toggle('active',which==='nieuw');
+  document.getElementById('off-subtab-track').classList.toggle('active',which==='track');
+  if(which==='track')offTrackRenderList();
+}
+function offTrackRenderList(filter){
+  filter=filter||_offTrackFilter;
+  _offTrackFilter=filter;
+  var lijst=offTrackLoad();
+  lijst.sort(function(a,b){
+    var actA=(a.status==='open'||a.status==='ongoing');
+    var actB=(b.status==='open'||b.status==='ongoing');
+    if(actA!==actB)return actA?-1:1;
+    if(actA&&actB)return a.laatstGewijzigd-b.laatstGewijzigd;
+    return b.aangemaakt-a.aangemaakt;
+  });
+  var filtered=filter==='alle'?lijst:lijst.filter(function(r){return r.status===filter;});
+  var counts={open:0,ongoing:0,akkoord:0,afgewezen:0};
+  lijst.forEach(function(r){counts[r.status]=(counts[r.status]||0)+1;});
+  var filterBar=document.getElementById('off-track-filters');
+  if(filterBar){
+    var fOpts=[['alle','Alle',lijst.length]].concat(OFF_TRACK_STATUSSEN.map(function(s){return [s,OFF_TRACK_LABELS[s],counts[s]||0];}));
+    filterBar.innerHTML=fOpts.map(function(o){
+      var active=filter===o[0];
+      return '<button class="fb" onclick="offTrackRenderList(\''+o[0]+'\')" style="'+(active?'background:var(--navy);color:#fff;border-color:var(--navy)':'')+'">'+o[1]+' ('+o[2]+')</button>';
+    }).join('');
+  }
+  var c=document.getElementById('off-track-list');
+  if(!c)return;
+  if(filtered.length===0){
+    c.innerHTML='<div style="text-align:center;padding:40px 20px;color:var(--tx3);font-size:13px">Geen offertes in deze lijst.<br>Zodra je een offerte-PDF downloadt, verschijnt die hier automatisch.</div>';
+    return;
+  }
+  c.innerHTML=filtered.map(function(r){
+    var kleur=OFF_TRACK_KLEUR[r.status]||OFF_TRACK_KLEUR.open;
+    var dagen=offTrackDagenGeleden(r.laatstGewijzigd);
+    var needsFollowup=(r.status==='open'||r.status==='ongoing')&&dagen>=5;
+    var statusOpts=OFF_TRACK_STATUSSEN.map(function(s){
+      return '<option value="'+s+'"'+(r.status===s?' selected':'')+'>'+OFF_TRACK_LABELS[s]+'</option>';
+    }).join('');
+    var redenHtml='';
+    if(r.status==='afgewezen'){
+      redenHtml='<div style="margin-top:8px"><select onchange="offTrackSetReden(\''+r.id+'\',this.value)" style="font-size:12px;padding:5px 8px;border-radius:6px;border:.5px solid var(--bm);background:var(--bg2);color:var(--tx1)">'
+        +'<option value="">Kies reden...</option>'
+        +OFF_TRACK_REDENEN.map(function(rd){return '<option value="'+rd+'"'+(r.reden===rd?' selected':'')+'>'+rd+'</option>';}).join('')
+        +'</select></div>';
+    }
+    return '<div style="background:var(--bg1);border:.5px solid '+(needsFollowup?'#E24B4A':'var(--bl)')+';border-radius:var(--rl);padding:14px 16px;margin-bottom:10px">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">'
+      +'<div>'
+        +'<div style="font-weight:600;font-size:14px;color:var(--tx1)">'+(r.klantNaam||'Onbekend')+'</div>'
+        +'<div style="font-size:12px;color:var(--tx2);margin-top:2px">'+(r.evenement||'—')+(r.evenementDatum?' · '+r.evenementDatum:'')+'</div>'
+        +'<div style="font-size:11px;color:var(--tx3);margin-top:4px">Offerte gedownload: '+new Date(r.aangemaakt).toLocaleDateString('nl-BE')+(r.downloads>1?' ('+r.downloads+'x)':'')+'</div>'
+      +'</div>'
+      +'<div style="text-align:right">'
+        +'<div style="font-weight:700;font-size:15px;color:var(--tx1)">'+offTrackFmtGeld(r.bedrag)+'</div>'
+        +(needsFollowup?'<div style="font-size:11px;color:#A32D2D;font-weight:600;margin-top:2px">⏰ '+dagen+' dagen geen actie</div>':'')
+      +'</div>'
+      +'</div>'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:10px;flex-wrap:wrap">'
+        +'<select onchange="offTrackSetStatus(\''+r.id+'\',this.value)" style="font-size:12px;padding:6px 10px;border-radius:20px;border:none;background:'+kleur.bg+';color:'+kleur.tx+';font-weight:600">'+statusOpts+'</select>'
+        +'<button onclick="offTrackDelete(\''+r.id+'\')" class="fb" style="border-color:transparent;color:var(--tx3)"><i class="ti ti-trash"></i></button>'
+      +'</div>'
+      +redenHtml
+      +'</div>';
+  }).join('');
+}
+
 function renderOfferte(){
   if(!_offBuilt)offBuildSections();
+  offTrackUpdateBadge();
   // Geldigheid automatisch: aanmaakdatum (vandaag) + 14 dagen
   var gt=document.getElementById('oGeldigTot');
   if(gt&&!gt.value){
