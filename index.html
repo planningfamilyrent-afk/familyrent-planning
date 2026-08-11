@@ -3655,7 +3655,7 @@ function mijnBBOpslaan(naam){ try{localStorage.setItem(MIJN_BB_KEY,naam);}catch(
 function mijnBBLaad(){ try{return localStorage.getItem(MIJN_BB_KEY)||null;}catch(e){return null;} }
 
 // ═══════════════════════════════════════════════════════════
-// TEAM — eigenaarsoverzicht: wie doet wat, per weekend
+// TEAM — eigenaarsoverzicht: wie doet wat, per week (alle dagen, ma t/m zo)
 // Toggle tussen "per persoon" en "per opdracht"
 // Rode markering voor onbemande ritten
 // ═══════════════════════════════════════════════════════════
@@ -3669,20 +3669,28 @@ function teamGetWeekend(startMaandag){
   return [dstr(za),dstr(zo)];
 }
 
+function teamGetWeek(startMaandag){
+  // Geef alle 7 dagen van de week terug (ma t/m zo)
+  var dagen=[];
+  for(var i=0;i<7;i++){
+    var d=new Date(startMaandag+'T00:00:00');d.setDate(d.getDate()+i);
+    dagen.push(dstr(d));
+  }
+  return dagen;
+}
+
 function renderTeam(){
   var wrap=document.getElementById('team-wrap');
   if(!wrap)return;
   if(!_teamWeekStart)_teamWeekStart=getMon(today());
 
-  var weekend=teamGetWeekend(_teamWeekStart);
-  // Toon alle dagen van het weekend + eventueel vrijdag als er iets is
-  var vr=new Date(_teamWeekStart+'T00:00:00');vr.setDate(vr.getDate()+4);
-  var vrStr=dstr(vr);
-  var dagen=[vrStr,weekend[0],weekend[1]];
+  // Toon de volledige week (ma t/m zo), niet enkel het weekend
+  var dagen=teamGetWeek(_teamWeekStart);
 
   // Header met toggle en weeknavigatie
-  var zaDt=new Date(weekend[0]+'T00:00:00');
-  var weekLbl='Weekend '+zaDt.getDate()+' '+NLM[zaDt.getMonth()];
+  var maDt=new Date(dagen[0]+'T00:00:00');
+  var zoDt=new Date(dagen[6]+'T00:00:00');
+  var weekLbl='Week '+maDt.getDate()+' '+NLM[maDt.getMonth()]+' – '+zoDt.getDate()+' '+NLM[zoDt.getMonth()];
 
   var html='<div class="team-hdr">';
   html+='<div class="team-datum-nav">';
@@ -3712,7 +3720,7 @@ function renderTeam(){
   });
 
   if(taken.length===0){
-    html+='<div class="team-leeg"><i class="ti ti-calendar-off" style="font-size:32px;display:block;margin-bottom:10px"></i>Geen ritten dit weekend.</div>';
+    html+='<div class="team-leeg"><i class="ti ti-calendar-off" style="font-size:32px;display:block;margin-bottom:10px"></i>Geen ritten deze week.</div>';
     wrap.innerHTML=html.replace('<!--TELLER-->','');
     return;
   }
