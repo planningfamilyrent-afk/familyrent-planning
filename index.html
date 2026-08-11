@@ -3862,6 +3862,16 @@ function teamWijsOpen(bid,type){
   teamWijsRenderNamen();
 }
 
+// Extra crew: namen die via "Andere" zijn toegevoegd (externe/eenmalige hulp), lokaal onthouden
+const EXTRA_BB_KEY='FR_EXTRA_CREW';
+function extraBBLoad(){try{return JSON.parse(localStorage.getItem(EXTRA_BB_KEY)||'[]');}catch(e){return [];}}
+function extraBBSave(arr){try{localStorage.setItem(EXTRA_BB_KEY,JSON.stringify(arr));}catch(e){}}
+function teamAlleNamen(){
+  var extra=extraBBLoad();
+  var alle=BB.slice();
+  extra.forEach(function(n){if(alle.indexOf(n)<0)alle.push(n);});
+  return alle;
+}
 function teamWijsRenderNamen(){
   var w=window._teamWijs;
   var b=boekingen.find(function(x){return x.id===w.bid;});
@@ -3869,12 +3879,45 @@ function teamWijsRenderNamen(){
   var huidige=(w.type==='lev'?b.opstellers_lev:b.opstellers_oph)||[];
   var wrap=document.getElementById('team-wijs-namen');
   if(!wrap)return;
-  wrap.innerHTML=BB.map(function(nm){
+  wrap.innerHTML=teamAlleNamen().map(function(nm){
     var sel=huidige.indexOf(nm)>=0;
     return '<button onclick="teamWijsToggle(\''+encodeURIComponent(nm)+'\')" class="tg'+(sel?' sel':'')+'" style="min-height:44px;padding:8px 14px;font-size:13px">'
       +'<span style="display:inline-flex;align-items:center;gap:5px">'
       +(sel?'<i class="ti ti-check" style="font-size:12px"></i>':'')+ini(nm)+' '+esc(nm)+'</span></button>';
-  }).join('');
+  }).join('')
+  +'<button onclick="teamWijsAndereToon()" class="tg" style="min-height:44px;padding:8px 14px;font-size:13px;border-style:dashed"><span style="display:inline-flex;align-items:center;gap:5px"><i class="ti ti-plus" style="font-size:12px"></i>Andere</span></button>'
+  +'<div id="team-wijs-andere-form" style="display:none;width:100%;margin-top:8px;gap:6px"></div>';
+}
+function teamWijsAndereToon(){
+  var form=document.getElementById('team-wijs-andere-form');
+  if(!form)return;
+  form.style.display='flex';
+  form.innerHTML='<input type="text" id="team-wijs-andere-input" placeholder="Naam van externe hulp..." style="flex:1;min-width:150px;padding:8px 12px;border-radius:8px;border:.5px solid var(--bm);background:var(--bg2);color:var(--tx1);font-size:13px">'
+    +'<button onclick="teamWijsAndereBevestig()" class="bprim" style="padding:8px 14px;font-size:13px;white-space:nowrap"><i class="ti ti-check"></i></button>';
+  setTimeout(function(){
+    var inp=document.getElementById('team-wijs-andere-input');
+    if(inp){
+      inp.focus();
+      inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();teamWijsAndereBevestig();}});
+    }
+  },50);
+}
+function teamWijsAndereBevestig(){
+  var inp=document.getElementById('team-wijs-andere-input');
+  if(!inp)return;
+  var nm=inp.value.trim();
+  if(!nm)return;
+  var alleNamen=teamAlleNamen();
+  var bestaand=alleNamen.find(function(x){return x.toLowerCase()===nm.toLowerCase();});
+  if(bestaand){
+    nm=bestaand;
+  } else {
+    var extra=extraBBLoad();
+    extra.push(nm);
+    extraBBSave(extra);
+  }
+  teamWijsRenderNamen();
+  teamWijsToggle(encodeURIComponent(nm));
 }
 
 async function teamWijsToggle(nmEnc){
