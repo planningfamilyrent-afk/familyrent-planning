@@ -4232,7 +4232,21 @@ function offBuildOfferteData(){
     tel: tel,
     evenement: evenement,
     evenementDatum: datumVal?fmtDate(datumVal):'',
-    bedrag: grandIncl
+    bedrag: grandIncl,
+    snapshot: {
+      velden: {
+        oVoornaam: vn, oAchternaam: an, oEmail: email, oTel: tel,
+        oStraat: straat, oGemeente: gemeente, oBtw: btwNr, oEvenement: evenement,
+        oDatum: datumVal, oLocatie: locatie, oOpmerking: opmerking,
+        oDagen: dagen, oGeldigTot: geldigVal
+      },
+      transport: {
+        Transport: !!(document.getElementById('ocbTransport')||{}).checked,
+        Plaatsing: !!(document.getElementById('ocbPlaatsing')||{}).checked,
+        Afbraak: !!(document.getElementById('ocbAfbraak')||{}).checked
+      },
+      offQ: JSON.parse(JSON.stringify(offQ))
+    }
   });
 
   var html='<!DOCTYPE html><html lang="nl"><head><meta charset="UTF-8"><title>Offerte '+klantNaam+'</title>'
@@ -4579,6 +4593,7 @@ function offTrackAdd(rec){
     lijst[idx].bedrag=rec.bedrag;
     lijst[idx].evenement=rec.evenement;
     lijst[idx].evenementDatum=rec.evenementDatum;
+    lijst[idx].snapshot=rec.snapshot;
     lijst[idx].laatstGewijzigd=Date.now();
     lijst[idx].downloads=(lijst[idx].downloads||1)+1;
     id=lijst[idx].id;
@@ -4635,6 +4650,43 @@ function offTrackDelete(id){
   offTrackSave(lijst);
   offTrackRenderList();
   offTrackUpdateBadge();
+}
+function offTrackEdit(id){
+  var lijst=offTrackLoad();
+  var rec=lijst.find(function(r){return r.id===id;});
+  if(!rec||!rec.snapshot){alert('Voor deze offerte is geen bewerkbare versie bewaard (waarschijnlijk gemaakt vóór deze functie er was).');return;}
+  var snap=rec.snapshot;
+
+  // Formuliervelden terugzetten
+  Object.keys(snap.velden||{}).forEach(function(fid){
+    var el=document.getElementById(fid);
+    if(el)el.value=snap.velden[fid]!=null?snap.velden[fid]:'';
+  });
+
+  // Transport-opties terugzetten
+  ['Transport','Plaatsing','Afbraak'].forEach(function(naam){
+    var cb=document.getElementById('ocb'+naam);
+    if(!cb)return;
+    var moetAan=!!(snap.transport||{})[naam];
+    if(cb.checked!==moetAan){cb.checked=moetAan;offToggleTr(naam);}
+  });
+
+  // Materiaal (offQ) terugzetten
+  if(!_offBuilt)offBuildSections();
+  OFF_PRODUCTS.forEach(function(p){offQ[p.id]=0;});
+  Object.keys(snap.offQ||{}).forEach(function(pid){offQ[pid]=snap.offQ[pid];});
+  OFF_PRODUCTS.forEach(function(p){
+    var inp=document.getElementById('oqi-'+p.id);
+    if(inp)inp.value=offQ[p.id];
+    offRow(p.id);
+  });
+  offUpdate();
+
+  // Naar het bewerkscherm springen
+  offShowSub('nieuw');
+  var status=document.getElementById('oParseStatus');
+  if(status)status.innerHTML='<span style="color:#0C447C"><i class="ti ti-edit"></i> Offerte van '+esc(rec.klantNaam||'klant')+' geladen om te bewerken. Wijzig hieronder en download/mail opnieuw.</span>';
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 function offTrackDagenGeleden(ts){
   return Math.floor((Date.now()-ts)/(1000*60*60*24));
@@ -4716,7 +4768,10 @@ function offTrackRenderList(filter){
       +'</div>'
       +'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:10px;flex-wrap:wrap">'
         +'<select onchange="offTrackSetStatus(\''+r.id+'\',this.value)" style="font-size:12px;padding:6px 10px;border-radius:20px;border:none;background:'+kleur.bg+';color:'+kleur.tx+';font-weight:600">'+statusOpts+'</select>'
+        +'<div style="display:flex;gap:6px">'
+        +(r.snapshot?'<button onclick="offTrackEdit(\''+r.id+'\')" class="fb"><i class="ti ti-edit"></i> Bewerken</button>':'')
         +'<button onclick="offTrackDelete(\''+r.id+'\')" class="fb" style="border-color:transparent;color:var(--tx3)"><i class="ti ti-trash"></i></button>'
+        +'</div>'
       +'</div>'
       +redenHtml
       +'</div>';
