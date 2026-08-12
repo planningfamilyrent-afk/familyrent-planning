@@ -1548,7 +1548,7 @@ const CATALOGUS = [
   {id:'rondh180',cat:'Tafels',naam:'Ronde tafel ø 180 cm',excl:7.44,incl:9},
   {id:'stretch_r',cat:'Tafels',naam:'Stretchdoek rechthoek',excl:3.31,incl:4},
   {id:'stretch_k',cat:'Tafels',naam:'Stretchdoek klaptafel',excl:4.13,incl:5},
-  {id:'tafelkleed152',cat:'Tafels',naam:'Wit tafelkleed ø 152 cm',excl:9.92,incl:12},
+  {id:'tafelkleed152',cat:'Tafels',naam:'Wit tafelkleed ø 152 cm',excl:12.40,incl:15},
   {id:'tafelkleed183',cat:'Tafels',naam:'Wit tafelkleed ø 183 cm',excl:12.40,incl:15},
   {id:'toog_b',cat:'Bar & koeling',naam:'Toog / bar (beige)',excl:49.59,incl:60},
   {id:'toog_s',cat:'Bar & koeling',naam:'Toog met spoelbak',excl:57.85,incl:70},
@@ -1586,6 +1586,8 @@ const CATALOGUS = [
   {id:'wijn_glas',cat:'Glazen & bekers',naam:'Wijnglas (per 24)',excl:8.13,incl:9.84},
   {id:'fris_glas',cat:'Glazen & bekers',naam:'Frisdrankglas (per 24)',excl:8.13,incl:9.84},
   {id:'gin_glas',cat:'Glazen & bekers',naam:'Gin glas',excl:0.50,incl:0.60},
+  {id:'duvel_glas',cat:'Glazen & bekers',naam:'Duvel glas',excl:0.50,incl:0.60},
+  {id:'cola_glas',cat:'Glazen & bekers',naam:'Cola glas',excl:0.34,incl:0.41},
   {id:'kookplaat',cat:'Keuken',naam:'Elektrische kookplaat',excl:12.40,incl:15},
 ];
 
@@ -3998,8 +4000,8 @@ var OFF_PRODUCTS = [
   { id:'kindertafel',cat:'tafels',name:'Kindertafel wit',excl:2.89,incl:3.50 },
   { id:'stretch_r',cat:'tafels',name:'Stretchdoek rechthoek',excl:3.31,incl:4 },
   { id:'stretch_k',cat:'tafels',name:'Stretchdoek klaptafel',excl:4.13,incl:5 },
-  { id:'tafelkleed152',cat:'tafels',name:'Wit tafellaken 150 cm',excl:9.92,incl:12 },
-  { id:'tafelkleed183',cat:'tafels',name:'Wit tafellaken 180 cm',excl:9.92,incl:12 },
+  { id:'tafelkleed152',cat:'tafels',name:'Wit tafellaken 150 cm',excl:12.40,incl:15 },
+  { id:'tafelkleed183',cat:'tafels',name:'Wit tafellaken 180 cm',excl:12.40,incl:15 },
   { id:'toog_b',cat:'koeling',name:'Toog / bar (beige)',excl:49.59,incl:60 },
   { id:'toog_s',cat:'koeling',name:'Toog met spoelbak',excl:57.85,incl:70 },
   { id:'ijskast',cat:'koeling',name:'IJskast glazen deur',excl:61.98,incl:75 },
@@ -4036,6 +4038,8 @@ var OFF_PRODUCTS = [
   { id:'wijn_glas',cat:'glazen',name:'Wijnglas (p/24)',excl:8.13,incl:9.84 },
   { id:'fris_glas',cat:'glazen',name:'Frisdrankglas (p/24)',excl:8.13,incl:9.84 },
   { id:'gin_glas',cat:'glazen',name:'Gin glas',excl:0.50,incl:0.60 },
+  { id:'duvel_glas',cat:'glazen',name:'Duvel glas',excl:0.50,incl:0.60 },
+  { id:'cola_glas',cat:'glazen',name:'Cola glas',excl:0.34,incl:0.41 },
 ];
 var OFF_CAT_LABELS = {
   tenten:'Partytenten',stretch:'Stretchtenten',vloer:'Houten vloer',bar:'Mobiele bar',
@@ -5644,8 +5648,8 @@ var VR_DEFAULT = [
   {id:'kindertafel', stock:4,  buffer:0},
   {id:'kinderstoel', stock:12, buffer:2},
   // ── BORDEN & BESTEK ──────────────────────────────────────
-  {id:'bord_groot',  stock:100, buffer:10},
-  {id:'bord_klein',  stock:100, buffer:10},
+  {id:'bord_groot',  stock:141, buffer:10},
+  {id:'bord_klein',  stock:169, buffer:10},
   {id:'vork',        stock:100, buffer:10},
   {id:'mes',         stock:100, buffer:10},
   {id:'lepel_groot', stock:100, buffer:10},
@@ -5658,6 +5662,8 @@ var VR_DEFAULT = [
   {id:'wijn_glas',       stock:48,  buffer:24},  // 2×24 = 48
   {id:'fris_glas',       stock:48,  buffer:24},  // 2×24 = 48
   {id:'gin_glas',        stock:12,  buffer:3},
+  {id:'duvel_glas',      stock:16,  buffer:4},
+  {id:'cola_glas',       stock:19,  buffer:4},
   // ── KEUKEN ───────────────────────────────────────────────
   {id:'kookplaat', stock:2, buffer:0}
 ];
