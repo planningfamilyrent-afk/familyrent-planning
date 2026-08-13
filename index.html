@@ -926,6 +926,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
     </div>
   </div>
   <button class="btn-new no-print" onclick="toggleDark()" id="dark-toggle" title="Donkere/lichte modus" style="background:rgba(255,255,255,.15);padding:8px 10px"><i class="ti ti-moon" aria-hidden="true"></i></button>
+<button class="btn-new no-print" onclick="showTab('offerte')" id="offerte-icon-btn" title="Offerte" style="background:rgba(255,255,255,.15);padding:8px 10px"><i class="ti ti-file-euro" aria-hidden="true"></i></button>
 <button class="btn-new" onclick="showTab('nieuw')"><i class="ti ti-plus" aria-hidden="true"></i> Nieuwe boeking</button>
 </div>
 
@@ -933,17 +934,13 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 <div class="banner banner-er" id="bn-er"><i class="ti ti-alert-circle" aria-hidden="true"></i><span id="bn-er-msg"></span></div>
 
 <div class="tabs" id="tabs">
-  <button class="tab active" onclick="showTab('dashboard')" id="tab-dashboard"><i class="ti ti-layout-dashboard" aria-hidden="true"></i> Dashboard</button>
+  <button class="tab active" onclick="showTab('dashboard')" id="tab-dashboard"><i class="ti ti-layout-dashboard" aria-hidden="true"></i> Vandaag</button>
   <button class="tab" onclick="showTab('planning')" id="tab-planning"><i class="ti ti-layout-list" aria-hidden="true"></i> Planning</button>
-  <button class="tab" onclick="showTab('kalender')" id="tab-kalender"><i class="ti ti-calendar-month" aria-hidden="true"></i> Kalender</button>
-  <button class="tab" onclick="showTab('rit')" id="tab-rit"><i class="ti ti-route" aria-hidden="true"></i> Ritplanning</button>
-  <button class="tab" onclick="showTab('mijn')" id="tab-mijn"><i class="ti ti-user" aria-hidden="true"></i> Mijn planning</button>
+  <button class="tab" onclick="showTab('rit')" id="tab-rit"><i class="ti ti-route" aria-hidden="true"></i> Ritten</button>
   <button class="tab" onclick="showTab('team')" id="tab-team"><i class="ti ti-users-group" aria-hidden="true"></i> Team</button>
-  <button class="tab" onclick="showTab('voorraad')" id="tab-voorraad"><i class="ti ti-package" aria-hidden="true"></i> Voorraad</button>
-  <button class="tab" onclick="showTab('rapport')" id="tab-rapport"><i class="ti ti-chart-bar" aria-hidden="true"></i> Rapport</button>
-  <button class="tab" onclick="showTab('offerte')" id="tab-offerte"><i class="ti ti-file-euro" aria-hidden="true"></i> Offerte</button>
+  <button class="tab" onclick="showTab('voorraad')" id="tab-voorraad"><i class="ti ti-package" aria-hidden="true"></i> Materiaal</button>
   <button class="tab" onclick="showTab('klanten')" id="tab-klanten"><i class="ti ti-address-book" aria-hidden="true"></i> Klanten</button>
-  <button class="tab" onclick="showTab('nieuw')" id="tab-nieuw"><i class="ti ti-plus" aria-hidden="true"></i> Nieuw</button>
+  <button class="tab" onclick="showTab('rapport')" id="tab-rapport"><i class="ti ti-chart-bar" aria-hidden="true"></i> Rapporten</button>
   <button class="notif-btn" id="notif-btn" onclick="wgOpen()" title="Waarschuwingen"><i class="ti ti-bell" style="font-size:15px"></i><span class="notif-dot" id="notif-dot"></span></button>
 </div>
 
@@ -956,6 +953,10 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 
 <!-- PLANNING -->
 <div class="view" id="view-planning">
+  <div class="fb" style="display:inline-flex;gap:4px;padding:3px;margin-bottom:14px;border-radius:20px;background:var(--bg2);width:fit-content;border:none">
+    <button onclick="showTab('planning')" style="font-size:12px;padding:6px 14px;border-radius:20px;border:none;cursor:pointer;font-family:Poppins,sans-serif;font-weight:600;background:var(--navy);color:#fff"><i class="ti ti-layout-list" style="font-size:12px"></i> Lijst</button>
+    <button onclick="showTab('kalender')" style="font-size:12px;padding:6px 14px;border-radius:20px;border:none;cursor:pointer;font-family:Poppins,sans-serif;font-weight:600;background:transparent;color:var(--tx2)"><i class="ti ti-calendar-month" style="font-size:12px"></i> Kalender</button>
+  </div>
   <div class="stats" id="stats-wrap">
     <div class="stat"><div class="stat-lbl">Totaal</div><div class="stat-val" id="st0">—</div></div>
     <div class="stat"><div class="stat-lbl">Leveringen</div><div class="stat-val" id="st1">—</div><div class="stat-sub" id="st1s"></div></div>
@@ -988,6 +989,10 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 
 <!-- KALENDER -->
 <div class="view" id="view-kalender">
+  <div class="fb" style="display:inline-flex;gap:4px;padding:3px;margin-bottom:14px;border-radius:20px;background:var(--bg2);width:fit-content;border:none">
+    <button onclick="showTab('planning')" style="font-size:12px;padding:6px 14px;border-radius:20px;border:none;cursor:pointer;font-family:Poppins,sans-serif;font-weight:600;background:transparent;color:var(--tx2)"><i class="ti ti-layout-list" style="font-size:12px"></i> Lijst</button>
+    <button onclick="showTab('kalender')" style="font-size:12px;padding:6px 14px;border-radius:20px;border:none;cursor:pointer;font-family:Poppins,sans-serif;font-weight:600;background:var(--navy);color:#fff"><i class="ti ti-calendar-month" style="font-size:12px"></i> Kalender</button>
+  </div>
   <div id="kal-wrap">
     <div class="loading"><i class="ti ti-loader"></i>Kalender laden...</div>
   </div>
@@ -1016,6 +1021,10 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 
 <!-- MIJN PLANNING -->
 <div class="view" id="view-mijn">
+  <div class="fb" style="display:inline-flex;gap:4px;padding:3px;margin-bottom:14px;border-radius:20px;background:var(--bg2);width:fit-content;border:none">
+    <button onclick="showTab('team')" style="font-size:12px;padding:6px 14px;border-radius:20px;border:none;cursor:pointer;font-family:Poppins,sans-serif;font-weight:600;background:transparent;color:var(--tx2)"><i class="ti ti-users-group" style="font-size:12px"></i> Toewijzen</button>
+    <button onclick="showTab('mijn')" style="font-size:12px;padding:6px 14px;border-radius:20px;border:none;cursor:pointer;font-family:Poppins,sans-serif;font-weight:600;background:var(--navy);color:#fff"><i class="ti ti-user" style="font-size:12px"></i> Mijn dag</button>
+  </div>
   <div id="bb-sel">
     <p style="font-size:13px;color:var(--tx2);margin-bottom:12px">Klik op jouw naam.</p>
     <div class="bb-grid" id="bb-grid"></div>
@@ -1032,6 +1041,10 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 </div>
 
 <div class="view" id="view-team">
+  <div class="fb" style="display:inline-flex;gap:4px;padding:3px;margin-bottom:14px;border-radius:20px;background:var(--bg2);width:fit-content;border:none">
+    <button onclick="showTab('team')" style="font-size:12px;padding:6px 14px;border-radius:20px;border:none;cursor:pointer;font-family:Poppins,sans-serif;font-weight:600;background:var(--navy);color:#fff"><i class="ti ti-users-group" style="font-size:12px"></i> Toewijzen</button>
+    <button onclick="showTab('mijn')" style="font-size:12px;padding:6px 14px;border-radius:20px;border:none;cursor:pointer;font-family:Poppins,sans-serif;font-weight:600;background:transparent;color:var(--tx2)"><i class="ti ti-user" style="font-size:12px"></i> Mijn dag</button>
+  </div>
   <div id="team-wrap"><div class="loading"><i class="ti ti-loader"></i>Teamoverzicht laden...</div></div>
 </div>
 
@@ -2051,7 +2064,10 @@ function nearN(stops,start){
 function showTab(tab){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-  var tabEl=document.getElementById('tab-'+tab);
+  // Kalender en Mijn planning zijn samengevoegd onder Planning/Team in de tabbalk —
+  // markeer de juiste hoofdtab als actief, ook al bestaat de eigen tab-knop niet meer.
+  var barTab = (tab==='kalender') ? 'planning' : (tab==='mijn') ? 'team' : tab;
+  var tabEl=document.getElementById('tab-'+barTab);
   if(tabEl) tabEl.classList.add('active');
   var viewEl=document.getElementById('view-'+tab);
   if(viewEl) viewEl.classList.add('active');
