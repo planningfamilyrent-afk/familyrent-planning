@@ -3684,6 +3684,121 @@ function teamGetWeek(startMaandag){
   return dagen;
 }
 
+// ═══════════════════════════════════════════════════════════
+// WEEKVOLLEDIGHEID — planningscompleetheid-score voor een set stops
+// ═══════════════════════════════════════════════════════════
+function teamWeekVolledigheid(taken){
+  var totaal=taken.length;
+  var toegewezen=taken.filter(function(t){return t.team.length>0;});
+  var adresOntbreekt=taken.filter(function(t){return !t.b.adres||!t.b.adres.trim();});
+
+  // Materiaalconflicten: unieke boekingen in deze set, via bestaande voorraadcheck
+  var uniekeBoekingen={};
+  taken.forEach(function(t){uniekeBoekingen[t.b.id]=t.b;});
+  var matConflicten=[];
+  Object.values(uniekeBoekingen).forEach(function(b){
+    vrCheckBoeking(b).forEach(function(c){
+      if(c.check.status==='conflict')matConflicten.push({boeking:b,product:c.product,check:c.check});
+    });
+  });
+
+  var persConflicten=vindPersoneelsConflicten(taken);
+
+  if(totaal===0){
+    return {totaal:0,pct:100,toegewezen:[],onbemand:[],adresOntbreekt:[],matConflicten:[],persConflicten:[]};
+  }
+
+  var pctToegewezen=toegewezen.length/totaal;
+  var pctAdres=(totaal-adresOntbreekt.length)/totaal;
+  var pctGeenMat=matConflicten.length===0?1:0;
+  var pctGeenPers=persConflicten.length===0?1:0;
+  var pct=Math.round(((pctToegewezen+pctAdres+pctGeenMat+pctGeenPers)/4)*100);
+
+  return {
+    totaal:totaal,
+    pct:pct,
+    toegewezen:toegewezen,
+    onbemand:taken.filter(function(t){return t.team.length===0;}),
+    adresOntbreekt:adresOntbreekt,
+    matConflicten:matConflicten,
+    persConflicten:persConflicten
+  };
+}
+
+function teamVolledigheidCardHtml(v){
+  var kleur=v.pct===100?{bg:'#EAF3DE',tx:'#27500A',bar:'#5FA033'}:v.pct>=80?{bg:'#FAEEDA',tx:'#854F0B',bar:'#EF9F27'}:{bg:'#FCEBEB',tx:'#A32D2D',bar:'#E24B4A'};
+  var punten=[];
+  punten.push((v.totaal-v.onbemand.length)+' / '+v.totaal+' ritten toegewezen');
+  punten.push((v.totaal-v.adresOntbreekt.length)+' / '+v.totaal+' adressen compleet');
+  punten.push(v.matConflicten.length+' materiaalconflict'+(v.matConflicten.length!==1?'en':''));
+  punten.push(v.persConflicten.length+' personeelsconflict'+(v.persConflicten.length!==1?'en':''));
+  return '<div style="background:'+kleur.bg+';border-radius:var(--rl);padding:16px 18px;margin-bottom:14px">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px">'
+    +'<div style="display:flex;align-items:center;gap:12px">'
+      +'<div style="font-size:26px;font-weight:800;color:'+kleur.tx+'">'+v.pct+'%</div>'
+      +'<div style="font-size:13px;font-weight:600;color:'+kleur.tx+'">'+(v.pct===100?'Weekplanning klaar':'Weekplanning nog niet compleet')+'</div>'
+    +'</div>'
+    +'<button onclick="teamWeekKlaarModal()" style="background:var(--navy);color:#fff;border:none;border-radius:20px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:Poppins,sans-serif;white-space:nowrap">Week klaar controleren</button>'
+    +'</div>'
+    +'<div style="height:6px;background:rgba(255,255,255,.5);border-radius:10px;overflow:hidden;margin-bottom:10px"><div style="height:100%;width:'+v.pct+'%;background:'+kleur.bar+'"></div></div>'
+    +'<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:'+kleur.tx+'">'
+    +punten.map(function(p){return '<span>'+p+'</span>';}).join('')
+    +'</div>'
+    +'</div>';
+}
+
+function teamWeekKlaarModal(){
+  var taken=window._teamLaatsteTaken||[];
+  var v=teamWeekVolledigheid(taken);
+  var mo=document.getElementById('week-klaar-mo');
+  if(!mo){
+    mo=document.createElement('div');
+    mo.id='week-klaar-mo';
+    mo.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:550;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto';
+    mo.onclick=function(e){if(e.target===mo)mo.remove();};
+    document.body.appendChild(mo);
+  }
+  var klaar=v.pct===100;
+  var kleur=klaar?{bg:'#27500A',tx:'#fff'}:{bg:'#A32D2D',tx:'#fff'};
+  var reasonsHtml='';
+  if(!klaar){
+    reasonsHtml+='<div style="font-size:13px;font-weight:700;color:var(--tx1);margin:14px 0 8px">Nog te regelen:</div>';
+    if(v.onbemand.length>0){
+      reasonsHtml+='<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:600;color:#A32D2D;margin-bottom:4px"><i class="ti ti-user-x"></i> '+v.onbemand.length+' rit'+(v.onbemand.length!==1?'ten':'')+' zonder medewerker</div>'
+        +v.onbemand.map(function(t){return '<div style="font-size:12px;color:var(--tx2);padding:3px 0 3px 20px" onclick="document.getElementById(\'week-klaar-mo\').remove();teamWijsOpen('+t.b.id+',\''+t.type+'\')" style="cursor:pointer">'+fmtShort(t.dag)+' '+t.uur+' — '+esc(t.b.naam)+'</div>';}).join('')
+        +'</div>';
+    }
+    if(v.adresOntbreekt.length>0){
+      reasonsHtml+='<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:600;color:#854F0B;margin-bottom:4px"><i class="ti ti-map-pin-off"></i> '+v.adresOntbreekt.length+' zonder adres</div>'
+        +v.adresOntbreekt.map(function(t){return '<div style="font-size:12px;color:var(--tx2);padding:3px 0 3px 20px">'+fmtShort(t.dag)+' — '+esc(t.b.naam)+'</div>';}).join('')
+        +'</div>';
+    }
+    if(v.matConflicten.length>0){
+      reasonsHtml+='<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:600;color:#A32D2D;margin-bottom:4px"><i class="ti ti-package-off"></i> '+v.matConflicten.length+' materiaalconflict'+(v.matConflicten.length!==1?'en':'')+'</div>'
+        +v.matConflicten.map(function(c){return '<div style="font-size:12px;color:var(--tx2);padding:3px 0 3px 20px">'+esc(c.product.naam)+' — '+esc(c.boeking.naam)+' ('+fmtShort(c.boeking.levdatum)+')</div>';}).join('')
+        +'</div>';
+    }
+    if(v.persConflicten.length>0){
+      reasonsHtml+='<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:600;color:#A32D2D;margin-bottom:4px"><i class="ti ti-user-exclamation"></i> '+v.persConflicten.length+' personeelsconflict'+(v.persConflicten.length!==1?'en':'')+'</div>'
+        +v.persConflicten.map(function(c){return '<div style="font-size:12px;color:var(--tx2);padding:3px 0 3px 20px">'+esc(c.naam)+' — '+fmtShort(c.dag)+' om '+c.uur+' ('+c.stops.map(function(s){return esc(s.b.naam);}).join(' & ')+')</div>';}).join('')
+        +'</div>';
+    }
+  }
+  mo.innerHTML='<div style="background:var(--bg1);border-radius:var(--rl);padding:0;max-width:520px;width:100%;margin:auto;overflow:hidden">'
+    +'<div style="background:'+kleur.bg+';padding:20px;text-align:center">'
+    +'<i class="ti '+(klaar?'ti-circle-check':'ti-alert-triangle')+'" style="font-size:34px;color:'+kleur.tx+'"></i>'
+    +'<div style="font-size:18px;font-weight:800;color:'+kleur.tx+';margin-top:8px">'+(klaar?'WEEKPLANNING KLAAR':'WEEKPLANNING NIET KLAAR')+'</div>'
+    +'<div style="font-size:13px;color:'+kleur.tx+';opacity:.9;margin-top:2px">'+v.pct+'% compleet</div>'
+    +'</div>'
+    +'<div style="padding:18px 20px;max-height:60vh;overflow-y:auto">'
+    +(klaar?'<div style="text-align:center;color:var(--tx2);font-size:13px"><i class="ti ti-confetti" style="font-size:24px;display:block;margin-bottom:8px;color:#5FA033"></i>Alle ritten zijn toegewezen, er zijn geen conflicten en alle adressen zijn compleet.</div>':reasonsHtml)
+    +'</div>'
+    +'<div style="padding:14px 20px;border-top:.5px solid var(--bl);text-align:right">'
+    +'<button onclick="document.getElementById(\'week-klaar-mo\').remove()" style="background:var(--navy);color:#fff;border:none;border-radius:20px;padding:8px 18px;font-size:12px;font-weight:600;cursor:pointer;font-family:Poppins,sans-serif">Sluiten</button>'
+    +'</div>'
+    +'</div>';
+}
+
 function renderTeam(){
   var wrap=document.getElementById('team-wrap');
   if(!wrap)return;
@@ -3733,13 +3848,12 @@ function renderTeam(){
   if(_teamModus==='persoon') html+=teamRenderPerPersoon(taken,dagen);
   else html+=teamRenderPerOpdracht(taken,dagen);
 
-  // Teller onbemande ritten bovenaan invoegen
-  var onbemandTotaal=taken.filter(function(t){return t.team.length===0;}).length;
-  var tellerHtml='<div style="margin-bottom:14px;padding:10px 14px;border-radius:var(--rm);font-size:13px;font-weight:600;'
-    +(onbemandTotaal>0
-      ?'background:#FCEBEB;color:#A32D2D"><i class="ti ti-alert-triangle"></i> '+onbemandTotaal+' van '+taken.length+' ritten nog onbemand'
-      :'background:#EAF3DE;color:#27500A"><i class="ti ti-circle-check"></i> Alle '+taken.length+' ritten zijn toegewezen')
-    +'</div>';
+  // Bewaar taken voor de "Week klaar"-modal
+  window._teamLaatsteTaken=taken;
+
+  // Weekvolledigheid-kaart + onbemand-teller bovenaan invoegen
+  var volledigheid=teamWeekVolledigheid(taken);
+  var tellerHtml=teamVolledigheidCardHtml(volledigheid);
   html=html.replace('<!--TELLER-->',tellerHtml);
 
   wrap.innerHTML=html;
@@ -5833,6 +5947,46 @@ function vrCheckBeschikbaar(productId, benodigdAantal, levdatum, ophdatum, uitge
   };
 }
 
+// ═══════════════════════════════════════════════════════════
+// MEDEWERKERSCONFLICT — dezelfde persoon op exact hetzelfde
+// moment op 2 verschillende opdrachten ingepland
+// ═══════════════════════════════════════════════════════════
+// stops: [{b:boeking, type:'lev'|'oph', dag:'YYYY-MM-DD', uur:'HH:MM', team:[namen]}]
+function vindPersoneelsConflicten(stops){
+  var perSleutel={};
+  stops.forEach(function(s){
+    (s.team||[]).forEach(function(nm){
+      var key=nm+'|'+s.dag+'|'+s.uur;
+      if(!perSleutel[key])perSleutel[key]={naam:nm,dag:s.dag,uur:s.uur,stops:[]};
+      perSleutel[key].stops.push(s);
+    });
+  });
+  var conflicten=[];
+  Object.keys(perSleutel).forEach(function(k){
+    var groep=perSleutel[k];
+    var unieke={};
+    groep.stops.forEach(function(s){unieke[s.b.id+'_'+s.type]=s;});
+    if(Object.keys(unieke).length>1){
+      groep.stops=Object.values(unieke);
+      conflicten.push(groep);
+    }
+  });
+  return conflicten;
+}
+// Bouw de stops-array op vanuit boekingen[] voor een datumbereik (voor dashboard/waarschuwingen)
+function bouwPersoneelsStops(vanaf,tot){
+  var stops=[];
+  boekingen.filter(function(b){return !(b.voltooid===true||b.voltooid==='true');}).forEach(function(b){
+    if(b.levdatum&&b.levdatum>=vanaf&&b.levdatum<=tot&&(b.levType==='levering'||!b.levType||b.levType==='')){
+      stops.push({b:b,type:'lev',dag:b.levdatum,uur:b.levuur||'09:00',team:b.opstellers_lev||[]});
+    }
+    if(b.ophdatum&&b.ophdatum!==b.levdatum&&b.ophdatum>=vanaf&&b.ophdatum<=tot){
+      stops.push({b:b,type:'oph',dag:b.ophdatum,uur:b.ophuur||'10:00',team:b.opstellers_oph||[]});
+    }
+  });
+  return stops;
+}
+
 // Check alle producten in een boeking
 function vrCheckBoeking(boeking){
   if(!boeking.materiaal||!boeking.levdatum) return [];
@@ -6645,6 +6799,29 @@ function _waarschuwingsEngineBerekening(){
     });
   });
 
+  // ── PERSONEEL: dezelfde medewerker dubbel ingepland ───────
+  var w30Dt = new Date(t+'T00:00:00'); w30Dt.setDate(w30Dt.getDate()+30);
+  var w30 = dstr(w30Dt);
+  var persStops = bouwPersoneelsStops(t, w30);
+  var persConflicten = vindPersoneelsConflicten(persStops);
+  persConflicten.forEach(function(c){
+    var when = urgLabel(c.dag);
+    var isVandaag = c.dag === t;
+    var isMorgen = c.dag === morgen;
+    var klanten = c.stops.map(function(s){return s.b.naam;}).join(' & ');
+    resultaat.push({
+      prio: 'krit',
+      cat: 'Personeel',
+      icoon: 'ti-user-exclamation',
+      tekst: (isVandaag?'⚡ ':isMorgen?'⚠️ ':'') +
+        c.naam + ' is dubbel ingepland op ' + when + ' om ' + c.uur +
+        ' — ' + klanten,
+      datum: c.dag,
+      urgentie: urgPrio(c.dag, 'krit'),
+      boekingId: c.stops[0].b.id
+    });
+  });
+
   // ── ONDERHOUD: geboekt materiaal in onderhoud/beschadigd ──
   var itemsData = itemsLaad();
   Object.keys(itemsData).forEach(function(productId){
@@ -6863,7 +7040,7 @@ function wgRender(){
   // Bouw header met filters + tellers
   var catIcoon = {
     'Voorraad':'ti-package','Onderhoud':'ti-tool','Magazijn':'ti-package',
-    'Logistiek':'ti-truck-delivery','Financieel':'ti-currency-euro'
+    'Logistiek':'ti-truck-delivery','Financieel':'ti-currency-euro','Personeel':'ti-user-exclamation'
   };
 
   // Update panel header met teller
@@ -6917,8 +7094,6 @@ function wgRender(){
     html += ' <span style="font-size:10px;background:var(--bg2);border-radius:20px;padding:1px 5px;font-weight:500">'+catItems.length+'</span>';
     html += '</div>';
     catItems.forEach(function(item){
-      var isVandaag = item.datum===_t || (item.tekst&&item.tekst.indexOf('VANDAAG')>=0);
-      var isMorgen = item.datum===_morgen || (item.tekst&&item.tekst.indexOf('MORGEN')>=0);
       var badgeCls = 'wg-badge wg-badge-'+item.prio;
       var badgeLbl = item.prio==='krit'?'Kritiek':item.prio==='warn'?'Waarschuwing':'Info';
       var borderColor = item.prio==='krit'?'#E24B4A':item.prio==='warn'?'#EF9F27':'#61ABED';
