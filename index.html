@@ -6529,6 +6529,8 @@ function beschikbaarheidOpen(){
     +'<div style="flex:1;min-width:130px"><label style="font-size:11px;font-weight:600;color:var(--tx2);display:block;margin-bottom:4px">Ophaaldatum</label>'
     +'<input type="date" id="beschik-oph" value="'+vandaag+'" onchange="beschikVervers()" style="width:100%;padding:10px;border:.5px solid var(--bm);border-radius:var(--rm);font-size:14px;background:var(--bg2);color:var(--tx1)"></div>'
     +'</div>'
+    // ── EINDOORDEEL ──
+    +'<div id="beschik-eindoordeel" style="margin-bottom:16px"></div>'
     // ── B: SNELLE CHECK ──
     +'<div style="background:var(--bg2);border:.5px solid var(--bl);border-radius:var(--rm);padding:12px 14px;margin-bottom:16px">'
     +'<div style="font-size:12px;font-weight:600;color:var(--tx1);margin-bottom:8px"><i class="ti ti-bolt" style="color:#EF9F27;margin-right:4px"></i>Snelle check — kan ik dit beloven?</div>'
@@ -6536,6 +6538,9 @@ function beschikbaarheidOpen(){
     +'<div id="beschik-snelkeuze" style="display:flex;flex-wrap:wrap;gap:5px"></div>'
     +'<div id="beschik-snel-resultaat" style="margin-top:10px"></div>'
     +'</div>'
+    // ── PERSONEEL ──
+    +'<div style="font-size:12px;font-weight:600;color:var(--tx1);margin-bottom:8px"><i class="ti ti-users-group" style="color:var(--sky);margin-right:4px"></i>Personeel op deze datum(s)</div>'
+    +'<div id="beschik-personeel" style="margin-bottom:16px"></div>'
     // ── A: VOLLEDIG OVERZICHT ──
     +'<div style="font-size:12px;font-weight:600;color:var(--tx1);margin-bottom:8px"><i class="ti ti-list-check" style="color:var(--sky);margin-right:4px"></i>Alles op deze datum</div>'
     +'<div id="beschik-overzicht"></div>'
@@ -6570,6 +6575,29 @@ function beschikSnelToggle(id){
   beschikVervers();
 }
 
+function beschikPersoneel(levdatum,ophdatum){
+  var dagen=[levdatum];
+  if(ophdatum&&ophdatum!==levdatum)dagen.push(ophdatum);
+  var bezet={};
+  boekingen.filter(function(b){return !(b.voltooid===true||b.voltooid==='true');}).forEach(function(b){
+    dagen.forEach(function(dag){
+      if(b.levdatum===dag&&(b.levType==='levering'||!b.levType||b.levType==='')){
+        (b.opstellers_lev||[]).forEach(function(nm){bezet[nm]=bezet[nm]||[];bezet[nm].push({dag:dag,klant:b.naam,uur:b.levuur||'09:00',type:'levering'});});
+      }
+      if(b.ophdatum===dag&&b.ophdatum!==b.levdatum){
+        (b.opstellers_oph||[]).forEach(function(nm){bezet[nm]=bezet[nm]||[];bezet[nm].push({dag:dag,klant:b.naam,uur:b.ophuur||'10:00',type:'ophaling'});});
+      }
+    });
+  });
+  var alleNamen=(typeof teamAlleNamen==='function')?teamAlleNamen():BB.slice();
+  var vrij=[],bezetLijst=[];
+  alleNamen.forEach(function(nm){
+    if(bezet[nm]&&bezet[nm].length>0)bezetLijst.push({naam:nm,taken:bezet[nm]});
+    else vrij.push(nm);
+  });
+  return {vrij:vrij,bezet:bezetLijst};
+}
+
 function beschikVervers(){
   var lev=(document.getElementById('beschik-lev')||{}).value;
   var oph=(document.getElementById('beschik-oph')||{}).value||lev;
@@ -6600,6 +6628,63 @@ function beschikVervers(){
         +(allesOk?'✅ Alles beschikbaar — je kan dit beloven':'⚠️ Niet alles is vrij')+'</div>'
         +regels.join('')+'</div>';
     }
+  }
+
+  // ── PERSONEEL OP DEZE DATUM(S) ──
+  var pers=beschikPersoneel(lev,oph);
+  var persEl=document.getElementById('beschik-personeel');
+  if(persEl){
+    var pHtml='';
+    if(pers.vrij.length>0){
+      pHtml+='<div style="margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:#2D6A1E;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">🟢 Beschikbaar</div>'
+        +'<div style="display:flex;flex-wrap:wrap;gap:5px">'
+        +pers.vrij.map(function(nm){return '<span style="background:#EAF3DE;color:#2D6A1E;font-size:12px;padding:4px 10px;border-radius:20px;font-weight:600">'+esc(nm)+'</span>';}).join('')
+        +'</div></div>';
+    }
+    if(pers.bezet.length>0){
+      pHtml+='<div><div style="font-size:11px;font-weight:700;color:#854F0B;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">🟠 Heeft al een opdracht</div>';
+      pers.bezet.forEach(function(x){
+        pHtml+='<div style="font-size:12px;color:var(--tx2);padding:3px 0"><strong style="color:var(--tx1)">'+esc(x.naam)+'</strong> — '
+          +x.taken.map(function(tk){return tk.uur+' '+tk.type+' bij '+esc(tk.klant)+' ('+fmtShort(tk.dag)+')';}).join(', ')+'</div>';
+      });
+      pHtml+='</div>';
+    }
+    if(pers.vrij.length===0&&pers.bezet.length===0){
+      pHtml='<span style="font-size:12px;color:var(--tx3)">Geen crew ingesteld.</span>';
+    }
+    persEl.innerHTML=pHtml;
+  }
+
+  // ── EINDOORDEEL (materiaal + personeel samen) ──
+  var eindEl=document.getElementById('beschik-eindoordeel');
+  if(eindEl){
+    var gekozenIds=Object.keys(window._beschikSnel||{});
+    var matNietOk=[];
+    gekozenIds.forEach(function(id){
+      var p=CATALOGUS.find(function(x){return x.id===id;});
+      if(!p)return;
+      var check=vrCheckBeschikbaar(id,1,lev,oph,null,null,null);
+      if(check.beschikbaar<=0)matNietOk.push(p.naam);
+    });
+    var oordeel,kleur,titel,tekst;
+    if(gekozenIds.length>0&&matNietOk.length>0){
+      oordeel='rood';kleur={bg:'#FCEBEB',tx:'#A32D2D'};
+      titel='🔴 NIET UITVOERBAAR ZONDER WIJZIGING';
+      tekst='Niet beschikbaar: '+matNietOk.join(', ')+'.';
+    } else if(pers.vrij.length===0){
+      oordeel='oranje';kleur={bg:'#FAEEDA',tx:'#854F0B'};
+      titel='🟠 MOGELIJK, CONTROLE NODIG';
+      tekst='Geen enkele medewerker is volledig vrij op deze datum(s) — iedereen heeft al minstens één andere opdracht. Bekijk hieronder of het te combineren valt.';
+    } else {
+      oordeel='groen';kleur={bg:'#EAF3DE',tx:'#2D6A1E'};
+      titel='🟢 OPDRACHT LIJKT UITVOERBAAR';
+      var voorstel=pers.vrij.slice(0,2).join(' + ');
+      tekst='Voorgestelde medewerker'+(pers.vrij.slice(0,2).length>1?'s':'')+': '+voorstel+(gekozenIds.length===0?' — tik hieronder producten aan voor een materiaalcheck.':'');
+    }
+    eindEl.innerHTML='<div style="background:'+kleur.bg+';border-radius:var(--rl);padding:14px 16px">'
+      +'<div style="font-size:14px;font-weight:800;color:'+kleur.tx+'">'+titel+'</div>'
+      +'<div style="font-size:12px;color:'+kleur.tx+';margin-top:4px;line-height:1.5">'+tekst+'</div>'
+      +'</div>';
   }
 
   // ── A: VOLLEDIG OVERZICHT PER CATEGORIE ──
