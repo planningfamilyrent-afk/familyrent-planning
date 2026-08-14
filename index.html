@@ -27,7 +27,11 @@ window.FR_CONFIG={
   emailjs_template_klant:'template_6zmn5tp',
   apps_script_url:'https://script.google.com/macros/s/AKfycbzh_GfQKgsoOpkfMRiBUYf_s6usyqUlH27GOI-LuLHMIZ9PUlPyR0Ddgiympg3UYAAoIg/exec',
   // AI-proxy (Vercel) — vervang door je eigen URL na het opzetten van de tussenserver
-  ai_proxy_url:'https://familyrent-ai.vercel.app/api/claude'
+  ai_proxy_url:'https://familyrent-ai.vercel.app/api/claude',
+  // Pincode voor "Ik ben de beheerder" in het "Wie ben jij?"-scherm.
+  // Let op: dit is enkel een drempel tegen per-ongeluk-aantikken, geen echte beveiliging
+  // (de code staat mee in dit bestand). Verander gerust naar wat jullie willen onthouden.
+  beheerder_pin:'1234'
 };
 // EmailJS init — in try-catch zodat een CDN-timeout de tool niet blokkeert
 try{
@@ -1037,6 +1041,8 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
         <i class="ti ti-printer" style="font-size:13px"></i> Afdrukken
       </button>
     </div>
+    <div class="bb-stats" id="bb-stats" style="display:flex;gap:8px;margin:14px 0"></div>
+    <div id="bb-list"></div>
   </div>
 </div>
 
@@ -2062,6 +2068,10 @@ function nearN(stops,start){
 }
 
 function showTab(tab){
+  // Medewerker-modus: alle navigatie wordt teruggeleid naar "Mijn dag", ongeacht de bron
+  if(typeof frRolLaad==='function' && frRolLaad()==='medewerker' && tab!=='mijn'){
+    tab='mijn';
+  }
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   // Kalender en Mijn planning zijn samengevoegd onder Planning/Team in de tabbalk —
@@ -2076,7 +2086,9 @@ function showTab(tab){
   if(tab==='betalen')renderBetalen();
   if(tab==='kalender')renderKalender();
   if(tab==='rit'){laadLeafletLazy(function(){renderRit();setTimeout(function(){if(_ritKaart)_ritKaart.invalidateSize();},300);});}
-  if(tab==='mijn')renderBBGrid();
+  if(tab==='mijn'){
+    renderBBGrid();
+  }
   if(tab==='team')renderTeam();
   if(tab==='voorraad')renderVoorraad();
   if(tab==='rapport')renderRapport();
@@ -5011,8 +5023,10 @@ function renderBBGrid(){
     });
   }
 
-  // Als er een onthouden BB is en geen vandaag-sectie: scroll direct naar hun planningsdetail
-  if(onthouden&&!mijnDagHtml){
+  // Als er een onthouden BB is: scroll direct naar hun planningsdetail
+  // (ook als er vandaag-events zijn voor iedereen — vooral belangrijk in medewerker-modus)
+  var isMedewerkerModus=(typeof frRolLaad==='function')&&frRolLaad()==='medewerker';
+  if(onthouden&&(!mijnDagHtml||isMedewerkerModus)){
     setTimeout(function(){showBBDetail(onthouden);},50);
   }
 }
@@ -10231,8 +10245,165 @@ async function wizardVolgend(){
   }
 }
 
+// ═══════════════════════════════════════════════════════════
+// WIE BEN JIJ? — lichte identiteitskeuze (geen wachtwoord)
+// Beheerder ziet alles zoals voorheen; een medewerker ziet
+// enkel "Mijn dag" met grote, eenvoudige knoppen.
+// ═══════════════════════════════════════════════════════════
+var FR_ROL_KEY='fr_rol_v1';
+function frRolLaad(){try{return localStorage.getItem(FR_ROL_KEY)||null;}catch(e){return null;}}
+function frRolOpslaan(rol){try{localStorage.setItem(FR_ROL_KEY,rol);}catch(e){}}
+
+function wieBenJijScherm(){
+  var namen=(typeof teamAlleNamen==='function')?teamAlleNamen():BB.slice();
+  var mo=document.createElement('div');
+  mo.id='wie-mo';
+  mo.style.cssText='position:fixed;inset:0;background:var(--bg);z-index:900;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto';
+  mo.innerHTML='<div style="max-width:440px;width:100%;text-align:center;padding:20px 0" id="wie-mo-inner">'
+    +'<div class="hdr-icon" style="width:56px;height:56px;font-size:26px;margin:0 auto 16px;border-radius:14px"><i class="ti ti-calendar"></i></div>'
+    +'<div style="font-size:21px;font-weight:700;color:var(--tx1);margin-bottom:6px">Wie ben jij?</div>'
+    +'<div style="font-size:13px;color:var(--tx2);margin-bottom:26px">Zo tonen we meteen de juiste planning. Dit wordt onthouden op dit toestel.</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:12px">'
+    +namen.map(function(nm){
+      var safe=esc(nm).replace(/'/g,"\\'");
+      return '<button onclick="wieKies(\''+safe+'\')" style="padding:14px 16px;border-radius:var(--rl);border:.5px solid var(--bl);background:var(--bg1);cursor:pointer;font-family:Poppins,sans-serif;font-size:13px;font-weight:600;color:var(--tx1);min-width:92px">'
+        +'<div class="team-av" style="margin:0 auto 6px">'+ini(nm)+'</div>'+esc(nm)+'</button>';
+    }).join('')
+    +'<button onclick="wieAndereToon()" style="padding:14px 16px;border-radius:var(--rl);border:.5px dashed var(--bm);background:transparent;cursor:pointer;font-family:Poppins,sans-serif;font-size:13px;font-weight:600;color:var(--tx2);min-width:92px">'
+    +'<div class="team-av" style="margin:0 auto 6px;background:var(--bg2)"><i class="ti ti-plus"></i></div>Andere</button>'
+    +'</div>'
+    +'<div id="wie-andere-form" style="display:none;gap:6px;margin-bottom:16px"></div>'
+    +'<div style="margin-bottom:16px"></div>'
+    +'<button onclick="wieBeheerderToon()" style="background:var(--navy);color:#fff;border:none;border-radius:var(--rl);padding:13px 24px;font-size:13px;font-weight:600;cursor:pointer;font-family:Poppins,sans-serif;width:100%;max-width:320px"><i class="ti ti-user-shield" style="margin-right:6px"></i>Ik ben de beheerder</button>'
+    +'</div>';
+  document.body.appendChild(mo);
+}
+
+function wieAndereToon(){
+  var form=document.getElementById('wie-andere-form');
+  if(!form)return;
+  form.style.display='flex';
+  form.innerHTML='<input type="text" id="wie-andere-input" placeholder="Jouw naam..." style="flex:1;min-width:150px;padding:10px 12px;border-radius:8px;border:.5px solid var(--bm);background:var(--bg2);color:var(--tx1);font-size:13px;font-family:inherit">'
+    +'<button onclick="wieAndereBevestig()" style="background:var(--navy);color:#fff;border:none;border-radius:8px;padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:Poppins,sans-serif">OK</button>';
+  var inp=document.getElementById('wie-andere-input');
+  if(inp){
+    inp.focus();
+    inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();wieAndereBevestig();}});
+  }
+}
+
+function wieAndereBevestig(){
+  var inp=document.getElementById('wie-andere-input');
+  if(!inp)return;
+  var nm=inp.value.trim();
+  if(!nm)return;
+  // Onthoud deze naam ook op dit toestel voor volgende keer (zelfde lijst als teamWijsAndere)
+  if(typeof extraBBLoad==='function'&&typeof extraBBSave==='function'){
+    var alleNamen=(typeof teamAlleNamen==='function')?teamAlleNamen():BB.slice();
+    var bestaat=alleNamen.some(function(x){return x.toLowerCase()===nm.toLowerCase();});
+    if(!bestaat){
+      var extra=extraBBLoad();
+      extra.push(nm);
+      extraBBSave(extra);
+    }
+  }
+  wieKies(nm);
+}
+
+function wieBeheerderToon(){
+  var inner=document.getElementById('wie-mo-inner');
+  if(!inner)return;
+  inner.innerHTML='<div class="hdr-icon" style="width:56px;height:56px;font-size:26px;margin:0 auto 16px;border-radius:14px"><i class="ti ti-lock"></i></div>'
+    +'<div style="font-size:21px;font-weight:700;color:var(--tx1);margin-bottom:6px">Pincode beheerder</div>'
+    +'<div style="font-size:13px;color:var(--tx2);margin-bottom:22px">Vul de beheerderspincode in.</div>'
+    +'<input type="password" inputmode="numeric" id="wie-pin-input" maxlength="8" placeholder="••••" style="width:180px;text-align:center;letter-spacing:6px;font-size:22px;padding:12px;border-radius:var(--rl);border:.5px solid var(--bm);background:var(--bg2);color:var(--tx1);margin-bottom:10px;font-family:inherit">'
+    +'<div id="wie-pin-fout" style="font-size:12px;color:#A32D2D;margin-bottom:14px;min-height:16px"></div>'
+    +'<div style="display:flex;gap:8px;justify-content:center">'
+    +'<button onclick="document.getElementById(\'wie-mo\').remove();wieBenJijScherm()" style="background:transparent;color:var(--tx2);border:.5px solid var(--bm);border-radius:var(--rl);padding:12px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:Poppins,sans-serif">Terug</button>'
+    +'<button onclick="wieBeheerderControleer()" style="background:var(--navy);color:#fff;border:none;border-radius:var(--rl);padding:12px 24px;font-size:13px;font-weight:600;cursor:pointer;font-family:Poppins,sans-serif">Bevestigen</button>'
+    +'</div>';
+  var pinInp=document.getElementById('wie-pin-input');
+  if(pinInp){
+    pinInp.focus();
+    pinInp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();wieBeheerderControleer();}});
+  }
+}
+
+function wieBeheerderControleer(){
+  var inp=document.getElementById('wie-pin-input');
+  var fout=document.getElementById('wie-pin-fout');
+  var juist=(window.FR_CONFIG&&window.FR_CONFIG.beheerder_pin)||'1234';
+  if(inp&&inp.value===juist){
+    wieKies('__beheerder__');
+  } else {
+    if(fout)fout.textContent='Onjuiste pincode. Probeer opnieuw.';
+    if(inp){inp.value='';inp.focus();}
+  }
+}
+
+function wieKies(waarde){
+  if(waarde==='__beheerder__'){
+    frRolOpslaan('beheerder');
+  } else {
+    frRolOpslaan('medewerker');
+    mijnBBOpslaan(waarde);
+  }
+  var mo=document.getElementById('wie-mo');
+  if(mo)mo.remove();
+  wiePasToe();
+  if(waarde==='__beheerder__')showTab('dashboard');
+}
+
+function wieWissel(){
+  frRolOpslaan('');
+  try{localStorage.removeItem(MIJN_BB_KEY);}catch(e){}
+  wieBenJijScherm();
+}
+
+function wiePasToe(){
+  var rol=frRolLaad();
+  var isMedewerker=rol==='medewerker';
+  var tabs=document.getElementById('tabs');
+  var nieuwBtn=document.querySelector('.btn-new[onclick*="nieuw"]');
+  var offBtn=document.getElementById('offerte-icon-btn');
+  var fab=document.getElementById('fab-nieuw');
+  var wisselWrap=document.getElementById('wie-wissel-wrap');
+
+  if(tabs)tabs.style.display=isMedewerker?'none':'';
+  if(nieuwBtn)nieuwBtn.style.display=isMedewerker?'none':'';
+  if(offBtn)offBtn.style.display=isMedewerker?'none':'';
+  if(fab)fab.style.display=isMedewerker?'none':'flex';
+  // Verberg de "Toewijzen"-schakelpil in Mijn dag: een medewerker mag niet naar het admin-Team-scherm
+  var mijnPil=document.querySelector('#view-mijn > .fb');
+  if(mijnPil)mijnPil.style.display=isMedewerker?'none':'';
+
+  if(!wisselWrap){
+    wisselWrap=document.createElement('div');
+    wisselWrap.id='wie-wissel-wrap';
+    wisselWrap.style.cssText='display:flex;align-items:center;gap:10px';
+    var hdr=document.querySelector('.hdr');
+    if(hdr)hdr.appendChild(wisselWrap);
+  }
+  var naam=mijnBBLaad();
+  wisselWrap.innerHTML=isMedewerker
+    ?'<span style="font-size:12px;color:rgba(255,255,255,.7)">👋 '+esc(naam||'')+'</span><button class="btn-new no-print" onclick="wieWissel()" style="background:rgba(255,255,255,.15);padding:8px 12px;font-size:12px"><i class="ti ti-switch-horizontal"></i> Wissel</button>'
+    :'<button class="btn-new no-print" onclick="wieWissel()" style="background:rgba(255,255,255,.15);padding:8px 10px" title="Wissel gebruiker"><i class="ti ti-switch-horizontal"></i></button>';
+
+  if(isMedewerker&&naam){
+    document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});
+    var mijnView=document.getElementById('view-mijn');
+    if(mijnView)mijnView.classList.add('active');
+    renderBBGrid();
+  }
+}
+
 showTab('dashboard');
 loadData();
+if(!frRolLaad()){
+  wieBenJijScherm();
+} else {
+  wiePasToe();
+}
 setInterval(()=>{
   // Wacht minstens 15 seconden na een save voor auto-refresh
   // om race conditions (BB-overschrijving) te vermijden
