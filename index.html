@@ -672,18 +672,19 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 
 /* AFDRUKKEN */
 @media print{
+  @page{margin:8mm;size:A4}
   :root{--bg:#fff;--bg1:#fff;--bg2:#f5f7fc;--tx1:#0C1135;--tx2:#6b7280;--bl:rgba(12,17,53,.12)}
   body{background:#fff;padding:0;font-family:'Poppins',sans-serif}
   .print-page{display:block!important}
   .no-print,.hdr,.tabs,.view,.wrap{display:none!important}
-  .print-page{padding:20mm;max-width:100%;width:100%}
-  .print-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:6mm;padding-bottom:4mm;border-bottom:2px solid #0C1135}
+  .print-page{padding:8mm;max-width:100%;width:100%}
+  .print-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:4mm;padding-bottom:3mm;border-bottom:2px solid #0C1135}
   .print-logo{font-size:18pt;font-weight:700;color:#0C1135}
   .print-logo span{color:#61ABED}
   .print-meta{font-size:9pt;color:#6b7280;text-align:right;line-height:1.6}
   .print-bb-title{font-size:16pt;font-weight:700;color:#0C1135;margin-bottom:2mm}
-  .print-datum{font-size:11pt;color:#61ABED;font-weight:600;margin-bottom:6mm}
-  .print-stop{border:1px solid #dde3f5;border-radius:3mm;padding:4mm 5mm;margin-bottom:4mm;page-break-inside:avoid}
+  .print-datum{font-size:11pt;color:#61ABED;font-weight:600;margin-bottom:3mm}
+  .print-stop{border:1px solid #dde3f5;border-radius:3mm;padding:2.5mm 5mm;margin-bottom:2.5mm;page-break-inside:avoid}
   .print-stop-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:2mm}
   .print-type-lev{background:#E6F1FB;color:#0C447C;font-size:8pt;font-weight:700;padding:1mm 3mm;border-radius:2mm;text-transform:uppercase;letter-spacing:.5px}
   .print-type-oph{background:#EAF3DE;color:#27500A;font-size:8pt;font-weight:700;padding:1mm 3mm;border-radius:2mm;text-transform:uppercase;letter-spacing:.5px}
@@ -692,13 +693,13 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
   .print-adres{font-size:10pt;color:#6b7280;margin-bottom:1mm}
   .print-tel{font-size:10pt;color:#0C1135;font-weight:500}
   .print-mat{font-size:9pt;color:#444;margin-top:2mm;padding-top:2mm;border-top:1px solid #eee}
-  .print-mat-title{font-weight:600;margin-bottom:1mm;font-size:9pt;color:#0C1135}
-  .print-mat-item{padding:0.5mm 0;display:flex;align-items:baseline;gap:2mm}
+  .print-mat-title{font-weight:600;margin-bottom:0.5mm;font-size:9pt;color:#0C1135}
+  .print-mat-item{padding:0.5mm 0;display:flex;align-items:baseline;gap:2mm;page-break-inside:avoid}
   .print-mat-qty{font-weight:700;color:#61ABED;min-width:8mm}
   .print-opm{background:#FFF3CD;border-left:3px solid #EF9F27;padding:2mm 3mm;margin-top:2mm;font-size:9pt;color:#633806}
   .print-samen{font-size:9pt;color:#6b7280;margin-top:1mm}
-  .print-footer{margin-top:8mm;padding-top:3mm;border-top:1px solid #dde3f5;font-size:8pt;color:#9ca3af;display:flex;justify-content:space-between}
-  .print-sign{margin-top:6mm;border-top:1px solid #0C1135;width:60mm;padding-top:1mm;font-size:8pt;color:#6b7280}
+  .print-footer{margin-top:3mm;padding-top:2mm;border-top:1px solid #dde3f5;font-size:8pt;color:#9ca3af;display:flex;justify-content:space-between}
+  .print-sign{margin-top:3mm;border-top:1px solid #0C1135;width:60mm;padding-top:1mm;font-size:8pt;color:#6b7280}
   .print-totaal{background:#0C1135;color:#fff;padding:3mm 5mm;border-radius:2mm;margin-bottom:5mm;font-size:10pt;display:flex;gap:8mm}
   .print-totaal span{font-weight:700;color:#61ABED}
 }
@@ -7809,11 +7810,11 @@ function printBoeking(id){
     +'</div>';
 
   // ── PROMINENT BLOK: voor wie, en naar welk adres ──
-  html+='<div style="background:#0C1135;color:#fff;border-radius:3mm;padding:5mm 6mm;margin-bottom:5mm">'
+  html+='<div style="background:#0C1135;color:#fff;border-radius:3mm;padding:4mm 6mm;margin-bottom:4mm">'
     +'<div style="font-size:8pt;letter-spacing:1px;text-transform:uppercase;color:#61ABED;font-weight:700;margin-bottom:1mm">Leveren aan</div>'
-    +'<div style="font-size:16pt;font-weight:700;margin-bottom:2mm">'+esc(b.naam||'')+'</div>'
-    +'<div style="font-size:13pt;font-weight:600;display:flex;align-items:baseline;gap:2mm">📍 '+esc(b.adres||'—')+'</div>'
-    +(b.tel?'<div style="font-size:9pt;color:#c5d4ef;margin-top:2mm">📞 '+esc(b.tel)+'</div>':'')
+    +'<div style="font-size:15pt;font-weight:700;margin-bottom:1.5mm">'+esc(b.naam||'')+'</div>'
+    +'<div style="font-size:12pt;font-weight:600;display:flex;align-items:baseline;gap:2mm">📍 '+esc(b.adres||'—')+'</div>'
+    +(b.tel?'<div style="font-size:9pt;color:#c5d4ef;margin-top:1.5mm">📞 '+esc(b.tel)+'</div>':'')
     +(b.email?'<div style="font-size:9pt;color:#c5d4ef">✉ '+esc(b.email)+'</div>':'')
     +'</div>'
     +'<div class="print-datum">'+(STATUSSEN[stIdx]||'')+'</div>';
@@ -7842,15 +7843,20 @@ function printBoeking(id){
   }
 
   // ── Materiaallijst — expliciet gekoppeld aan klant + adres ──
+  // Als <table> met <thead> opgebouwd: browsers herhalen de kop automatisch op elke afdrukpagina,
+  // zodat de klant/adres-context niet verloren gaat als een grote levering over meerdere pagina's loopt.
   if(regels.length){
-    html+='<div class="print-stop" style="margin-top:5mm;border:1.5px solid #0C1135">'
-      +'<div class="print-mat-title" style="margin-bottom:1mm">Materiaal — '+regels.length+' regel'+(regels.length!==1?'s':'')+'</div>'
-      +'<div style="font-size:9pt;color:#6b7280;margin-bottom:3mm">voor <strong style="color:#0C1135">'+esc(b.naam||'')+'</strong> · 📍 '+esc(b.adres||'—')+'</div>';
+    html+='<table style="width:100%;border-collapse:collapse;margin-top:5mm">'
+      +'<thead><tr><th colspan="2" style="text-align:left;padding:0;border:1.5px solid #0C1135;border-bottom:none;border-radius:3mm 3mm 0 0;background:#fff;padding:4mm 5mm 2mm">'
+        +'<div class="print-mat-title" style="margin-bottom:1mm">Materiaal — '+regels.length+' regel'+(regels.length!==1?'s':'')+'</div>'
+        +'<div style="font-size:9pt;color:#6b7280;font-weight:400">voor <strong style="color:#0C1135">'+esc(b.naam||'')+'</strong> · 📍 '+esc(b.adres||'—')+'</div>'
+      +'</th></tr></thead>'
+      +'<tbody><tr><td colspan="2" style="padding:0 5mm 4mm;border:1.5px solid #0C1135;border-top:none">';
     regels.forEach(function(r){
       var m=r.trim().match(/^(\d+)[x×]?\s+(.+)$/i);
       html+='<div class="print-mat-item"><span class="print-mat-qty">'+(m?m[1]+'×':'—')+'</span><span>'+(m?esc(m[2]):esc(r.trim()))+'</span></div>';
     });
-    html+='</div>';
+    html+='</td></tr></tbody></table>';
   }
 
   // ── Prijs/betaling ──
