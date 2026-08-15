@@ -7802,22 +7802,33 @@ function printBoeking(id){
   var regels=(b.materiaal||'').split('\n').filter(function(r){return r.trim();});
   var levTeam=b.opstellers_lev||[];
   var ophTeam=b.opstellers_oph||[];
-  var stIdx=b.status!==undefined&&b.status!==null?Number(b.status):1;
+
+  // ── Robuuste locatieweergave ──
+  // Bij zelf-afhaling staat de locatie in afhaalpunt (ons eigen adres), niet in b.adres.
+  // Bij levering hoort er altijd een klantadres te zijn; als dat leeg is, tonen we dat
+  // duidelijk als waarschuwing i.p.v. stil niets te tonen.
+  var locatieLabel, locatieWaarde;
+  if(isAfhaling){
+    locatieLabel='Klant haalt zelf af bij';
+    locatieWaarde=b.afhaalpunt||b.vertrek||'⚠ Geen afhaalpunt ingesteld';
+  } else {
+    locatieLabel='Leveren op adres';
+    locatieWaarde=(b.adres&&b.adres.trim())?b.adres:'⚠ Geen adres ingevuld — controleer de boeking';
+  }
 
   var html='<div class="print-hdr">'
     +'<div class="print-logo">FAMILY<span>RENT</span></div>'
     +'<div class="print-meta">Boekingsfiche<br>Afgedrukt op: '+printDatum+'<br>www.familyrent.be · 0497 03 52 23</div>'
     +'</div>';
 
-  // ── PROMINENT BLOK: voor wie, en naar welk adres ──
+  // ── PROMINENT BLOK: klant + adres/afhaalpunt + contact ──
   html+='<div style="background:#0C1135;color:#fff;border-radius:3mm;padding:4mm 6mm;margin-bottom:4mm">'
-    +'<div style="font-size:8pt;letter-spacing:1px;text-transform:uppercase;color:#61ABED;font-weight:700;margin-bottom:1mm">Leveren aan</div>'
-    +'<div style="font-size:15pt;font-weight:700;margin-bottom:1.5mm">'+esc(b.naam||'')+'</div>'
-    +'<div style="font-size:12pt;font-weight:600;display:flex;align-items:baseline;gap:2mm">📍 '+esc(b.adres||'—')+'</div>'
-    +(b.tel?'<div style="font-size:9pt;color:#c5d4ef;margin-top:1.5mm">📞 '+esc(b.tel)+'</div>':'')
-    +(b.email?'<div style="font-size:9pt;color:#c5d4ef">✉ '+esc(b.email)+'</div>':'')
-    +'</div>'
-    +'<div class="print-datum">'+(STATUSSEN[stIdx]||'')+'</div>';
+    +'<div style="font-size:15pt;font-weight:700;margin-bottom:2mm">'+esc(b.naam||'')+'</div>'
+    +'<div style="font-size:8pt;letter-spacing:1px;text-transform:uppercase;color:#61ABED;font-weight:700;margin-bottom:1mm">'+locatieLabel+'</div>'
+    +'<div style="font-size:13pt;font-weight:600;display:flex;align-items:baseline;gap:2mm">📍 '+esc(locatieWaarde)+'</div>'
+    +(b.tel?'<div style="font-size:10pt;color:#c5d4ef;margin-top:2mm">📞 '+esc(b.tel)+'</div>':'')
+    +(b.email?'<div style="font-size:10pt;color:#c5d4ef">✉ '+esc(b.email)+'</div>':'')
+    +'</div>';
 
   // ── Levering ──
   html+='<div class="print-stop">'
@@ -7825,31 +7836,28 @@ function printBoeking(id){
       +'<span class="print-type-lev">'+(isAfhaling?'Afhaling door klant':'Levering')+'</span>'
       +'<span class="print-time">'+(b.levuur||'')+'</span>'
     +'</div>'
-    +'<div class="print-adres">'+fmtDate(b.levdatum)+' — 📍 '+esc(b.adres||'—')+'</div>'
-    +'<div class="print-adres">Vertrek vanuit: '+esc(b.vertrek||'Kallo')+'</div>'
+    +'<div class="print-adres">'+fmtDate(b.levdatum)+'</div>'
     +'<div class="print-samen">Team: '+(levTeam.length?levTeam.map(esc).join(', '):'⚠ Niemand aangeduid')+'</div>'
     +'</div>';
 
-  // ── Ophaling (enkel apart tonen als andere datum dan levering) ──
+  // ── Ophaling ──
   if(b.ophdatum){
     html+='<div class="print-stop">'
       +'<div class="print-stop-hdr">'
         +'<span class="print-type-oph">'+(isAfhaling?'Terugbreng door klant':'Ophaling')+'</span>'
         +'<span class="print-time">'+(b.ophuur||'')+'</span>'
       +'</div>'
-      +'<div class="print-adres">'+fmtDate(b.ophdatum)+' — 📍 '+esc(b.adres||'—')+'</div>'
+      +'<div class="print-adres">'+fmtDate(b.ophdatum)+'</div>'
       +'<div class="print-samen">Team: '+(ophTeam.length?ophTeam.map(esc).join(', '):'⚠ Niemand aangeduid')+'</div>'
       +'</div>';
   }
 
-  // ── Materiaallijst — expliciet gekoppeld aan klant + adres ──
-  // Als <table> met <thead> opgebouwd: browsers herhalen de kop automatisch op elke afdrukpagina,
-  // zodat de klant/adres-context niet verloren gaat als een grote levering over meerdere pagina's loopt.
+  // ── Materiaallijst — koptekst (met klant + locatie) herhaalt automatisch op elke afdrukpagina ──
   if(regels.length){
-    html+='<table style="width:100%;border-collapse:collapse;margin-top:5mm">'
-      +'<thead><tr><th colspan="2" style="text-align:left;padding:0;border:1.5px solid #0C1135;border-bottom:none;border-radius:3mm 3mm 0 0;background:#fff;padding:4mm 5mm 2mm">'
-        +'<div class="print-mat-title" style="margin-bottom:1mm">Materiaal — '+regels.length+' regel'+(regels.length!==1?'s':'')+'</div>'
-        +'<div style="font-size:9pt;color:#6b7280;font-weight:400">voor <strong style="color:#0C1135">'+esc(b.naam||'')+'</strong> · 📍 '+esc(b.adres||'—')+'</div>'
+    html+='<table style="width:100%;border-collapse:collapse;margin-top:4mm">'
+      +'<thead><tr><th colspan="2" style="text-align:left;padding:0;border:1.5px solid #0C1135;border-bottom:none;border-radius:3mm 3mm 0 0;background:#fff;padding:3mm 5mm 2mm">'
+        +'<div class="print-mat-title">Materiaal — '+regels.length+' regel'+(regels.length!==1?'s':'')+'</div>'
+        +'<div style="font-size:9pt;color:#6b7280;font-weight:400">voor <strong style="color:#0C1135">'+esc(b.naam||'')+'</strong> · 📍 '+esc(locatieWaarde)+'</div>'
       +'</th></tr></thead>'
       +'<tbody><tr><td colspan="2" style="padding:0 5mm 4mm;border:1.5px solid #0C1135;border-top:none">';
     regels.forEach(function(r){
@@ -7857,31 +7865,16 @@ function printBoeking(id){
       html+='<div class="print-mat-item"><span class="print-mat-qty">'+(m?m[1]+'×':'—')+'</span><span>'+(m?esc(m[2]):esc(r.trim()))+'</span></div>';
     });
     html+='</td></tr></tbody></table>';
+  } else {
+    html+='<div class="print-stop" style="margin-top:4mm;border-color:#E24B4A"><span style="color:#A32D2D;font-weight:600">⚠ Geen materiaal ingevuld voor deze boeking.</span></div>';
   }
 
-  // ── Prijs/betaling ──
-  if(b.prijs){
-    html+='<div class="print-totaal"><div>Prijs: <span>€ '+esc(b.prijs)+'</span></div>'
-      +(b.betaling?'<div>Betaling: <span>'+esc(b.betaling)+'</span></div>':'')+'</div>';
-  }
-
-  // ── Opmerkingen ──
+  // ── Extra info / opmerkingen ──
   if(b.opmerking){
-    html+='<div class="print-opm">⚠️ '+esc(b.opmerking)+'</div>';
+    html+='<div class="print-opm" style="margin-top:4mm">⚠️ <strong>Extra info:</strong> '+esc(b.opmerking)+'</div>';
   }
 
-  // ── Taken ──
-  if(b.taken&&b.taken.length){
-    html+='<div class="print-stop" style="margin-top:5mm">'
-      +'<div class="print-mat-title" style="margin-bottom:2mm">Taken</div>';
-    b.taken.forEach(function(tk){
-      html+='<div class="print-mat-item"><span class="print-mat-qty">'+(tk.gedaan?'✓':'☐')+'</span><span>'+esc(tk.tekst)+'</span></div>';
-    });
-    html+='</div>';
-  }
-
-  html+='<div class="print-sign">Handtekening / opmerkingen bij levering</div>'
-    +'<div class="print-footer"><span>Familyrent · info@familyrent.be · 0497 03 52 23</span><span>Afgedrukt op '+printDatum+'</span></div>';
+  html+='<div class="print-footer"><span>Familyrent · info@familyrent.be · 0497 03 52 23</span><span>Afgedrukt op '+printDatum+'</span></div>';
 
   printEl.innerHTML=html;
   window.print();
