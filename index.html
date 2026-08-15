@@ -677,6 +677,9 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
   body{background:#fff;padding:0;font-family:'Poppins',sans-serif}
   .print-page{display:block!important}
   .no-print,.hdr,.tabs,.view,.wrap{display:none!important}
+  /* Alle modals/pop-ups (boekingdetail, laadbriefje, "is dit vrij?", "wie ben jij?", ...)
+     moeten tijdens het afdrukken verborgen zijn — anders wordt hun inhoud mee afgedrukt. */
+  #mo,[id$="-mo"]{display:none!important}
   .print-page{padding:8mm;max-width:100%;width:100%}
   .print-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:4mm;padding-bottom:3mm;border-bottom:2px solid #0C1135}
   .print-logo{font-size:18pt;font-weight:700;color:#0C1135}
