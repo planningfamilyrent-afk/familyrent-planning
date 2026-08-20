@@ -10415,6 +10415,9 @@ async function wizardVolgend(){
 // enkel "Mijn dag" met grote, eenvoudige knoppen.
 // ═══════════════════════════════════════════════════════════
 var FR_ROL_KEY='fr_rol_v1';
+// Namen die bij het kiezen van "Wie ben jij?" meteen volledige (beheerder-)toegang krijgen,
+// zonder pincode — voeg hier gerust extra namen toe of haal ze weg.
+var VOLLEDIGE_TOEGANG_NAMEN=['Stany','Yentl','Jony'];
 function frRolLaad(){try{return localStorage.getItem(FR_ROL_KEY)||null;}catch(e){return null;}}
 function frRolOpslaan(rol){try{localStorage.setItem(FR_ROL_KEY,rol);}catch(e){}}
 
@@ -10506,7 +10509,8 @@ function wieBeheerderControleer(){
 }
 
 function wieKies(waarde){
-  if(waarde==='__beheerder__'){
+  var heeftVolledigeToegang=VOLLEDIGE_TOEGANG_NAMEN.some(function(n){return n.toLowerCase()===waarde.toLowerCase();});
+  if(waarde==='__beheerder__'||heeftVolledigeToegang){
     frRolOpslaan('beheerder');
   } else {
     frRolOpslaan('medewerker');
@@ -10515,7 +10519,7 @@ function wieKies(waarde){
   var mo=document.getElementById('wie-mo');
   if(mo)mo.remove();
   wiePasToe();
-  if(waarde==='__beheerder__')showTab('dashboard');
+  if(waarde==='__beheerder__'||heeftVolledigeToegang)showTab('dashboard');
 }
 
 function wieWissel(){
