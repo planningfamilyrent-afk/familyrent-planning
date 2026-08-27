@@ -1201,6 +1201,21 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
         </div>
       </div>
 
+      <!-- Extern gehuurd materiaal -->
+      <div class="off-card">
+        <div class="off-card-hdr"><span class="off-num">3b</span> Extern gehuurd materiaal</div>
+        <div class="off-card-body">
+          <p style="font-size:12px;color:var(--tx3);margin:0 0 10px">Niet in onze eigen catalogus? Voeg het hier apart toe — bv. materiaal dat we zelf bij een externe partij huren voor deze klant.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+            <input type="text" id="oExtNaam" placeholder="Naam product..." style="flex:2;min-width:160px;padding:9px 12px;border-radius:var(--rm);border:.5px solid var(--bm);background:var(--bg2);color:var(--tx1);font-size:13px;font-family:inherit">
+            <input type="number" id="oExtAantal" placeholder="Aantal" min="1" value="1" style="flex:1;min-width:70px;padding:9px 12px;border-radius:var(--rm);border:.5px solid var(--bm);background:var(--bg2);color:var(--tx1);font-size:13px;font-family:inherit">
+            <input type="number" id="oExtPrijs" placeholder="€ per dag incl." min="0" step="0.01" style="flex:1;min-width:110px;padding:9px 12px;border-radius:var(--rm);border:.5px solid var(--bm);background:var(--bg2);color:var(--tx1);font-size:13px;font-family:inherit">
+            <button onclick="offExternToevoegen()" class="off-btn-pdf" style="flex:0 0 auto;padding:9px 16px;margin:0"><i class="ti ti-plus"></i></button>
+          </div>
+          <div id="oExternLijst"></div>
+        </div>
+      </div>
+
       <!-- Transport -->
       <div class="off-card">
         <div class="off-card-hdr"><span class="off-num">4</span> Transport, plaatsing & afbraak</div>
@@ -4327,6 +4342,56 @@ function offToggleTr(t){
   var cb=document.getElementById('ocb'+t);var pr=document.getElementById('opr'+t);
   pr.disabled=!cb.checked;if(!cb.checked)pr.value='';offUpdate();
 }
+// ═══════════════════════════════════════════════════════════
+// EXTERN GEHUURD MATERIAAL — losse regels buiten de vaste catalogus
+// ═══════════════════════════════════════════════════════════
+var offExtern=[];
+
+function offExternToevoegen(){
+  var naamEl=document.getElementById('oExtNaam');
+  var aantalEl=document.getElementById('oExtAantal');
+  var prijsEl=document.getElementById('oExtPrijs');
+  var naam=(naamEl.value||'').trim();
+  var aantal=parseInt(aantalEl.value)||1;
+  var prijsIncl=parseFloat(prijsEl.value);
+  if(!naam){alert('Vul eerst een naam in voor het externe product.');naamEl.focus();return;}
+  if(!prijsIncl||prijsIncl<=0){alert('Vul een geldige prijs per dag in (incl. btw).');prijsEl.focus();return;}
+  offExtern.push({id:'ext_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),naam:naam,aantal:aantal,prijsIncl:prijsIncl});
+  naamEl.value='';aantalEl.value=1;prijsEl.value='';
+  naamEl.focus();
+  offExternRender();
+  offUpdate();
+}
+
+function offExternVerwijder(id){
+  offExtern=offExtern.filter(function(x){return x.id!==id;});
+  offExternRender();
+  offUpdate();
+}
+
+function offExternRender(){
+  var wrap=document.getElementById('oExternLijst');
+  if(!wrap)return;
+  if(offExtern.length===0){wrap.innerHTML='';return;}
+  wrap.innerHTML=offExtern.map(function(x){
+    return '<div style="display:flex;justify-content:space-between;align-items:center;background:var(--bg2);border:.5px solid var(--bl);border-radius:var(--rm);padding:8px 12px;margin-bottom:6px">'
+      +'<span style="font-size:13px;color:var(--tx1)"><i class="ti ti-truck-delivery" style="color:var(--sky);margin-right:6px"></i>'+esc(x.naam)+' ×'+x.aantal+'</span>'
+      +'<span style="display:flex;align-items:center;gap:10px">'
+      +'<span style="font-size:13px;font-weight:600;color:var(--tx1)">'+offFmt(x.prijsIncl*x.aantal)+'/dag</span>'
+      +'<span style="cursor:pointer;color:var(--tx3)" onclick="offExternVerwijder(\''+x.id+'\')">✕</span>'
+      +'</span></div>';
+  }).join('');
+}
+
+function offExternTotalen(dagen){
+  var totIncl=0,totExcl=0;
+  offExtern.forEach(function(x){
+    totIncl+=x.prijsIncl*x.aantal*dagen;
+    totExcl+=(x.prijsIncl/1.21)*x.aantal*dagen;
+  });
+  return {totIncl:totIncl,totExcl:totExcl};
+}
+
 function offUpdate(){
   var dagen=parseInt((document.getElementById('oDagen')||{}).value)||1;
   var vn=(document.getElementById('oVoornaam')||{}).value||'';
@@ -4339,12 +4404,19 @@ function offUpdate(){
   var totIncl=0,totExcl=0;
   if(linesEl){
     linesEl.innerHTML='';
-    if(selected.length===0){linesEl.innerHTML='<div class="off-sum-empty">Selecteer materiaal om te beginnen</div>';}
+    if(selected.length===0&&offExtern.length===0){linesEl.innerHTML='<div class="off-sum-empty">Selecteer materiaal om te beginnen</div>';}
     else selected.forEach(function(p){
       var q=offQ[p.id];var lI=p.incl*q*dagen;var lE=p.excl*q*dagen;
       totIncl+=lI;totExcl+=lE;
       var d=document.createElement('div');d.className='off-sum-line';
       d.innerHTML='<span>'+p.name+' x'+q+'</span><span style="font-weight:600;white-space:nowrap">'+offFmt(lI)+'</span>';
+      linesEl.appendChild(d);
+    });
+    offExtern.forEach(function(x){
+      var lI=x.prijsIncl*x.aantal*dagen;var lE=(x.prijsIncl/1.21)*x.aantal*dagen;
+      totIncl+=lI;totExcl+=lE;
+      var d=document.createElement('div');d.className='off-sum-line';
+      d.innerHTML='<span><i class="ti ti-truck-delivery" style="font-size:12px;color:var(--sky)"></i> '+esc(x.naam)+' x'+x.aantal+'</span><span style="font-weight:600;white-space:nowrap">'+offFmt(lI)+'</span>';
       linesEl.appendChild(d);
     });
   }
@@ -4384,6 +4456,8 @@ function offUpdate(){
 function offReset(){
   if(!confirm('Alle offertegegevens wissen?'))return;
   OFF_PRODUCTS.forEach(function(p){offQ[p.id]=0;var i=document.getElementById('oqi-'+p.id);if(i)i.value=0;offRow(p.id);});
+  offExtern=[];
+  offExternRender();
   ['oVoornaam','oAchternaam','oEmail','oTel','oStraat','oGemeente','oBtw','oEvenement','oLocatie','oOpmerking'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
   var dg=document.getElementById('oDagen');if(dg)dg.value=1;
   var dt=document.getElementById('oDatum');if(dt)dt.value='';
@@ -4430,6 +4504,20 @@ function offBuildOfferteData(){
     });
   });
   var transportRows='';var tExcl=0;
+
+  // Extern gehuurd materiaal — blend gewoon tussen de andere producten,
+  // de eindklant hoeft niet te zien dat dit extern gehuurd is
+  if(offExtern.length){
+    offExtern.forEach(function(x){
+      var lI=x.prijsIncl*x.aantal*dagen;var lE=(x.prijsIncl/1.21)*x.aantal*dagen;
+      totIncl+=lI;totExcl+=lE;
+      productRows+='<tr><td style="padding:7px 12px;font-size:12px;color:#0C1135">'+esc(x.naam)+'</td>'
+        +'<td style="padding:7px 12px;font-size:12px;text-align:center;color:#6b7280">'+x.aantal+'</td>'
+        +'<td style="padding:7px 12px;font-size:12px;text-align:right;color:#6b7280">'+offFmt(x.prijsIncl)+'</td>'
+        +'<td style="padding:7px 12px;font-size:12px;text-align:right;font-weight:700;color:#0C1135">'+offFmt(lI)+'</td></tr>';
+    });
+  }
+
   ['Transport','Plaatsing','Afbraak'].forEach(function(t){
     var cb=document.getElementById('ocb'+t);var pr=document.getElementById('opr'+t);
     if(cb&&cb.checked&&pr.value&&parseFloat(pr.value)>0){
@@ -4466,7 +4554,8 @@ function offBuildOfferteData(){
         Plaatsing: !!(document.getElementById('ocbPlaatsing')||{}).checked,
         Afbraak: !!(document.getElementById('ocbAfbraak')||{}).checked
       },
-      offQ: JSON.parse(JSON.stringify(offQ))
+      offQ: JSON.parse(JSON.stringify(offQ)),
+      offExtern: JSON.parse(JSON.stringify(offExtern))
     }
   });
 
@@ -4901,6 +4990,11 @@ function offTrackEdit(id){
     if(inp)inp.value=offQ[p.id];
     offRow(p.id);
   });
+
+  // Extern gehuurd materiaal terugzetten
+  offExtern=(snap.offExtern||[]).slice();
+  offExternRender();
+
   offUpdate();
 
   // Naar het bewerkscherm springen
