@@ -900,7 +900,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 .off-sum-transport{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;color:var(--tx3)}
 .off-sum-transport span:last-child{font-weight:600;color:var(--tx1)}
 .off-sum-excl,.off-sum-btw{display:flex;justify-content:space-between;font-size:12px;color:var(--tx3);padding:2px 0}
-.off-sum-korting-rij{display:none;justify-content:space-between;align-items:center;font-size:12px;color:var(--tx3);padding:2px 0}
+.off-sum-korting-rij{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--tx3);padding:4px 0}
 .off-sum-korting-rij>span:first-child{display:flex;align-items:center;gap:5px}
 .off-sum-total{display:flex;justify-content:space-between;align-items:baseline;padding:10px 0 0;border-top:2px solid var(--navy);margin-top:6px}
 .off-sum-total span:first-child{font-size:13px;font-weight:700;color:var(--tx1)}
@@ -4096,10 +4096,8 @@ function offUpdate(){
   var grandIncl=grandExcl*1.21;
   var btw=grandIncl-grandExcl;
   var eEl=document.getElementById('oSumExcl');if(eEl)eEl.textContent=offFmt(subExcl);
-  var kRij=document.querySelector('.off-sum-korting-rij');
   var kEl2=document.getElementById('oSumKorting');
-  if(kEl2)kEl2.textContent='− '+offFmt(kortBedrag);
-  if(kRij)kRij.style.display=kortPct>0?'flex':'none';
+  if(kEl2)kEl2.textContent=kortPct>0?('− '+offFmt(kortBedrag)):'';
   var bEl=document.getElementById('oSumBtw');if(bEl)bEl.textContent=offFmt(btw);
   var iEl=document.getElementById('oSumIncl');if(iEl)iEl.textContent=offFmt(grandIncl);
 
