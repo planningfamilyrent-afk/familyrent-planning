@@ -900,6 +900,8 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
 .off-sum-transport{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;color:var(--tx3)}
 .off-sum-transport span:last-child{font-weight:600;color:var(--tx1)}
 .off-sum-excl,.off-sum-btw{display:flex;justify-content:space-between;font-size:12px;color:var(--tx3);padding:2px 0}
+.off-sum-korting-rij{display:none;justify-content:space-between;align-items:center;font-size:12px;color:var(--tx3);padding:2px 0}
+.off-sum-korting-rij>span:first-child{display:flex;align-items:center;gap:5px}
 .off-sum-total{display:flex;justify-content:space-between;align-items:baseline;padding:10px 0 0;border-top:2px solid var(--navy);margin-top:6px}
 .off-sum-total span:first-child{font-size:13px;font-weight:700;color:var(--tx1)}
 .off-sum-total span:last-child{font-size:22px;font-weight:900;color:var(--tx1)}
@@ -1197,6 +1199,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padd
           <div id="oTransportLines"></div>
           <hr class="off-divider">
           <div class="off-sum-excl"><span>Subtotaal excl. btw</span><span id="oSumExcl">€ 0,00</span></div>
+          <div class="off-sum-korting-rij"><span>Korting <input type="number" id="oKorting" min="0" max="100" step="1" value="0" oninput="offUpdate()" style="width:52px;padding:3px 6px;border:.5px solid var(--bl);border-radius:6px;text-align:right;font-size:13px">%</span><span id="oSumKorting" style="color:#16a34a">€ 0,00</span></div>
           <div class="off-sum-btw"><span>BTW 21%</span><span id="oSumBtw">€ 0,00</span></div>
           <div class="off-sum-total"><span>Totaal incl. btw</span><span id="oSumIncl">€ 0,00</span></div>
           <div class="off-validity" id="oValidity">Vul offertenummer en geldigheid in om de PDF te vervolledigen.</div>
@@ -4083,11 +4086,20 @@ function offUpdate(){
       }
     });
   }
-  // Correcte btw-berekening: alles excl → +21%
-  var grandExcl=totExcl+tExcl;
+  // Korting: percentage op het excl-subtotaal, vóór btw
+  var subExcl=totExcl+tExcl;
+  var kortPct=parseFloat((document.getElementById('oKorting')||{}).value)||0;
+  if(kortPct<0)kortPct=0; if(kortPct>100)kortPct=100;
+  var kortBedrag=subExcl*kortPct/100;
+  // Correcte btw-berekening: (excl − korting) → +21%
+  var grandExcl=subExcl-kortBedrag;
   var grandIncl=grandExcl*1.21;
   var btw=grandIncl-grandExcl;
-  var eEl=document.getElementById('oSumExcl');if(eEl)eEl.textContent=offFmt(grandExcl);
+  var eEl=document.getElementById('oSumExcl');if(eEl)eEl.textContent=offFmt(subExcl);
+  var kRij=document.querySelector('.off-sum-korting-rij');
+  var kEl2=document.getElementById('oSumKorting');
+  if(kEl2)kEl2.textContent='− '+offFmt(kortBedrag);
+  if(kRij)kRij.style.display=kortPct>0?'flex':'none';
   var bEl=document.getElementById('oSumBtw');if(bEl)bEl.textContent=offFmt(btw);
   var iEl=document.getElementById('oSumIncl');if(iEl)iEl.textContent=offFmt(grandIncl);
 
@@ -4106,6 +4118,7 @@ function offReset(){
   OFF_PRODUCTS.forEach(function(p){offQ[p.id]=0;var i=document.getElementById('oqi-'+p.id);if(i)i.value=0;offRow(p.id);});
   ['oVoornaam','oAchternaam','oEmail','oTel','oStraat','oGemeente','oBtw','oEvenement','oLocatie','oOpmerking'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
   var dg=document.getElementById('oDagen');if(dg)dg.value=1;
+  var kt=document.getElementById('oKorting');if(kt)kt.value=0;
   var dt=document.getElementById('oDatum');if(dt)dt.value='';
   var gt=document.getElementById('oGeldigTot');if(gt){var g=new Date();g.setDate(g.getDate()+14);gt.value=dstr(g);}
   ['Transport','Plaatsing','Afbraak'].forEach(function(t){var cb=document.getElementById('ocb'+t);if(cb)cb.checked=false;var pr=document.getElementById('opr'+t);if(pr){pr.value='';pr.disabled=true;}});
@@ -4163,7 +4176,11 @@ function offGeneratePDF(){
   });
   if(transportRows)transportRows='<tr><td colspan="4" style="background:#F0F3FC;padding:6px 12px;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#4a96d8">Transport & service</td></tr>'+transportRows;
 
-  var grandExcl=totExcl+tExcl;
+  var subExclPdf=totExcl+tExcl;
+  var kortPctPdf=parseFloat((document.getElementById('oKorting')||{}).value)||0;
+  if(kortPctPdf<0)kortPctPdf=0; if(kortPctPdf>100)kortPctPdf=100;
+  var kortBedragPdf=subExclPdf*kortPctPdf/100;
+  var grandExcl=subExclPdf-kortBedragPdf;
   var grandIncl=grandExcl*1.21;
   var btwBedrag=grandIncl-grandExcl;
 
@@ -4201,7 +4218,7 @@ function offGeneratePDF(){
     +'</table></div></div>'
     +'<table class="pdf-table"><thead><tr><th style="width:50%">Omschrijving</th><th style="width:10%">Aantal</th><th style="width:20%">Dagprijs incl. btw</th><th style="width:20%">Totaal incl. btw</th></tr></thead><tbody>'
     +productRows+transportRows+'</tbody></table>'
-    +'<div class="pdf-totaal"><table><tr><td>Subtotaal excl. btw</td><td>'+offFmt(grandExcl)+'</td></tr><tr><td>BTW 21%</td><td>'+offFmt(btwBedrag)+'</td></tr><tr class="totaal-final"><td>TOTAAL incl. btw</td><td>'+offFmt(grandIncl)+'</td></tr></table></div>'
+    +'<div class="pdf-totaal"><table><tr><td>Subtotaal excl. btw</td><td>'+offFmt(subExclPdf)+'</td></tr>'+(kortPctPdf>0?'<tr><td>Korting '+kortPctPdf+'%</td><td>− '+offFmt(kortBedragPdf)+'</td></tr>':'')+'<tr><td>BTW 21%</td><td>'+offFmt(btwBedrag)+'</td></tr><tr class="totaal-final"><td>TOTAAL incl. btw</td><td>'+offFmt(grandIncl)+'</td></tr></table></div>'
     +'<div class="pdf-validity"><strong>Geldigheid & voorwaarden:</strong> Deze offerte is vrijblijvend en geldig '+(geldigVal?'tot '+fmtDate(geldigVal):'voor 14 dagen')+'. Vermelde prijzen zijn '+(dagen>1?dagen+' x ':'')+'dagprijzen incl. 21% BTW.'
     +(tExcl>0?' Transport, plaatsing en/of afbraak zijn inbegrepen zoals vermeld.':' Transport, plaatsing en afbraak zijn niet inbegrepen tenzij apart vermeld.')+'</div>'
     +(opmerking?'<div class="pdf-opmerking"><strong>Opmerkingen:</strong> '+opmerking+'</div>':'')
